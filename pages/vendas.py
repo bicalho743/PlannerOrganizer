@@ -18,10 +18,9 @@ from datetime import datetime, date, timedelta
 import os
 import tempfile
 from utils.custom_components import custom_info, custom_warning
-from streamlit_extras.stylable_container import stylable_container
 from utils.ui import botao_excluir, cartao_clicavel
 from utils.design_tokens import (
-    NAVY, NAVY_HOVER, GOLD, GOLD_BUTTON_CSS,
+    NAVY, NAVY_HOVER, GOLD,
 )
 
 
@@ -345,27 +344,15 @@ def _render_detail_panel(venda_id, venda_row):
             "observacoes": venda_row.get("observacoes", "")
         }
         pdf_bytes = _pdf_venda(proposta_dados, {"nome": nome_raw}, itens_det)
-        # uma regra por item: o stylable_container só prefixa o começo de cada item
-        _venda_css = [
-            "button {"
-            f"background:{NAVY} !important;border-radius:10px !important;"
-            "padding:14px 24px !important;width:100% !important;"
-            "border:1px solid transparent !important;transition:all 0.2s !important;}",
-            "button:hover {"
-            f"background:{NAVY_HOVER} !important;transform:translateY(-2px) !important;"
-            "box-shadow:0 4px 12px rgba(0,0,0,0.3) !important;}",
-            "button :is(p, div) {"
-            f"color:{GOLD} !important;font-weight:700 !important;font-size:13px !important;}}",
-        ]
-        with stylable_container(key=f"dl_venda_{venda_id}", css_styles=_venda_css):
-            st.download_button(
-                label="Baixar PDF da Venda",
-                data=pdf_bytes,
-                file_name=f"Relatorio_Venda_{safe_nome}_{numero_exibir}.pdf",
-                mime="application/pdf",
-                key=f"dl_btn_venda_{venda_id}",
-                use_container_width=True,
-            )
+        st.download_button(
+            label="Baixar PDF da venda",
+            data=pdf_bytes,
+            file_name=f"Relatorio_Venda_{safe_nome}_{numero_exibir}.pdf",
+            mime="application/pdf",
+            key=f"dl_btn_venda_{venda_id}",
+            icon=":material/download:",
+            use_container_width=True,
+        )
     except Exception as e:
         st.error(f"Erro ao gerar PDF: {str(e)}")
 
@@ -418,9 +405,15 @@ def _render_detail_panel(venda_id, venda_row):
                 itens_atuais = st.session_state.db.get_itens_venda(venda_id)
                 produtos_df  = st.session_state.db.get_produtos()
 
+                # quantidade e preço mudam só nos campos; "Salvar e fechar" grava tudo de uma vez.
+                # Remover e Adicionar produto gravam na hora.
+                _chaves_itens = [k for i in itens_atuais["id"] for k in (f"eq_{i}", f"ep_{i}")] if not itens_atuais.empty else []
                 if not itens_atuais.empty:
+                    ch1, ch2, ch3, _ = st.columns([3, 1, 1, 1])
+                    ch2.caption("Qtd")
+                    ch3.caption("Preço unit.")
                     for _, item in itens_atuais.iterrows():
-                        ec1, ec2, ec3, ec4, ec5 = st.columns([3, 1, 1, 1, 1])
+                        ec1, ec2, ec3, ec5 = st.columns([3, 1, 1, 1], vertical_alignment="center")
                         ec1.write(f"**{item['produto_nome']}**")
                         with ec2:
                             nova_qtd = st.number_input("Qtd", min_value=1, value=int(item["quantidade"]),
@@ -428,15 +421,8 @@ def _render_detail_panel(venda_id, venda_row):
                         with ec3:
                             novo_preco = st.number_input("R$", min_value=0.01, value=float(item["preco_unitario"]),
                                                          format="%.2f", key=f"ep_{item['id']}", label_visibility="collapsed")
-                        with ec4:
-                            if st.button("💾", key=f"esv_{item['id']}", help="Salvar", use_container_width=True):
-                                try:
-                                    st.session_state.db.update_item_venda(item["id"], nova_qtd, novo_preco)
-                                    st.rerun()
-                                except Exception as ex:
-                                    st.error(str(ex))
                         with ec5:
-                            if botao_excluir("🗑️", f"erm_{item['id']}", help="Remover"):
+                            if botao_excluir("Remover", f"erm_{item['id']}", help="Remove o item da venda agora"):
                                 try:
                                     st.session_state.db.remove_item_venda(item["id"])
                                     st.rerun()
@@ -472,13 +458,22 @@ def _render_detail_panel(venda_id, venda_row):
                 with fe1:
                     if st.button("Salvar e fechar", type="primary", use_container_width=True, key=f"fin_edit_{venda_id}"):
                         try:
+                            for _, item in itens_atuais.iterrows():
+                                q = int(st.session_state.get(f"eq_{item['id']}", item["quantidade"]))
+                                pr = float(st.session_state.get(f"ep_{item['id']}", item["preco_unitario"]))
+                                if q != int(item["quantidade"]) or round(pr, 2) != round(float(item["preco_unitario"]), 2):
+                                    st.session_state.db.update_item_venda(item["id"], q, pr)
                             st.session_state.db.recalcular_valor_total_venda(venda_id)
+                            for k in _chaves_itens:
+                                st.session_state.pop(k, None)
                             st.session_state[f"editando_venda_{venda_id}"] = False
                             st.rerun()
                         except Exception as ex:
                             st.error(str(ex))
                 with fe2:
                     if st.button("Cancelar", use_container_width=True, key=f"canc_edit_{venda_id}"):
+                        for k in _chaves_itens:  # descarta o que foi mudado nos campos
+                            st.session_state.pop(k, None)
                         st.session_state[f"editando_venda_{venda_id}"] = False
                         st.rerun()
             except Exception as e:
@@ -626,7 +621,7 @@ def show():
 
     col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
     with col_btn:
-        with stylable_container(key="gold_nova_venda", css_styles=list(GOLD_BUTTON_CSS)):
+        with st.container(key="gold_nova_venda"):
             if st.button("Nova venda", type="primary", icon=":material/add:", use_container_width=True, key="btn_nova_venda_top"):
                 st.session_state["vendas_nova_venda_open"] = not st.session_state["vendas_nova_venda_open"]
                 if not st.session_state["vendas_nova_venda_open"]:

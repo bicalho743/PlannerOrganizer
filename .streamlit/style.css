@@ -417,7 +417,9 @@ div[data-testid="stExpander"] {
 div[data-testid="stExpander"] * { color: #262730 !important; }
 /* a regra acima escurecia o texto dos botões azul-marinho dentro de um expander */
 div[data-testid="stExpander"] button[data-testid="stBaseButton-primary"],
-div[data-testid="stExpander"] button[data-testid$="FormSubmit"] { color: #FFFFFF !important; }
+div[data-testid="stExpander"] button[data-testid="stBaseButton-primary"] *,
+div[data-testid="stExpander"] button[data-testid$="FormSubmit"],
+div[data-testid="stExpander"] button[data-testid$="FormSubmit"] * { color: #FFFFFF !important; }
 /* cabeçalho do expander é texto, não botão */
 div[data-testid="stExpander"] summary, div[data-testid="stExpander"] summary * { color: #101828 !important; font-weight: 600 !important; }
 /* Campo de DATA — Streamlit moderno (>=1.4x) renderiza o campo como
@@ -490,15 +492,27 @@ div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] * {
 /* ========================================
    DOWNLOAD BUTTONS
    ======================================== */
+/* baixar PDF é ação secundária: branco com borda, texto azul-marinho (era verde com degradê) */
 div[data-testid="stDownloadButton"] > button {
-    background: linear-gradient(135deg, #1B5E20, #2E7D32) !important;
-    color: white !important; border: none !important; border-radius: 6px !important;
-    font-weight: 500 !important; min-height: 40px !important;
-    text-decoration: none !important;
+    background: #FFFFFF !important; color: var(--navy) !important; border: 1px solid #D0D5DD !important;
+    border-radius: 8px !important; font-weight: 600 !important; min-height: 40px !important;
+    text-decoration: none !important; box-shadow: none !important;
 }
+div[data-testid="stDownloadButton"] > button:hover { background: #F9FAFB !important; border-color: #98A2B3 !important; }
+/* cartões de relatório da proposta (propostas_unificado._report_card_download): azul-marinho com texto dourado */
+[class*="st-key-dl_card_"] div[data-testid="stDownloadButton"] > button,
+[class*="st-key-gen_card_"] .stButton > button {
+    background: var(--navy) !important; border: 1px solid var(--navy) !important; border-radius: 10px !important;
+    padding: 16px !important; min-height: 80px !important; width: 100% !important;
+    display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important;
+}
+[class*="st-key-dl_card_"] div[data-testid="stDownloadButton"] > button:hover,
+[class*="st-key-gen_card_"] .stButton > button:hover { background: var(--navy-hover) !important; border-color: var(--navy-hover) !important; }
+[class*="st-key-dl_card_"] div[data-testid="stDownloadButton"] > button *,
+[class*="st-key-gen_card_"] .stButton > button * { color: var(--gold) !important; font-weight: 700 !important; font-size: 12px !important; }
 div[data-testid="stDownloadButton"] > button *,
 div[data-testid="stDownloadButton"] * {
-    color: white !important; text-decoration: none !important;
+    color: var(--navy) !important; text-decoration: none !important;
     border-bottom: none !important;
 }
 

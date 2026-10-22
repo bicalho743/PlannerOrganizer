@@ -13,9 +13,8 @@ import plotly.graph_objects as go
 import html as html_module
 from utils.database import Fornecedor
 from utils.propostas_helper import st_gerar_pdf_cliente, st_gerar_pdf_interno, st_gerar_pdf_fornecedores, gerar_pdf_proposta
-from streamlit_extras.stylable_container import stylable_container
 from utils.design_tokens import (
-    NAVY, NAVY_HOVER, GOLD, GOLD_BUTTON_CSS,
+    NAVY, NAVY_HOVER, GOLD,
 )
 from utils.status_execucao import EXEC_EM_EXECUCAO, EXEC_FINALIZADA, EXEC_CANCELADA
 from utils.ui import botao_excluir, link_fechar, input_moeda, cartao_clicavel
@@ -765,26 +764,13 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_
     relatórios ao abrir o detalhe da proposta (grande ganho de velocidade).
     Uma vez gerado na sessão, o card passa a oferecer 'Baixar' direto."""
     state_key = f"_report_pdf_{report_type}_{proposta_id}"
-    # uma regra por item: o stylable_container só prefixa o começo de cada item
-    _card_css = [
-        "button {"
-        f"background:{NAVY} !important;border-radius:10px !important;"
-        "padding:16px !important;min-height:80px !important;width:100% !important;"
-        "border:1px solid transparent !important;transition:all 0.2s !important;"
-        "display:flex !important;flex-direction:column !important;"
-        "align-items:center !important;justify-content:center !important;}",
-        "button:hover {"
-        f"background:{NAVY_HOVER} !important;transform:translateY(-2px) !important;"
-        "box-shadow:0 4px 12px rgba(0,0,0,0.3) !important;}",
-        "button :is(p, div) {"
-        f"color:{GOLD} !important;font-weight:700 !important;font-size:12px !important;}}",
-    ]
+    # estilo dos cartões em .streamlit/style.css (containers st-key-dl_card_* e st-key-gen_card_*)
 
     saved = st.session_state.get(state_key)
     if isinstance(saved, dict) and saved.get('path') and os.path.exists(saved['path']):
         with open(saved['path'], "rb") as f:
             pdf_bytes = f.read()
-        with stylable_container(key=f"dl_card_{report_type}_{proposta_id}", css_styles=_card_css):
+        with st.container(key=f"dl_card_{report_type}_{proposta_id}"):
             st.download_button(
                 label=f"{title}", data=pdf_bytes, file_name=saved['name'],
                 mime="application/pdf", key=f"dl_btn_{report_type}_{proposta_id}",
@@ -793,7 +779,7 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_
         st.caption(f"Pronto — {subtitle}")
         return
 
-    with stylable_container(key=f"gen_card_{report_type}_{proposta_id}", css_styles=_card_css):
+    with st.container(key=f"gen_card_{report_type}_{proposta_id}"):
         gerar = st.button(f"{title}", key=f"gen_btn_{report_type}_{proposta_id}", use_container_width=True)
     st.caption(subtitle)
     if gerar:
@@ -2012,7 +1998,7 @@ def show():
 
     col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
     with col_btn:
-        with stylable_container(key="gold_nova_proposta", css_styles=list(GOLD_BUTTON_CSS)):
+        with st.container(key="gold_nova_proposta"):
             nova_btn = st.button("Nova proposta", type="primary", icon=":material/add:", use_container_width=True, key="btn_nova_proposta_top")
             if nova_btn:
                 st.session_state['kanban_nova_proposta_open'] = not st.session_state['kanban_nova_proposta_open']
