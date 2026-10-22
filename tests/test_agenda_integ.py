@@ -134,3 +134,40 @@ def test_origem_do_cadastro_guarda_a_primeira(ctx):
     finally:
         db.session.query(Perfil).filter_by(usuario_id=db.usuario_id).delete()
         db.session.flush()
+
+
+def test_modo_consulta_nao_grava_nada_mas_le(ctx, monkeypatch):
+    """Teste grátis encerrado: leitura normal, toda gravação recusada (ORM e psycopg2 direto)."""
+    import psycopg2
+    from utils import somente_leitura
+    db, cliente = ctx
+    db.salvar_compromisso(data=date(2026, 11, 10), titulo="Antes do bloqueio", valor=100)
+    monkeypatch.setattr(somente_leitura, "ativo", lambda: True)
+    monkeypatch.setattr(somente_leitura, "tentou", lambda: None)
+    assert len(db.get_compromissos()) == 1                       # lê
+    for gravar in (lambda: db.salvar_compromisso(data=date(2026, 11, 11), titulo="Depois", valor=50),
+                   lambda: db.lancar_das(2026, 3, 86.05, date(2026, 4, 2))):
+        with pytest.raises(Exception, match="teste grátis terminou"):
+            gravar()
+    with pytest.raises(somente_leitura.ContaSomenteLeitura):
+        with psycopg2.connect(os.environ["DATABASE_URL"]) as conn, conn.cursor() as cur:
+            cur.execute("UPDATE clientes SET nome = 'x' WHERE id = %s", (cliente,))
+    monkeypatch.setattr(somente_leitura, "ativo", lambda: False)
+    db.session.rollback()
+    assert list(db.get_compromissos()["titulo"]) == ["Antes do bloqueio"]
+
+
+def test_modo_consulta_nao_gera_pdf(monkeypatch, tmp_path):
+    from reportlab.lib.pagesizes import A4
+    from reportlab.platypus import SimpleDocTemplate, Paragraph
+    from reportlab.lib.styles import getSampleStyleSheet
+    from utils import somente_leitura
+    monkeypatch.setattr(somente_leitura, "ativo", lambda: True)
+    monkeypatch.setattr(somente_leitura, "tentou", lambda: None)
+    doc = lambda: SimpleDocTemplate(str(tmp_path / "x.pdf"), pagesize=A4).build(
+        [Paragraph("oi", getSampleStyleSheet()["Normal"])])
+    with pytest.raises(somente_leitura.ContaSomenteLeitura):
+        doc()
+    with somente_leitura.liberar_pdf():  # manual do sistema
+        doc()
+    assert (tmp_path / "x.pdf").exists()

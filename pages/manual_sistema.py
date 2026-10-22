@@ -493,6 +493,9 @@ def gerar_manual_sistema(verificar_auth=True):
              "plano <b>mensal (R$ 29,90)</b> ou <b>anual (R$ 297, o equivalente a R$ 24,75 por mês)</b>, com acesso "
              "completo nos dois. Nesta tela também ficam o portal de pagamentos, para trocar o cartão, ver as "
              "faturas ou cancelar.")
+    texto("<b>Quando o teste grátis termina</b> sem assinatura, a conta entra em <b>modo consulta</b>: você continua "
+          "entrando e vendo tudo o que cadastrou, mas não cadastra, não edita e não gera PDFs. Um aviso no topo das "
+          "telas leva aos planos; ao assinar, tudo volta a ser liberado na hora.")
 
     # ── BOAS PRÁTICAS ──────────────────────────────────────────────────
     capitulo("Boas práticas")

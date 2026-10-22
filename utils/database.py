@@ -225,6 +225,9 @@ from sqlalchemy import event
 from sqlalchemy.orm import Session as _SessaoOrm, with_loader_criteria
 
 _conta_atual = ContextVar("planner_conta_atual", default=None)
+from utils import somente_leitura as _somente_leitura
+_somente_leitura.instalar(engine)  # conta em modo consulta (teste grátis encerrado) não grava
+
 MODELOS_POR_CONTA = (Cliente, Proposta, Transacao, Fornecedor, Assistente, Parceiro, Produto, Venda,
                      AndamentoProposta, PostOrganization, PostOrganizationAction, Compromisso)
 

@@ -24,6 +24,8 @@ SECOES = [
     ("2. Teste grátis e assinatura", [
         "Toda conta nova tem 7 dias de teste grátis com todos os recursos. Depois disso o uso continua "
         "mediante assinatura, mensal ou anual, nos preços exibidos em Plano e cobrança no momento da contratação.",
+        "Sem assinatura, ao fim do teste a conta passa ao modo consulta: seus dados continuam guardados e "
+        "visíveis, mas não é possível cadastrar, editar nem gerar documentos até a assinatura.",
         "O pagamento é processado pelo Stripe por cartão de crédito e renovado automaticamente ao fim de cada "
         "período até que você cancele. Se uma cobrança falhar, o acesso aos recursos pagos pode ser suspenso "
         "até a regularização.",

@@ -96,11 +96,25 @@ def botao_editar(label, key, **kwargs):
 
 
 def botao_documento(label, key, **kwargs):
-    """Botão que gera um documento (dourado claro, ícone de documento)."""
+    """Botão que gera um documento (dourado claro, ícone de documento). Em modo consulta (teste
+    grátis encerrado) o clique abre o convite para assinar em vez de gerar."""
+    from utils import somente_leitura
     kwargs.pop("type", None)
     kwargs.setdefault("icon", ":material/description:")
     with st.container(key=f"btndoc_{key}"):
-        return st.button(label, key=key, **kwargs)
+        clicou = st.button(label, key=key, **kwargs)
+    if clicou and somente_leitura.ativo():
+        somente_leitura.tentou()
+        return False
+    return clicou
+
+
+def _somente_leitura():
+    from utils import somente_leitura
+    if somente_leitura.ativo():
+        somente_leitura.tentou()
+        return True
+    return False
 
 
 def baixar_pdf(rotulo, key, gerar, legenda=None):
@@ -134,6 +148,8 @@ def baixar_pdf(rotulo, key, gerar, legenda=None):
         clicou = st.button(rotulo, key=f"gen_{key}", icon=":material/download:", use_container_width=True)
     if legenda:
         st.caption(legenda)
+    if clicou and _somente_leitura():
+        return
     if clicou:
         with st.spinner("Preparando o PDF…"):
             caminho, nome, erro = gerar()

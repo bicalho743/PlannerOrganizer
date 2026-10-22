@@ -734,10 +734,9 @@ try:
             st.session_state["_origem_salva"] = True
             st.session_state.db.salvar_origem_cadastro(_origem)
     rastreamento.compra_se_assinante(_perfil_trial, _uid_trial)
-    if trial_expirado(_perfil_trial):
-        _render_bloqueio_trial(_perfil_trial, _uid_trial)
-        rastreamento.disparar()
-        st.stop()
+    # Teste grátis acabou e sem assinatura: a conta continua entrando, em modo consulta
+    # (vê tudo, não grava nem gera PDF; utils/somente_leitura.py)
+    st.session_state["somente_leitura"] = bool(trial_expirado(_perfil_trial))
 except Exception as _e_trial:
     # Fail-open: se der erro ao checar, NÃO bloqueia (não trava quem pagou).
     print(f"[trial] erro ao verificar bloqueio: {_e_trial}")
@@ -776,8 +775,12 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
         if _perfil_menu and not _is_pro_menu(_perfil_menu):
             _d = _dias_menu(_perfil_menu)
             with st.sidebar.container(key="cta_trial"):
-                st.markdown(f'<div class="sb-trial">Teste grátis · <b>{_d} dia{"s" if _d != 1 else ""}</b> restante{"s" if _d != 1 else ""}</div>',
-                            unsafe_allow_html=True)
+                if st.session_state.get("somente_leitura"):
+                    st.markdown('<div class="sb-trial">Teste grátis <b>encerrado</b> · modo consulta</div>',
+                                unsafe_allow_html=True)
+                else:
+                    st.markdown(f'<div class="sb-trial">Teste grátis · <b>{_d} dia{"s" if _d != 1 else ""}</b> restante{"s" if _d != 1 else ""}</div>',
+                                unsafe_allow_html=True)
                 if st.button("Assinar agora", key="sb_assinar", icon=":material/workspace_premium:", use_container_width=True):
                     st.session_state.current_page = "Plano"
                     st.rerun()
@@ -832,7 +835,9 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
     if 'manual_pdf_bytes' not in st.session_state or st.session_state.manual_pdf_bytes is None:
         try:
             from pages.manual_sistema import gerar_manual_sistema
-            _pdf_path = gerar_manual_sistema()
+            from utils.somente_leitura import liberar_pdf
+            with liberar_pdf():  # o manual continua disponível no modo consulta
+                _pdf_path = gerar_manual_sistema()
             with open(_pdf_path, "rb") as _f:
                 st.session_state.manual_pdf_bytes = _f.read()
         except Exception:
@@ -887,6 +892,11 @@ from utils.page_config import apply_page_header, apply_page_footer
 apply_page_header()
 apply_page_footer()
 
+from utils import somente_leitura
+if st.session_state.get("authenticated") and st.session_state.get("current_page") != "Plano":
+    st.markdown(somente_leitura.CSS, unsafe_allow_html=True)
+    somente_leitura.faixa()
+
 try:
     if st.session_state.current_page == "Dashboard":
         from pages.dashboard import show; show()
@@ -921,7 +931,8 @@ st.session_state["_last_page_rendered"] = st.session_state.get("current_page")
 if st.session_state.get("authenticated"):
     try:
         from utils import tour
-        tour.mostrar()  # na primeira entrada da conta, ou pelo botão "Tutorial rápido" do menu
+        if not somente_leitura.janela_se_tentou():  # uma janela por vez: o convite para assinar vem antes
+            tour.mostrar()  # na primeira entrada da conta, ou pelo botão "Tutorial rápido" do menu
     except Exception as _e_tour:
         print(f"[tour] {_e_tour}")
 rastreamento.disparar()

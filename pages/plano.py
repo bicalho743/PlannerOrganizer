@@ -119,7 +119,7 @@ def show():
     </ul>
     <p style="font-size:.85rem;color:#667085;margin-top:14px">
       Depois de pagar, o plano é liberado em alguns instantes; atualize a página.
-      Já assinou e continua bloqueada? <a href="{STRIPE_PORTAL_LINK}" target="_blank">Confira sua assinatura no portal</a>
+      Já assinou e continua em modo consulta? <a href="{STRIPE_PORTAL_LINK}" target="_blank">Confira sua assinatura no portal</a>
       ou escreva para contato@plannerorganiza.com.br.
     </p>
     """, unsafe_allow_html=True)
