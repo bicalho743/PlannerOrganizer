@@ -721,6 +721,8 @@ def show():
         st.caption(f"Pagas e canceladas: {nome_periodo.lower()}. Para vendas mais antigas, busque pelo nome "
                    "da cliente ou escolha “Tudo” no período. “A receber” mostra todas as vendas em aberto.")
 
+    _lista_vendas(vendas_df, busca)
+
     # Detalhes em modal centralizado (mesmo padrão do Financeiro e das Propostas)
     selected_id = st.session_state.get("venda_selecionada")
     if selected_id is not None and not vendas_df.empty:
@@ -734,6 +736,8 @@ def show():
                 st.markdown("---")
                 if st.button("Fechar", key=f"venda_fechar_modal_{selected_id}", type="tertiary"):
                     st.session_state["venda_selecionada"] = None
+                    for k in ("vd_lista", "vd_lista_ultima"):  # a mesma linha pode ser aberta de novo
+                        st.session_state.pop(k, None)
                     st.rerun()
 
             _modal_venda()
@@ -744,6 +748,41 @@ def show():
     st.markdown("---")
     with st.expander("Análise por período", expanded=False):
         _analise(vendas_df[vendas_df["situacao"] != "Cancelada"] if not vendas_df.empty else vendas_df)
+
+
+def _lista_vendas(vendas_df, busca):
+    """Todas as vendas, de qualquer data, com o nome da cliente: clicar na linha abre a venda."""
+    st.markdown('<div class="ini-secao" style="font-size:.78rem;font-weight:600;letter-spacing:.06em;'
+                'text-transform:uppercase;color:#667085;margin:18px 0 6px">Todas as vendas</div>', unsafe_allow_html=True)
+    if vendas_df.empty:
+        st.caption("Nenhuma venda registrada.")
+        return
+    df = vendas_df
+    if busca:
+        b = busca.strip().lower()
+        df = df[df["cliente_nome"].astype(str).str.lower().str.contains(b, regex=False)
+                | df["observacoes"].astype(str).str.lower().str.contains(b, regex=False)]
+    df = df.sort_values("data_venda", ascending=False).reset_index(drop=True)
+    tabela = pd.DataFrame({
+        "Data": df["data_venda"].dt.strftime("%d/%m/%Y"),
+        "Cliente": df["cliente_nome"].apply(lambda v: valor_ou_traco(v, "—")),
+        "Valor": df["valor_total"].apply(_fmt_brl),
+        "Situação": df["situacao"],
+        "Pagamento": df["forma_pagamento"].apply(lambda v: valor_ou_traco(v, "—")),
+        "Venda": df["id"].apply(lambda v: f"#{v}"),
+    })
+    sel = st.dataframe(tabela, hide_index=True, use_container_width=True, height=min(38 + 35 * len(tabela), 420),
+                       on_select="rerun", selection_mode="single-cell", key="vd_lista")
+    st.caption(f"{len(tabela)} venda(s){' na busca' if busca else ''} · clique numa linha para abrir")
+    # qualquer célula da linha abre a venda (no modo de linha só o quadradinho à esquerda selecionava)
+    celulas = sel.selection.cells if sel and sel.selection else []
+    escolhida = int(df.iloc[celulas[0][0]]["id"]) if celulas else None
+    # abre só quando a escolha muda (depois de fechar, a linha continua marcada e não deve reabrir)
+    if escolhida != st.session_state.get("vd_lista_ultima"):
+        st.session_state["vd_lista_ultima"] = escolhida
+        if escolhida is not None:
+            st.session_state["venda_selecionada"] = escolhida
+            st.rerun()
 
 
 def _analise(vendas_df):
