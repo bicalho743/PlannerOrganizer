@@ -2,11 +2,16 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import html as html_module
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from utils.currency_formatter import fmt_brl
 from utils.ui import botao_excluir, botao_editar, input_moeda, cartao_clicavel
 from utils.indicadores import (movimentos, entrou_gastou, retirado, previsto, por_categoria, mei, cor_categoria,
-                               realizados_no_mes, CATEGORIA_IMPOSTO, CATEGORIA_RETIRADA)
+                               realizados_no_mes, das_do_ano, faturamento_ano, prazo_dasn,
+                               CATEGORIA_IMPOSTO, CATEGORIA_RETIRADA, DAS_MEI, LIMITE_MEI)
+
+LINK_PGMEI = "https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/Identificacao"
+LINK_DASN = "https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/dasnsimei.app/Identificacao"
+
 
 MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto",
          "setembro", "outubro", "novembro", "dezembro"]
@@ -42,6 +47,15 @@ CSS_PAINEL = """
 .fp-mei .det { font-size: .8rem; color: #667085; line-height: 1.5; }
 .fp-mei .ok { color: #067647; font-weight: 600; }
 .fp-mei .pend { color: #B54708; font-weight: 600; }
+.fp-das { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin: 4px 0 10px; }
+.fp-das div { border: 1px solid #E4E7EC; border-radius: 10px; padding: 8px 10px; background: #fff; }
+.fp-das b { display: block; font-size: .9rem; color: #101828; text-transform: capitalize; }
+.fp-das span { font-size: .74rem; color: #667085; display: block; line-height: 1.35; }
+.fp-das .pago { background: #ECFDF3; border-color: #ABEFC6; } .fp-das .pago span { color: #067647; }
+.fp-das .atrasado { background: #FEF3F2; border-color: #FECDCA; } .fp-das .atrasado span { color: #B42318; font-weight: 600; }
+.fp-das .avencer { background: #FFFAEB; border-color: #FEDF89; } .fp-das .avencer span { color: #B54708; font-weight: 600; }
+.fp-das .futuro { background: #F9FAFB; } .fp-das .futuro b { color: #98A2B3; }
+@media (max-width: 900px) { .fp-das { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .fp-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
 """
@@ -120,13 +134,107 @@ def _painel_mes(financeiro_df):
             proj = info["projecao"]
             aviso = (f'No ritmo atual o ano fecha em <b>{fmt_brl(proj)}</b>, acima do limite: converse com sua contadora.'
                      if proj > info["limite"] else f'No ritmo atual o ano fecha em {fmt_brl(proj)}.')
-            das = (f'<span class="ok">DAS de {MES_ABREV[hoje.month - 1]} pago</span>' if info["das_pago"]
-                   else f'<span class="pend">DAS de {fmt_brl(info["das"])} vence dia 20</span>')
+            ant = date(hoje.year, hoje.month, 1) - timedelta(days=1)
+            situ = das_do_ano(mov, ant.year, hoje)[ant.month - 1]
+            das = (f'<span class="ok">DAS de {MES_ABREV[ant.month - 1]} pago</span>' if situ["situacao"] == "pago"
+                   else f'<span class="pend">DAS de {MES_ABREV[ant.month - 1]} '
+                        f'{"atrasado" if situ["situacao"] == "atrasado" else "vence dia 20"}</span>')
             st.markdown(f'<div class="fp-mei"><div class="lin"><span>Faturado</span>'
                         f'<b>{fmt_brl(info["faturado"])} de {fmt_brl(info["limite"])}</b></div>'
                         f'<div class="trilho"><i style="width:{min(uso, 1) * 100:.0f}%;background:{cor}"></i></div>'
-                        f'<div class="det">{uso:.0%} do limite usado. {aviso}<br>{das} · lance como “{CATEGORIA_IMPOSTO}”.</div></div>',
+                        f'<div class="det">{uso:.0%} do limite usado. {aviso}<br>{das} · detalhes na aba MEI.</div></div>',
                         unsafe_allow_html=True)
+
+
+def _aba_mei(financeiro_df):
+    """Aba MEI: limite do ano com projeção, DAS de cada mês e a declaração anual (DASN-SIMEI)."""
+    hoje = datetime.now().date()
+    mov = movimentos(financeiro_df.assign(data=financeiro_df["data"].dt.date) if not financeiro_df.empty else financeiro_df)
+    col_ano, _ = st.columns([1, 3])
+    ano = col_ano.selectbox("Ano", [hoje.year, hoje.year - 1], key="fin_mei_ano", label_visibility="collapsed")
+
+    fat = faturamento_ano(mov, ano)
+    uso = fat["total"] / LIMITE_MEI
+    if ano == hoje.year:
+        dia = hoje.timetuple().tm_yday
+        proj = fat["total"] / dia * (366 if ano % 4 == 0 else 365) if fat["total"] else 0.0
+    else:
+        proj = fat["total"]
+    das = das_do_ano(mov, ano, hoje)
+    devidos = [m for m in das if m["situacao"] != "futuro"]
+    pagos = sum(m["situacao"] == "pago" for m in devidos)
+    atrasados = [m for m in devidos if m["situacao"] == "atrasado"]
+    ano_decl, limite_decl, faltam = prazo_dasn(hoje)
+
+    st.markdown(CSS_PAINEL + '<div class="fp-kpis">' +
+                _kpi(f"Faturado em {ano}", fmt_brl(fat["total"]), f"{uso:.0%} do limite de {fmt_brl(LIMITE_MEI)}",
+                     "destaque") +
+                _kpi("Projeção do ano" if ano == hoje.year else "Fechou o ano", fmt_brl(proj),
+                     "acima do limite: fale com sua contadora" if proj > LIMITE_MEI
+                     else f"sobram {fmt_brl(LIMITE_MEI - proj)} até o limite") +
+                _kpi("DAS pagos", f"{pagos} de {len(devidos)}",
+                     f"{len(atrasados)} em atraso" if atrasados else "nenhum em atraso",
+                     "sai" if atrasados else "entra") +
+                _kpi("Declaração anual", limite_decl.strftime("%d/%m/%Y"),
+                     f"DASN-SIMEI de {ano_decl} · faltam {faltam} dias") +
+                '</div>', unsafe_allow_html=True)
+
+    cor = "#067647" if uso < 0.7 else ("#DC6803" if uso < 0.9 else "#D92D20")
+    st.markdown(f'<div class="fp-mei" style="margin-bottom:14px"><div class="trilho">'
+                f'<i style="width:{min(uso, 1) * 100:.0f}%;background:{cor}"></i></div>'
+                f'<div class="det">Conta só o que já foi recebido. Se o MEI foi aberto em {ano}, o limite é de '
+                f'{fmt_brl(LIMITE_MEI / 12)} por mês de atividade. Passar até 20% do limite: paga a diferença e vira '
+                f'microempresa no ano seguinte; acima disso, o desenquadramento volta ao início do ano.</div></div>',
+                unsafe_allow_html=True)
+
+    st.markdown(f'<div class="fp-secao">DAS mês a mês · {ano}</div>', unsafe_allow_html=True)
+    classe = {"pago": "pago", "atrasado": "atrasado", "a vencer": "avencer", "futuro": "futuro"}
+    cards = ""
+    for m in das:
+        if m["situacao"] == "pago":
+            txt = f"pago em {m['pago_em'].strftime('%d/%m')}"
+        elif m["situacao"] == "futuro":
+            txt = f"vence {m['vencimento'].strftime('%d/%m')}"
+        else:
+            txt = f"{m['situacao']} · {m['vencimento'].strftime('%d/%m')}"
+        cards += f'<div class="{classe[m["situacao"]]}"><b>{MESES[m["mes"] - 1]}</b><span>{txt}</span></div>'
+    st.markdown(f'<div class="fp-das">{cards}</div>', unsafe_allow_html=True)
+    st.caption(f"O DAS de cada mês vence no dia 20 do mês seguinte. Em 2026 o valor para serviços é "
+               f"{fmt_brl(DAS_MEI)}. Pagou por fora? Lance aqui ou como “{CATEGORIA_IMPOSTO}” no Financeiro.")
+
+    em_aberto = [m for m in devidos if m["situacao"] != "pago"]
+    c1, c2 = st.columns([3, 2], gap="medium")
+    with c1:
+        if em_aberto:
+            with st.form("fin_form_das", clear_on_submit=True):
+                st.markdown("**Lançar DAS pago**")
+                f1, f2, f3 = st.columns(3)
+                comp = f1.selectbox("Mês do DAS", em_aberto, format_func=lambda m: f"{MESES[m['mes'] - 1].capitalize()}/{ano}")
+                pago_em = f2.date_input("Pago em", value=hoje, format="DD/MM/YYYY")
+                with f3:
+                    valor = input_moeda("Valor (R$)", "fin_das_valor", value=DAS_MEI, step=1.0)
+                if st.form_submit_button("Lançar pagamento", type="primary", use_container_width=True):
+                    if valor <= 0:
+                        st.warning("Informe o valor pago.")
+                    elif st.session_state.db.lancar_das(ano, comp["mes"], valor, pago_em):
+                        st.rerun()
+                    else:
+                        st.error("Não consegui lançar agora. Tente de novo.")
+        else:
+            st.success("Todos os DAS devidos até agora estão pagos.")
+        st.link_button("Gerar a guia do DAS (PGMEI)", LINK_PGMEI, icon=":material/open_in_new:")
+    with c2:
+        st.markdown(f'<div class="fp-secao">Declaração anual · DASN-SIMEI {ano_decl}</div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            ant = faturamento_ano(mov, ano_decl)
+            st.markdown(f'<div class="fp-mei"><div class="lin"><span>Receita bruta de {ano_decl}</span>'
+                        f'<b>{fmt_brl(ant["total"])}</b></div>'
+                        f'<div class="lin"><span>Serviços</span><b>{fmt_brl(ant["servicos"])}</b></div>'
+                        f'<div class="lin"><span>Venda de produtos (comércio)</span><b>{fmt_brl(ant["comercio"])}</b></div>'
+                        f'<div class="det" style="margin-top:8px">Prazo: até {limite_decl.strftime("%d/%m/%Y")}. '
+                        f'São esses números que a declaração pede. Confira com seus extratos antes de enviar.</div></div>',
+                        unsafe_allow_html=True)
+            st.link_button("Fazer a declaração", LINK_DASN, icon=":material/open_in_new:", use_container_width=True)
 
 
 def _safe_float(val, default=0.0):
@@ -575,6 +683,14 @@ def show():
     if not financeiro_df.empty:
         concluidas = financeiro_df[financeiro_df['status'].isin(['Aprovado', 'Recebido', 'Pago'])].copy()
 
+    aba_lanc, aba_mei = st.tabs(["Lançamentos", "MEI"])
+    with aba_mei:
+        _aba_mei(financeiro_df)
+    with aba_lanc:
+        _conteudo_lancamentos(financeiro_df, a_receber, a_pagar, concluidas)
+
+
+def _conteudo_lancamentos(financeiro_df, a_receber, a_pagar, concluidas):
     col_btn, _ = st.columns([1, 3])
     with col_btn, st.container(key="cta_novo_lancamento"):
         if st.button("Novo lançamento", type="primary", icon=":material/add:", use_container_width=True, key="btn_nova_transacao"):

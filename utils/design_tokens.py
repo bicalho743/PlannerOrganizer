@@ -29,6 +29,7 @@ BG_APP = "#F8F6F1"
 # Tons médios que convivem com o azul-marinho e o dourado da marca.
 CORES_MODULO = {
     "Dashboard": "#B8943D",       # dourado
+    "Agenda": "#D9643A",          # coral
     "Clientes": "#C05A7B",        # rosa
     "Propostas": "#3D6BB3",       # azul
     "Vendas": "#0E8A7D",          # verde-azulado

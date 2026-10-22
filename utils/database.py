@@ -226,7 +226,7 @@ from sqlalchemy.orm import Session as _SessaoOrm, with_loader_criteria
 
 _conta_atual = ContextVar("planner_conta_atual", default=None)
 MODELOS_POR_CONTA = (Cliente, Proposta, Transacao, Fornecedor, Assistente, Parceiro, Produto, Venda,
-                     AndamentoProposta, PostOrganization, PostOrganizationAction)
+                     AndamentoProposta, PostOrganization, PostOrganizationAction, Compromisso)
 
 
 def conta_atual():
@@ -304,6 +304,16 @@ class Database:
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS cnpj VARCHAR"))
                 conn.execute(_sa_text("ALTER TABLE itens_venda ADD COLUMN IF NOT EXISTS custo_unitario DOUBLE PRECISION"))
                 conn.execute(_sa_text("ALTER TABLE itens_venda ADD COLUMN IF NOT EXISTS baixou_estoque BOOLEAN"))
+                # Agenda (o create_all não cria tabelas novas: o refresh_schema_metadata troca os modelos pelo reflect)
+                conn.execute(_sa_text(
+                    "CREATE TABLE IF NOT EXISTS compromissos ("
+                    " id SERIAL PRIMARY KEY, data DATE NOT NULL, hora VARCHAR, titulo VARCHAR NOT NULL,"
+                    " cliente_id INTEGER REFERENCES clientes(id) ON DELETE SET NULL, local VARCHAR,"
+                    " valor DOUBLE PRECISION DEFAULT 0, observacoes VARCHAR, transacao_id INTEGER, usuario_id VARCHAR)"
+                ))
+                conn.execute(_sa_text(
+                    "CREATE INDEX IF NOT EXISTS idx_compromisso_usuario_data ON compromissos (usuario_id, data)"
+                ))
         except Exception as e:
             print(f"[schema] ensure colunas extras: {e}")
 
@@ -6747,6 +6757,137 @@ class Database:
                 return {}
 
         return self._safe_query(query) or {}
+
+    # ---------- Agenda ----------
+
+    def get_compromissos(self, inicio=None, fim=None):
+        """Compromissos da Agenda no período (datas inclusive), com nome da cliente e situação da
+        receita gerada no Financeiro (status_receita: Pendente, Recebido ou vazio)."""
+        def query():
+            q = (self.session.query(Compromisso, Cliente.nome, Transacao.status)
+                 .outerjoin(Cliente, Compromisso.cliente_id == Cliente.id)
+                 .outerjoin(Transacao, Compromisso.transacao_id == Transacao.id)
+                 .filter(Compromisso.usuario_id == self.usuario_id))
+            if inicio:
+                q = q.filter(Compromisso.data >= inicio)
+            if fim:
+                q = q.filter(Compromisso.data <= fim)
+            linhas = [{"id": c.id, "data": c.data, "hora": c.hora or "", "titulo": c.titulo,
+                       "cliente_id": c.cliente_id, "cliente_nome": nome or "", "local": c.local or "",
+                       "valor": float(c.valor or 0), "observacoes": c.observacoes or "",
+                       "transacao_id": c.transacao_id, "status_receita": status or ""}
+                      for c, nome, status in q.order_by(Compromisso.data, Compromisso.hora).all()]
+            return pd.DataFrame(linhas, columns=["id", "data", "hora", "titulo", "cliente_id", "cliente_nome",
+                                                 "local", "valor", "observacoes", "transacao_id", "status_receita"])
+        resultado = self._safe_query(query)
+        return resultado if isinstance(resultado, pd.DataFrame) else pd.DataFrame()
+
+    def salvar_compromisso(self, compromisso_id=None, *, data, titulo, hora=None, cliente_id=None,
+                           local=None, valor=0.0, observacoes=None):
+        """Cria ou altera um compromisso e mantém a receita dele no Financeiro.
+
+        Com valor: uma receita "Pendente" na data do compromisso (cria ou atualiza). Valor zerado
+        apaga a receita pendente. Receita já recebida não é mexida (o dinheiro já entrou)."""
+        def query():
+            if not self.usuario_id:
+                raise ValueError("ID de usuário não definido.")
+            if compromisso_id:
+                c = self.session.query(Compromisso).filter_by(id=int(compromisso_id),
+                                                               usuario_id=self.usuario_id).first()
+                if c is None:
+                    return None
+            else:
+                c = Compromisso(usuario_id=self.usuario_id)
+                self.session.add(c)
+            c.data, c.titulo, c.hora = data, titulo.strip(), (hora or None)
+            c.cliente_id = int(cliente_id) if cliente_id else None
+            c.local, c.observacoes = (local or None), (observacoes or None)
+            c.valor = max(float(valor or 0), 0.0)
+
+            lanc = (self.session.query(Transacao).filter_by(id=c.transacao_id, usuario_id=self.usuario_id).first()
+                    if c.transacao_id else None)
+            if lanc is not None and lanc.status in ("Recebido", "Pago"):
+                pass
+            elif c.valor > 0:
+                if lanc is None:
+                    lanc = Transacao(tipo="Receita", categoria="Serviços de Organização", tipo_receita="organização",
+                                     tipo_conta="PF", status="Pendente", classificacao="receita",
+                                     usuario_id=self.usuario_id)
+                    self.session.add(lanc)
+                cliente = (self.session.query(Cliente).filter_by(id=c.cliente_id).first()
+                           if c.cliente_id else None)
+                lanc.descricao = f"{c.titulo} - {cliente.nome}" if cliente else c.titulo
+                lanc.valor, lanc.data = c.valor, c.data
+                lanc.origem_id, lanc.origem_tipo = (c.cliente_id, "cliente") if c.cliente_id else (None, None)
+                self.session.flush()
+                c.transacao_id = lanc.id
+            else:
+                if lanc is not None:
+                    self.session.delete(lanc)
+                c.transacao_id = None
+            self.session.flush()
+            return c.id
+        resultado = self._safe_query(query)
+        self.invalidar_cache()
+        return resultado
+
+    def excluir_compromisso(self, compromisso_id):
+        """Apaga o compromisso e a receita pendente dele (a já recebida fica no Financeiro)."""
+        def query():
+            c = self.session.query(Compromisso).filter_by(id=int(compromisso_id), usuario_id=self.usuario_id).first()
+            if c is None:
+                return False
+            if c.transacao_id:
+                lanc = self.session.query(Transacao).filter_by(id=c.transacao_id, usuario_id=self.usuario_id).first()
+                if lanc is not None and lanc.status not in ("Recebido", "Pago"):
+                    self.session.delete(lanc)
+            self.session.delete(c)
+            self.session.flush()
+            return True
+        resultado = self._safe_query(query)
+        self.invalidar_cache()
+        return resultado
+
+    def lancar_das(self, ano, mes, valor, pago_em):
+        """Lança o DAS do MEI de uma competência como despesa paga (categoria Impostos (DAS))."""
+        from utils.indicadores import CATEGORIA_IMPOSTO
+        def query():
+            if not self.usuario_id:
+                raise ValueError("ID de usuário não definido.")
+            t = Transacao(tipo="despesa", descricao=f"DAS MEI competência {int(mes):02d}/{int(ano)}",
+                          valor=float(valor or 0), categoria=CATEGORIA_IMPOSTO, data=pago_em,
+                          status="Pago", data_recebimento=pago_em, tipo_conta="PF",
+                          usuario_id=self.usuario_id)
+            self.session.add(t)
+            self.session.flush()
+            return t.id
+        resultado = self._safe_query(query)
+        self.invalidar_cache()
+        return resultado
+
+    def get_acoes_pos_periodo(self, inicio, fim):
+        """Retornos de pós-organização pendentes com data no período (só de serviços finalizados)."""
+        def query():
+            linhas = []
+            acoes = (self.session.query(PostOrganizationAction, PostOrganization)
+                     .join(PostOrganization, PostOrganizationAction.post_organization_id == PostOrganization.id)
+                     .filter(PostOrganization.usuario_id == self.usuario_id,
+                             PostOrganizationAction.status == 'PENDENTE',
+                             PostOrganizationAction.due_date >= inicio,
+                             PostOrganizationAction.due_date <= fim)
+                     .order_by(PostOrganizationAction.due_date).all())
+            for a, po in acoes:
+                proposta = self.session.query(Proposta).filter(Proposta.id == po.proposta_id).first()
+                if not self._servico_finalizado(proposta):
+                    continue
+                cliente = self.session.query(Cliente).filter(Cliente.id == po.cliente_id).first()
+                linhas.append({"action_id": a.id, "action_type": a.action_type, "due_date": a.due_date,
+                               "cliente_nome": cliente.nome if cliente else "",
+                               "proposta_numero": proposta.numero if proposta else None})
+            return pd.DataFrame(linhas, columns=["action_id", "action_type", "due_date", "cliente_nome",
+                                                 "proposta_numero"])
+        resultado = self._safe_query(query)
+        return resultado if isinstance(resultado, pd.DataFrame) else pd.DataFrame()
 
     def invalidar_cache(self):
         """
