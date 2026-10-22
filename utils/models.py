@@ -91,6 +91,7 @@ class Perfil(Base):
     logo = Column(Text)  # logotipo da organizadora em data URL (PNG/JPEG), usado nos PDFs
     cnpj = Column(String)
     precificacao = Column(Text)  # parâmetros da aba Precificação (JSON)
+    regime_tributario = Column(Text)  # JSON: {"regime": "MEI"|"Simples Nacional"|"Outro", "aliquota": %}
     role = Column(String, default='user')
     plano = Column(String, default='gratuito')
     # default como callable: avaliado a cada INSERT (data real do cadastro).

@@ -6,11 +6,14 @@ from datetime import date, datetime, timedelta
 from utils.currency_formatter import fmt_brl
 from utils.ui import botao_excluir, botao_editar, input_moeda, cartao_clicavel
 from utils.indicadores import (movimentos, entrou_gastou, retirado, previsto, por_categoria, mei, cor_categoria,
-                               realizados_no_mes, das_do_ano, faturamento_ano, prazo_dasn,
+                               realizados_no_mes, das_do_ano, faturamento_ano, prazo_dasn, simples_do_ano,
+                               impostos_pagos_no_mes, recebido_no_mes,
                                CATEGORIA_IMPOSTO, CATEGORIA_RETIRADA, DAS_MEI, LIMITE_MEI)
 
 LINK_PGMEI = "https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/Identificacao"
 LINK_DASN = "https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/dasnsimei.app/Identificacao"
+LINK_PGDASD = "https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/pgdasd2018.app/Identificacao"
+REGIME_ROTULO = {"MEI": "MEI", "Simples Nacional": "Simples Nacional (ME)", "Outro": "Outro regime ou autônoma"}
 
 
 MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto",
@@ -81,7 +84,7 @@ def _barras_categoria(itens):
     return html
 
 
-def _painel_mes(financeiro_df):
+def _painel_mes(financeiro_df, regime):
     """Entrou, gastou, sobrou e retiradas do mês escolhido; previsão; categorias; limite do MEI."""
     hoje = datetime.now().date()
     opcoes = []
@@ -126,6 +129,9 @@ def _painel_mes(financeiro_df):
         with st.container(border=True):
             st.markdown(_barras_categoria(por_categoria(mov, ano, mes, "sai")), unsafe_allow_html=True)
     with c3:
+        if regime["regime"] != "MEI":
+            _cartao_impostos(mov, hoje, regime)
+            return
         info = mei(mov, hoje)
         st.markdown(f'<div class="fp-secao">Limite do MEI · {info["ano"]}</div>', unsafe_allow_html=True)
         with st.container(border=True):
@@ -144,6 +150,166 @@ def _painel_mes(financeiro_df):
                         f'<div class="trilho"><i style="width:{min(uso, 1) * 100:.0f}%;background:{cor}"></i></div>'
                         f'<div class="det">{uso:.0%} do limite usado. {aviso}<br>{das} · detalhes na aba MEI.</div></div>',
                         unsafe_allow_html=True)
+
+
+def _regime():
+    try:
+        return st.session_state.db.get_regime()
+    except Exception as e:
+        print(f"[financeiro] regime: {e}")
+        return {"regime": "MEI", "aliquota": None}
+
+
+def _cartao_impostos(mov, hoje, regime):
+    """Cartão do painel para quem não é MEI: imposto do mês (Simples) ou impostos pagos (outro regime)."""
+    if regime["regime"] == "Simples Nacional":
+        st.markdown(f'<div class="fp-secao">Simples Nacional · {MESES[hoje.month - 1]}</div>', unsafe_allow_html=True)
+        m = simples_do_ano(mov, hoje.year, hoje, regime.get("aliquota"))[hoje.month - 1]
+        aliq = f'{m["aliquota"] * 100:.2f}%'.replace(".", ",")
+        with st.container(border=True):
+            st.markdown(f'<div class="fp-mei"><div class="lin"><span>Recebido no mês</span><b>{fmt_brl(m["receita"])}</b></div>'
+                        f'<div class="lin"><span>Alíquota efetiva</span><b>{aliq}</b></div>'
+                        f'<div class="lin"><span>DAS estimado</span><b>{fmt_brl(m["das_estimado"])}</b></div>'
+                        f'<div class="det" style="margin-top:6px">Vence em {m["vencimento"].strftime("%d/%m")}. '
+                        f'Detalhes na aba Impostos.</div></div>', unsafe_allow_html=True)
+    else:
+        st.markdown(f'<div class="fp-secao">Impostos · {MESES[hoje.month - 1]}</div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown(f'<div class="fp-mei"><div class="lin"><span>Recebido no mês</span>'
+                        f'<b>{fmt_brl(recebido_no_mes(mov, hoje.year, hoje.month))}</b></div>'
+                        f'<div class="lin"><span>Impostos pagos</span>'
+                        f'<b>{fmt_brl(impostos_pagos_no_mes(mov, hoje.year, hoje.month))}</b></div>'
+                        f'<div class="det" style="margin-top:6px">Lance os impostos como “{CATEGORIA_IMPOSTO}”. '
+                        f'Detalhes na aba Impostos.</div></div>', unsafe_allow_html=True)
+
+
+def _aba_impostos(financeiro_df, regime):
+    """Escolha do tipo de empresa e a tela de impostos de cada um."""
+    opcoes = list(REGIME_ROTULO)
+    c1, c2 = st.columns([1.4, 2.6], vertical_alignment="bottom")
+    escolha = c1.selectbox("Sua empresa é", opcoes, index=opcoes.index(regime["regime"]),
+                           format_func=REGIME_ROTULO.get, key="fin_regime",
+                           help="Passou do limite do MEI ou abriu uma ME? Troque aqui e a aba muda junto.")
+    aliquota = regime.get("aliquota")
+    if escolha == "Simples Nacional":
+        aliquota = c2.number_input("Alíquota informada pela contadora (%) · opcional", 0.0, 40.0,
+                                   value=float(aliquota) if aliquota else None, step=0.01, format="%.2f",
+                                   key="fin_aliquota", placeholder="em branco: calculo pelo Anexo III")
+    if escolha != regime["regime"] or (escolha == "Simples Nacional" and aliquota != regime.get("aliquota")):
+        if st.session_state.db.salvar_regime(escolha, aliquota if escolha == "Simples Nacional" else None):
+            st.session_state["fin_abrir_impostos"] = True
+            st.rerun()
+    st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+    if escolha == "MEI":
+        _aba_mei(financeiro_df)
+    elif escolha == "Simples Nacional":
+        _aba_simples(financeiro_df, aliquota)
+    else:
+        _aba_outro(financeiro_df)
+
+
+def _form_imposto_pago(em_aberto, ano, valor_padrao, rotulo):
+    hoje = datetime.now().date()
+    with st.form("fin_form_das", clear_on_submit=True):
+        st.markdown(f"**{rotulo}**")
+        f1, f2, f3 = st.columns(3)
+        comp = f1.selectbox("Mês", em_aberto, format_func=lambda m: f"{MESES[m['mes'] - 1].capitalize()}/{ano}")
+        pago_em = f2.date_input("Pago em", value=hoje, format="DD/MM/YYYY")
+        with f3:
+            valor = input_moeda("Valor (R$)", "fin_das_valor", value=valor_padrao, step=1.0)
+        if st.form_submit_button("Lançar pagamento", type="primary", use_container_width=True):
+            if valor <= 0:
+                st.warning("Informe o valor pago.")
+            elif st.session_state.db.lancar_das(ano, comp["mes"], valor, pago_em):
+                st.rerun()
+            else:
+                st.error("Não consegui lançar agora. Tente de novo.")
+
+
+def _grade_meses(meses, texto_extra=None):
+    classe = {"pago": "pago", "atrasado": "atrasado", "a vencer": "avencer", "futuro": "futuro",
+              "sem receita": "futuro"}
+    cards = ""
+    for m in meses:
+        if m["situacao"] == "pago":
+            txt = f"pago em {m['pago_em'].strftime('%d/%m')}"
+        elif m["situacao"] == "futuro":
+            txt = f"vence {m['vencimento'].strftime('%d/%m')}"
+        elif m["situacao"] == "sem receita":
+            txt = "sem receita, sem DAS"
+        else:
+            txt = f"{m['situacao']} · {m['vencimento'].strftime('%d/%m')}"
+        extra = (f"<span>{texto_extra(m)}</span>" if texto_extra and m["situacao"] not in ("futuro", "sem receita")
+                 else "")
+        cards += f'<div class="{classe[m["situacao"]]}"><b>{MESES[m["mes"] - 1]}</b>{extra}<span>{txt}</span></div>'
+    st.markdown(f'<div class="fp-das">{cards}</div>', unsafe_allow_html=True)
+
+
+def _aba_simples(financeiro_df, aliquota_informada):
+    """Simples Nacional: receita de 12 meses, alíquota efetiva e DAS estimado de cada mês."""
+    hoje = datetime.now().date()
+    mov = movimentos(financeiro_df.assign(data=financeiro_df["data"].dt.date) if not financeiro_df.empty else financeiro_df)
+    col_ano, _ = st.columns([1, 3])
+    ano = col_ano.selectbox("Ano", [hoje.year, hoje.year - 1], key="fin_simples_ano", label_visibility="collapsed")
+    meses = simples_do_ano(mov, ano, hoje, aliquota_informada)
+    atual = meses[hoje.month - 1] if ano == hoje.year else meses[-1]
+    devidos = [m for m in meses if m["situacao"] not in ("futuro", "sem receita")]
+    atrasados = [m for m in devidos if m["situacao"] == "atrasado"]
+    fat = faturamento_ano(mov, ano)
+    st.markdown(CSS_PAINEL + '<div class="fp-kpis">' +
+                _kpi(f"Faturado em {ano}", fmt_brl(fat["total"]), "só o que já foi recebido", "destaque") +
+                _kpi("Receita de 12 meses", fmt_brl(atual["rbt12"]), "é ela que define a alíquota") +
+                _kpi("Alíquota efetiva", f"{atual['aliquota'] * 100:.2f}%".replace(".", ","),
+                     "informada pela contadora" if aliquota_informada else "Anexo III (serviços)") +
+                _kpi("DAS pagos", f"{sum(m['situacao'] == 'pago' for m in devidos)} de {len(devidos)}",
+                     f"{len(atrasados)} em atraso" if atrasados else "nenhum em atraso",
+                     "sai" if atrasados else "entra") +
+                '</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="fp-secao">DAS mês a mês · {ano}</div>', unsafe_allow_html=True)
+    _grade_meses(meses, lambda m: f"estimado {fmt_brl(m['das_estimado'])}")
+    st.caption("Estimativa pelo que foi recebido em cada mês. O valor oficial é o calculado no PGDAS-D. Organização "
+               "costuma ficar no Anexo III; algumas atividades vão para o Anexo V conforme o fator R: confirme com "
+               "a sua contadora e, se ela passar a alíquota, informe acima.")
+    em_aberto = [m for m in devidos if m["situacao"] != "pago"]
+    c1, c2 = st.columns([3, 2], gap="medium")
+    with c1:
+        if em_aberto:
+            _form_imposto_pago(em_aberto, ano, round(em_aberto[0]["das_estimado"], 2), "Lançar DAS pago")
+        else:
+            st.success("Todos os DAS devidos até agora estão pagos.")
+        st.link_button("Calcular e gerar o DAS (PGDAS-D)", LINK_PGDASD, icon=":material/open_in_new:")
+    with c2:
+        st.markdown('<div class="fp-secao">Obrigações do ano</div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div class="fp-mei"><div class="det">'
+                        '<b>DAS</b>: todo mês, até o dia 20 do mês seguinte.<br>'
+                        '<b>DEFIS</b>: declaração anual do Simples, até 31 de março.<br>'
+                        'O limite do Simples é de R$ 4,8 milhões por ano.</div></div>', unsafe_allow_html=True)
+
+
+def _aba_outro(financeiro_df):
+    """Outro regime (Lucro Presumido) ou autônoma: recebido e impostos pagos mês a mês, para a contadora."""
+    hoje = datetime.now().date()
+    mov = movimentos(financeiro_df.assign(data=financeiro_df["data"].dt.date) if not financeiro_df.empty else financeiro_df)
+    col_ano, _ = st.columns([1, 3])
+    ano = col_ano.selectbox("Ano", [hoje.year, hoje.year - 1], key="fin_outro_ano", label_visibility="collapsed")
+    ultimo = hoje.month if ano == hoje.year else 12
+    linhas = [{"Mês": MESES[m - 1].capitalize(), "Recebido": recebido_no_mes(mov, ano, m),
+               "Impostos pagos": impostos_pagos_no_mes(mov, ano, m)} for m in range(1, ultimo + 1)]
+    rec = sum(l["Recebido"] for l in linhas)
+    imp = sum(l["Impostos pagos"] for l in linhas)
+    st.markdown(CSS_PAINEL + '<div class="fp-kpis">' +
+                _kpi(f"Recebido em {ano}", fmt_brl(rec), "só o que já entrou", "destaque") +
+                _kpi("Impostos pagos", fmt_brl(imp), f"lançados como “{CATEGORIA_IMPOSTO}”", "sai") +
+                _kpi("Peso dos impostos", f"{imp / rec:.1%}".replace(".", ",") if rec else "—", "impostos ÷ recebido") +
+                _kpi("Sobra depois dos impostos", fmt_brl(rec - imp), "antes dos outros custos") +
+                '</div>', unsafe_allow_html=True)
+    tabela = pd.DataFrame(linhas)
+    for c in ("Recebido", "Impostos pagos"):
+        tabela[c] = tabela[c].apply(fmt_brl)
+    st.dataframe(tabela, hide_index=True, use_container_width=True)
+    st.caption("Use estes números com a sua contadora. Autônoma (pessoa física) paga o imposto de renda pelo "
+               "Carnê-Leão todo mês; no Lucro Presumido, os impostos são calculados por ela.")
 
 
 def _aba_mei(financeiro_df):
@@ -184,21 +350,12 @@ def _aba_mei(financeiro_df):
                 f'<i style="width:{min(uso, 1) * 100:.0f}%;background:{cor}"></i></div>'
                 f'<div class="det">Conta só o que já foi recebido. Se o MEI foi aberto em {ano}, o limite é de '
                 f'{fmt_brl(LIMITE_MEI / 12)} por mês de atividade. Passar até 20% do limite: paga a diferença e vira '
-                f'microempresa no ano seguinte; acima disso, o desenquadramento volta ao início do ano.</div></div>',
+                f'microempresa no ano seguinte; acima disso, o desenquadramento volta ao início do ano. '
+                f'Deixou de ser MEI? Troque em “Sua empresa é”, acima.</div></div>',
                 unsafe_allow_html=True)
 
     st.markdown(f'<div class="fp-secao">DAS mês a mês · {ano}</div>', unsafe_allow_html=True)
-    classe = {"pago": "pago", "atrasado": "atrasado", "a vencer": "avencer", "futuro": "futuro"}
-    cards = ""
-    for m in das:
-        if m["situacao"] == "pago":
-            txt = f"pago em {m['pago_em'].strftime('%d/%m')}"
-        elif m["situacao"] == "futuro":
-            txt = f"vence {m['vencimento'].strftime('%d/%m')}"
-        else:
-            txt = f"{m['situacao']} · {m['vencimento'].strftime('%d/%m')}"
-        cards += f'<div class="{classe[m["situacao"]]}"><b>{MESES[m["mes"] - 1]}</b><span>{txt}</span></div>'
-    st.markdown(f'<div class="fp-das">{cards}</div>', unsafe_allow_html=True)
+    _grade_meses(das)
     st.caption(f"O DAS de cada mês vence no dia 20 do mês seguinte. Em 2026 o valor para serviços é "
                f"{fmt_brl(DAS_MEI)}. Pagou por fora? Lance aqui ou como “{CATEGORIA_IMPOSTO}” no Financeiro.")
 
@@ -206,20 +363,7 @@ def _aba_mei(financeiro_df):
     c1, c2 = st.columns([3, 2], gap="medium")
     with c1:
         if em_aberto:
-            with st.form("fin_form_das", clear_on_submit=True):
-                st.markdown("**Lançar DAS pago**")
-                f1, f2, f3 = st.columns(3)
-                comp = f1.selectbox("Mês do DAS", em_aberto, format_func=lambda m: f"{MESES[m['mes'] - 1].capitalize()}/{ano}")
-                pago_em = f2.date_input("Pago em", value=hoje, format="DD/MM/YYYY")
-                with f3:
-                    valor = input_moeda("Valor (R$)", "fin_das_valor", value=DAS_MEI, step=1.0)
-                if st.form_submit_button("Lançar pagamento", type="primary", use_container_width=True):
-                    if valor <= 0:
-                        st.warning("Informe o valor pago.")
-                    elif st.session_state.db.lancar_das(ano, comp["mes"], valor, pago_em):
-                        st.rerun()
-                    else:
-                        st.error("Não consegui lançar agora. Tente de novo.")
+            _form_imposto_pago(em_aberto, ano, DAS_MEI, "Lançar DAS pago")
         else:
             st.success("Todos os DAS devidos até agora estão pagos.")
         st.link_button("Gerar a guia do DAS (PGMEI)", LINK_PGMEI, icon=":material/open_in_new:")
@@ -683,14 +827,23 @@ def show():
     if not financeiro_df.empty:
         concluidas = financeiro_df[financeiro_df['status'].isin(['Aprovado', 'Recebido', 'Pago'])].copy()
 
-    aba_lanc, aba_mei = st.tabs(["Lançamentos", "MEI"])
-    with aba_mei:
-        _aba_mei(financeiro_df)
-    with aba_lanc:
-        _conteudo_lancamentos(financeiro_df, a_receber, a_pagar, concluidas)
+    regime = _regime()
+    rotulo_imp = (":material/account_balance: MEI" if regime["regime"] == "MEI"
+                  else ":material/account_balance: Impostos")
+    rotulos = [":material/receipt_long: Lançamentos", rotulo_imp]
+    # trocar o tipo de empresa muda o nome da aba: reabre a aba de impostos com o nome novo
+    if st.session_state.pop("fin_abrir_impostos", False) or st.session_state.get("fin_abas") not in (None, *rotulos):
+        st.session_state["fin_abas"] = rotulo_imp
+    aba_lanc, aba_imp = st.tabs(rotulos, key="fin_abas", on_change="rerun")
+    if aba_imp.open:
+        with aba_imp:
+            _aba_impostos(financeiro_df, regime)
+    else:
+        with aba_lanc:
+            _conteudo_lancamentos(financeiro_df, a_receber, a_pagar, concluidas, regime)
 
 
-def _conteudo_lancamentos(financeiro_df, a_receber, a_pagar, concluidas):
+def _conteudo_lancamentos(financeiro_df, a_receber, a_pagar, concluidas, regime):
     col_btn, _ = st.columns([1, 3])
     with col_btn, st.container(key="cta_novo_lancamento"):
         if st.button("Novo lançamento", type="primary", icon=":material/add:", use_container_width=True, key="btn_nova_transacao"):
@@ -699,7 +852,7 @@ def _conteudo_lancamentos(financeiro_df, a_receber, a_pagar, concluidas):
         with st.expander("Novo lançamento", expanded=True):
             _render_nova_transacao_form()
 
-    _painel_mes(financeiro_df)
+    _painel_mes(financeiro_df, regime)
 
 
     st.markdown("---")

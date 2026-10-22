@@ -2,6 +2,7 @@
 from datetime import date
 
 import pandas as pd
+import pytest
 
 from utils.agenda import montar_agenda, totais, semana_de, mes_de
 from utils.indicadores import das_do_ano, faturamento_ano, prazo_dasn, movimentos
@@ -85,3 +86,28 @@ def test_faturamento_separa_servicos_e_produtos_e_prazo_da_declaracao():
     assert faturamento_ano(mov, 2025) == {"total": 1300.0, "comercio": 300.0, "servicos": 1000.0}
     assert prazo_dasn(date(2026, 5, 1)) == (2025, date(2026, 5, 31), 30)
     assert prazo_dasn(date(2026, 10, 22))[:2] == (2026, date(2027, 5, 31))
+
+
+def test_aliquota_efetiva_do_anexo_iii():
+    from utils.indicadores import aliquota_efetiva
+    assert aliquota_efetiva(0) == 0.06 and aliquota_efetiva(150000) == 0.06
+    assert aliquota_efetiva(240000) == pytest.approx((240000 * 0.112 - 9360) / 240000)   # 7,3%
+
+
+def test_simples_estima_das_pelos_12_meses_anteriores():
+    from utils.indicadores import simples_do_ano
+    linhas = [{"tipo": "receita", "valor": 20000, "data": date(2025, m, 10), "status": "Recebido",
+               "categoria": "Serviços"} for m in range(1, 13)]
+    linhas.append({"tipo": "receita", "valor": 10000, "data": date(2026, 1, 10), "status": "Recebido", "categoria": "Serviços"})
+    mov = movimentos(_fin(linhas))
+    jan = simples_do_ano(mov, 2026, date(2026, 1, 25))[0]
+    assert jan["rbt12"] == 240000 and jan["receita"] == 10000
+    assert jan["das_estimado"] == pytest.approx(10000 * (240000 * 0.112 - 9360) / 240000)
+    assert simples_do_ano(mov, 2026, date(2026, 1, 25), aliquota_informada=8)[0]["das_estimado"] == pytest.approx(800)
+
+
+def test_simples_mes_sem_receita_nao_fica_atrasado():
+    from utils.indicadores import simples_do_ano
+    meses = simples_do_ano(movimentos(_fin([])), 2026, date(2026, 5, 25))
+    assert meses[0]["situacao"] == "sem receita" and meses[4]["situacao"] == "sem receita"
+    assert meses[6]["situacao"] == "futuro"

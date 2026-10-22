@@ -87,3 +87,18 @@ def test_lancar_das(ctx):
     tid = db.lancar_das(2026, 3, 86.05, date(2026, 4, 2))
     lanc = _lanc(db, tid)
     assert lanc["descricao"] == "DAS MEI competência 03/2026" and lanc["status"] == "Pago"
+
+
+def test_regime_padrao_mei_e_troca(ctx):
+    from utils.models import Perfil
+    db, _ = ctx
+    db.session.add(Perfil(usuario_id=db.usuario_id, email=f"{db.usuario_id}@teste.local", nome="Teste"))
+    db.session.flush()
+    try:
+        assert db.get_regime() == {"regime": "MEI", "aliquota": None}
+        assert db.salvar_regime("Simples Nacional", 7.5)
+        assert db.get_regime() == {"regime": "Simples Nacional", "aliquota": 7.5}
+        assert not db.salvar_regime("Inventado")
+    finally:
+        db.session.query(Perfil).filter_by(usuario_id=db.usuario_id).delete()
+        db.session.flush()

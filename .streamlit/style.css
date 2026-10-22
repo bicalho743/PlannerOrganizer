@@ -452,13 +452,30 @@ div[data-testid="stDateInputField"] [aria-selected="true"] {
     -webkit-text-fill-color: #1C1C1A !important;
     border-radius: 3px !important;
 }
-button[role="tab"] {
-    padding: 0.6rem 0.9rem !important; font-weight: 500 !important;
-    background: transparent !important; color: #475467 !important; border: 0 !important;
+/* ABAS: um trilho cinza com botões; a aba aberta fica branca, com a cor do módulo embaixo.
+   Antes era só texto sublinhado e não parecia clicável. (Streamlit 1.66: [role=tablist] / [role=tab]) */
+.stTabs [role="tablist"] {
+    gap: 4px !important; background: #ECE9E2 !important; padding: 4px !important; border-radius: 12px !important;
+    width: fit-content !important; max-width: 100% !important; overflow-x: auto; border: 0 !important;
+    box-shadow: none !important; margin-bottom: 6px;
 }
-button[role="tab"]:hover { color: #101828 !important; }
-.stTabs [aria-selected="true"] { font-weight: 600 !important; color: var(--navy) !important; }
-.stTabs [data-baseweb="tab-highlight"] { background-color: var(--modulo) !important; }
+.stTabs [role="tablist"]::after, .stTabs [role="tablist"]::before,
+.stTabs [role="tab"]::after, .stTabs [role="tab"]::before { display: none !important; }
+.stTabs [role="tab"] {
+    padding: 0.45rem 1rem !important; border-radius: 9px !important; cursor: pointer;
+    background: transparent !important; color: #475467 !important; border: 1px solid transparent !important;
+    white-space: nowrap !important; box-shadow: none !important;
+}
+.stTabs [role="tab"] p { font-weight: 600 !important; color: inherit !important; }
+.stTabs [role="tab"] [data-testid="stIconMaterial"] { color: inherit !important; }
+.stTabs [role="tab"]:hover { color: #101828 !important; background: rgba(255,255,255,.55) !important; }
+.stTabs [role="tab"][aria-selected="true"] {
+    background: #FFFFFF !important; color: var(--navy) !important; border-color: #DDD8CC !important;
+    box-shadow: inset 0 -3px 0 var(--modulo), 0 1px 3px rgba(16,24,40,.10) !important;
+}
+.stTabs [role="tab"][aria-selected="true"] [data-testid="stIconMaterial"],
+.stTabs [role="tab"][aria-selected="true"] span[translate="no"] { color: var(--modulo) !important; }
+.stTabs .react-aria-SelectionIndicator { display: none !important; }
 div[data-testid="stDataFrame"] table th {
     background-color: #0D1B2A !important; color: white !important;
     font-weight: 600 !important; padding: 0.75rem !important;
@@ -635,7 +652,7 @@ body, .main, [data-testid="stAppViewContainer"], .block-container {
 
     .dataframe td, .dataframe th { font-size: 12px !important; padding: 0.4rem !important; }
 
-    button[role="tab"] { padding: 0.5rem 0.75rem !important; font-size: 0.8rem !important; }
+    .stTabs [role="tab"] { padding: 0.4rem 0.7rem !important; }
 }
 
 #mobile-sidebar-fab {

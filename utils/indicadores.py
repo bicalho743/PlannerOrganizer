@@ -290,3 +290,61 @@ def prazo_dasn(hoje):
     if hoje > limite:
         limite = date(hoje.year + 1, 5, 31)
     return limite.year - 1, limite, (limite - hoje).days
+
+
+# Simples Nacional, Anexo III (serviços), LC 123/2006: (receita bruta de 12 meses até, alíquota, parcela a deduzir)
+ANEXO_III = [
+    (180000.0, 0.06, 0.0),
+    (360000.0, 0.112, 9360.0),
+    (720000.0, 0.135, 17640.0),
+    (1800000.0, 0.16, 35640.0),
+    (3600000.0, 0.21, 125640.0),
+    (4800000.0, 0.33, 648000.0),
+]
+
+
+def aliquota_efetiva(rbt12):
+    """Alíquota efetiva do Anexo III para a receita bruta dos últimos 12 meses (fração, ex.: 0.06)."""
+    if rbt12 <= 0:
+        return ANEXO_III[0][1]
+    for teto, aliq, deduz in ANEXO_III:
+        if rbt12 <= teto:
+            return (rbt12 * aliq - deduz) / rbt12
+    teto, aliq, deduz = ANEXO_III[-1]
+    return (rbt12 * aliq - deduz) / rbt12
+
+
+def recebido_no_mes(mov, ano, mes):
+    if mov.empty:
+        return 0.0
+    feito = realizados_no_mes(mov, ano, mes)
+    return float(feito[feito["lado"] == "entra"]["valor"].sum()) if not feito.empty else 0.0
+
+
+def simples_do_ano(mov, ano, hoje, aliquota_informada=None):
+    """Mês a mês do Simples Nacional: recebido no mês, receita dos 12 meses anteriores (RBT12),
+    alíquota efetiva (a informada pela contadora, em %, tem prioridade) e DAS estimado, com a
+    situação do pagamento (mesma regra do DAS do MEI)."""
+    situacao = das_do_ano(mov, ano, hoje)
+    meses = []
+    for m in situacao:
+        mes = m["mes"]
+        rbt12, a, ms = 0.0, ano, mes
+        for _ in range(12):
+            a, ms = (a - 1, 12) if ms == 1 else (a, ms - 1)
+            rbt12 += recebido_no_mes(mov, a, ms)
+        aliq = (float(aliquota_informada) / 100) if aliquota_informada else aliquota_efetiva(rbt12)
+        receita = recebido_no_mes(mov, ano, mes)
+        item = {**m, "receita": receita, "rbt12": rbt12, "aliquota": aliq, "das_estimado": receita * aliq}
+        if receita <= 0 and m["situacao"] in ("atrasado", "a vencer"):
+            item["situacao"] = "sem receita"  # sem faturamento no mês não há DAS a pagar
+        meses.append(item)
+    return meses
+
+
+def impostos_pagos_no_mes(mov, ano, mes):
+    feito = realizados_no_mes(mov, ano, mes)
+    if feito.empty:
+        return 0.0
+    sai = feito[feito["lado"] == "sai"]
+    return float(sai[[_eh_das(c, d) for c, d in zip(sai["categoria"], sai["descricao"])]]["valor"].sum())

@@ -148,7 +148,7 @@ def show():
     st.markdown('<div class="pc-intro">Quanto vale a sua hora e quanto cobrar por cada projeto, com os seus números.</div>',
                 unsafe_allow_html=True)
     p = _parametros()
-    aba_hora, aba_projeto = st.tabs(["Sua hora", "Preço de um projeto"])
+    aba_hora, aba_projeto = st.tabs([":material/schedule: Sua hora", ":material/home_work: Preço de um projeto"])
     with aba_hora:
         _aba_hora(p)
     with aba_projeto:

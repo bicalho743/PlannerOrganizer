@@ -303,6 +303,7 @@ class Database:
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS logo TEXT"))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS cnpj VARCHAR"))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS precificacao TEXT"))
+                conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS regime_tributario TEXT"))
                 conn.execute(_sa_text("ALTER TABLE itens_venda ADD COLUMN IF NOT EXISTS custo_unitario DOUBLE PRECISION"))
                 conn.execute(_sa_text("ALTER TABLE itens_venda ADD COLUMN IF NOT EXISTS baixou_estoque BOOLEAN"))
                 # Agenda (o create_all não cria tabelas novas: o refresh_schema_metadata troca os modelos pelo reflect)
@@ -608,6 +609,33 @@ class Database:
             if not perfil:
                 return False
             perfil.precificacao = json.dumps(parametros)
+            self.session.flush()
+            return True
+        return self._safe_query(query)
+
+    REGIMES = ("MEI", "Simples Nacional", "Outro")
+
+    def get_regime(self):
+        """{"regime": "MEI" | "Simples Nacional" | "Outro", "aliquota": % informada ou None}. Padrão: MEI."""
+        import json
+        def query():
+            perfil = self.session.query(Perfil).filter_by(usuario_id=self.usuario_id).first()
+            try:
+                dados = json.loads(perfil.regime_tributario) if perfil and perfil.regime_tributario else {}
+            except (TypeError, ValueError):
+                dados = {}
+            regime = dados.get("regime") if dados.get("regime") in self.REGIMES else "MEI"
+            return {"regime": regime, "aliquota": dados.get("aliquota")}
+        return self._safe_query(query) or {"regime": "MEI", "aliquota": None}
+
+    def salvar_regime(self, regime, aliquota=None):
+        import json
+        def query():
+            perfil = self.session.query(Perfil).filter_by(usuario_id=self.usuario_id).first()
+            if not perfil or regime not in self.REGIMES:
+                return False
+            perfil.regime_tributario = json.dumps({"regime": regime, "aliquota": aliquota or None})
+            self.session.flush()
             return True
         return self._safe_query(query)
 

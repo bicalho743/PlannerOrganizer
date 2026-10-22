@@ -427,7 +427,8 @@ def gerar_manual_sistema(verificar_auth=True):
     texto("<b>Entrou</b>, <b>Gastou</b>, <b>Retirado para você</b> (o que foi para a sua conta pessoal) e <b>Sobrou</b>, "
           "com <b>de onde veio</b> e <b>para onde foi</b> o dinheiro por categoria. Para quem é MEI, o "
           "<b>limite do MEI</b> mostra quanto do faturamento do ano já foi usado.")
-    texto("O Financeiro tem duas abas: <b>Lançamentos</b> (tudo o que está abaixo) e <b>MEI</b>.")
+    texto("O Financeiro tem duas abas: <b>Lançamentos</b> (tudo o que está abaixo) e <b>MEI</b>, que vira "
+          "<b>Impostos</b> para quem não é MEI.")
     e.append(_draw_board("O quadro do Financeiro", [
         ("A receber", GREEN_RGB, ["Propostas aprovadas", "Vendas e parcelas", "Comissões"]),
         ("A pagar", CORAL_RGB, ["Assistentes", "Contas e fornecedores", "Lançamentos manuais"]),
@@ -445,6 +446,12 @@ def gerar_manual_sistema(verificar_auth=True):
            "seguinte. <b>Lançar DAS pago</b> registra o pagamento; <b>Gerar a guia do DAS</b> abre o PGMEI da Receita.")
     bullet("<b>Declaração anual (DASN-SIMEI)</b>: o prazo (31 de maio) e a receita bruta do ano separada em serviços "
            "e venda de produtos, como a declaração pede.")
+    secao("Quem não é MEI")
+    texto("No alto da aba, em <b>Sua empresa é</b>, escolha o tipo de empresa. A escolha fica guardada.")
+    bullet("<b>Simples Nacional (ME)</b>: receita dos últimos 12 meses, alíquota efetiva (Anexo III, ou a que a "
+           "contadora informar) e o DAS estimado de cada mês, com pago, a vencer ou atrasado. Mês sem receita não "
+           "tem DAS. O valor oficial sai do PGDAS-D, que abre por um botão.")
+    bullet("<b>Outro regime ou autônoma</b>: o que entrou e os impostos pagos mês a mês, para conferir com a contadora.")
 
     # ── RELATÓRIOS ─────────────────────────────────────────────────────
     capitulo("Relatórios", "Relatórios",
