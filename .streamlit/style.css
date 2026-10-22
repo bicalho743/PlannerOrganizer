@@ -214,7 +214,16 @@ section[data-testid="stSidebar"] p { color: #344054 !important; }
 .sb-grupo { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase;
     color: #98A2B3; padding: 16px 10px 6px; cursor: default; user-select: none; }
 .sb-sep { border-top: 1px solid #EEF0F3; margin: 12px 4px 6px; }
-.sb-trial { margin: 2px 4px 8px; padding: 8px 10px; border-radius: 8px; background: #FFFAEB; color: #93370D; font-size: .8rem; }
+.sb-trial { margin: 2px 4px 6px; padding: 8px 10px; border-radius: 8px; background: #FBF5E6; color: #6B5314; font-size: .8rem; border: 1px solid #EBDDB4; }
+/* teste grátis: o botão de assinar é a chamada dourada do menu */
+section[data-testid="stSidebar"] .st-key-cta_trial { margin-bottom: 8px; }
+section[data-testid="stSidebar"] .st-key-cta_trial .stButton > button {
+    background: var(--gold) !important; color: var(--navy) !important; font-weight: 700 !important;
+    justify-content: center !important;
+}
+section[data-testid="stSidebar"] .st-key-cta_trial .stButton > button > div { justify-content: center !important; }
+section[data-testid="stSidebar"] .st-key-cta_trial .stButton > button [data-testid="stIconMaterial"] { color: var(--navy) !important; }
+section[data-testid="stSidebar"] .st-key-cta_trial .stButton > button:hover { background: var(--gold-dark) !important; color: var(--navy) !important; }
 .sb-rodape { font-size: 0.72rem; color: #98A2B3; line-height: 1.6; padding: 14px 10px 0; }
 .sb-rodape a { color: #667085 !important; text-decoration: none; }
 .sb-rodape a:hover { color: var(--navy) !important; text-decoration: underline; }

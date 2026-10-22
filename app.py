@@ -761,8 +761,12 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
         from utils.trial import is_pro as _is_pro_menu, dias_restantes_trial as _dias_menu
         if _perfil_menu and not _is_pro_menu(_perfil_menu):
             _d = _dias_menu(_perfil_menu)
-            st.sidebar.markdown(f'<div class="sb-trial">Teste grátis · <b>{_d} dia{"s" if _d != 1 else ""}</b> restante{"s" if _d != 1 else ""}</div>',
-                                unsafe_allow_html=True)
+            with st.sidebar.container(key="cta_trial"):
+                st.markdown(f'<div class="sb-trial">Teste grátis · <b>{_d} dia{"s" if _d != 1 else ""}</b> restante{"s" if _d != 1 else ""}</div>',
+                            unsafe_allow_html=True)
+                if st.button("Assinar agora", key="sb_assinar", icon=":material/workspace_premium:", use_container_width=True):
+                    st.session_state.current_page = "Plano"
+                    st.rerun()
     except Exception:
         pass
 

@@ -143,6 +143,7 @@ h1.ini-titulo { margin: 0 0 2px !important; padding: 0 !important; font-family: 
 .ini-passo .n { flex: none; width: 28px; height: 28px; border-radius: 50%; background: #EEF1F6; color: var(--navy);
                 font-weight: 700; display: flex; align-items: center; justify-content: center; }
 .ini-passo .n.ok { background: #ECFDF3; color: #067647; }
+.ini-passo .n.prox { background: var(--gold); color: var(--navy); }
 .ini-fu { display: grid; grid-template-columns: 84px 1fr 28px auto; gap: 10px; align-items: center; padding: 6px 0; font-size: .88rem; }
 .ini-fu .nm { color: #475467; }
 .ini-fu .bar { height: 10px; background: #F2F4F7; border-radius: 999px; overflow: hidden; }
@@ -216,14 +217,19 @@ def _onboarding(perfil, clientes, propostas):
         ("Crie a primeira proposta", "Monte o orçamento e gere o PDF para enviar.", "Propostas", "Criar proposta",
          not propostas.empty),
     ]
+    # o próximo passo pendente é a chamada dourada da tela; os outros ficam discretos
+    proximo = next((i for i, p in enumerate(passos, 1) if not p[4]), None)
     for i, (t, d, pagina, rotulo, feito) in enumerate(passos, 1):
         with st.container(border=True):
             c1, c2 = st.columns([5, 2], vertical_alignment="center")
-            marca = '<span class="n ok">✓</span>' if feito else f'<span class="n">{i}</span>'
+            marca = ('<span class="n ok">✓</span>' if feito
+                     else f'<span class="n{" prox" if i == proximo else ""}">{i}</span>')
             c1.markdown(f'<div class="ini-passo">{marca}<div class="ini-txt"><b>{t}</b>'
                         f'<span class="det">{d}</span></div></div>', unsafe_allow_html=True)
-            if not feito and c2.button(rotulo, key=f"ini_passo_{i}", use_container_width=True):
-                _ir(pagina)
+            if not feito:
+                with c2.container(key=f"cta_passo_{i}" if i == proximo else f"passo_{i}"):
+                    if st.button(rotulo, key=f"ini_passo_{i}", use_container_width=True):
+                        _ir(pagina)
 
 
 def _perfil():
@@ -330,8 +336,9 @@ def show():
             c1.markdown('<div class="ini-txt"><b>Suas propostas ainda saem sem o seu logotipo</b>'
                         '<span class="det">Envie o logo e escolha as cores em Perfil e marca.</span></div>',
                         unsafe_allow_html=True)
-            if c2.button("Colocar minha marca", key="ini_ir_marca", use_container_width=True):
-                _ir("Perfil")
+            with c2.container(key="cta_ir_marca"):
+                if st.button("Colocar minha marca", key="ini_ir_marca", use_container_width=True):
+                    _ir("Perfil")
             if c3.button("", icon=":material/close:", key="ini_sem_logo_fechar", type="tertiary", help="Agora não"):
                 st.session_state["ini_sem_logo_ok"] = True
                 st.rerun()
