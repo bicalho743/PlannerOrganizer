@@ -9,16 +9,16 @@ def show():
     """
     Exibe o formulário de registro de usuário
     """
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem; color: #C9A84C;">Criar Nova Conta</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="font-size: 1.9rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 0.25rem; color: #0D1B2A; font-family: Cormorant Garamond, serif; text-align: center;">Criar Nova Conta</h1>', unsafe_allow_html=True)
     
     with st.container():
-        col1, col2, col3 = st.columns([1, 3, 1])
+        col2 = st.container()  # o cartão da tela de entrada já centraliza e limita a largura
         
         with col2:
             st.markdown("""
             <div style="text-align: center; margin-bottom: 1.5rem;">
-                <h3 style="color: rgba(245,240,232,0.9); margin-bottom: 0.5rem;">Registre-se no Planner Organizer</h3>
-                <p style="color: rgba(245,240,232,0.55); font-size: 0.9rem;">
+                <p style="font-family: Cormorant Garamond, serif; font-size: 1.35rem; font-weight: 500; color: #16283E; margin-bottom: 0.3rem;">Registre-se no Planner Organizer</p>
+                <p style="color: #6B7C94; font-size: 0.9rem;">
                     Crie sua conta para começar a gerenciar propostas e finanças
                 </p>
             </div>
@@ -33,11 +33,11 @@ def show():
                 password_confirm = st.text_input("Confirme a senha", type="password")
                 
                 st.markdown(
-                    '<p style="color: rgba(245,240,232,0.7); font-size: 0.85rem; margin-bottom: 0.9rem; line-height: 1.5;">'
+                    '<p style="color: #3A4E68; font-size: 0.85rem; margin-bottom: 0.9rem; line-height: 1.5;">'
                     'Ao criar sua conta, você concorda com nossos '
-                    '<a href="?show_termos=true" target="_blank" style="color: #C9A84C; text-decoration: underline;">Termos de Uso</a>'
+                    '<a href="?show_termos=true" target="_blank" style="color: #8A6D12; text-decoration: underline;">Termos de Uso</a>'
                     ' e '
-                    '<a href="?show_politica=true" target="_blank" style="color: #C9A84C; text-decoration: underline;">Política de Privacidade</a>.'
+                    '<a href="?show_politica=true" target="_blank" style="color: #8A6D12; text-decoration: underline;">Política de Privacidade</a>.'
                     '</p>'
                     '<div style="height:6px"></div>',
                     unsafe_allow_html=True
@@ -79,16 +79,16 @@ def show():
             # conta automaticamente na primeira vez (mesmo fluxo do login).
             st.markdown("""
             <div style="display:flex;align-items:center;gap:10px;margin:16px 0 6px;">
-              <div style="flex:1;height:1px;background:rgba(245,240,232,0.1)"></div>
-              <span style="font-size:0.72rem;color:rgba(245,240,232,0.3);letter-spacing:0.1em">OU</span>
-              <div style="flex:1;height:1px;background:rgba(245,240,232,0.1)"></div>
+              <div style="flex:1;height:1px;background:#E0DACB"></div>
+              <span style="font-size:0.72rem;color:#6B7C94;letter-spacing:0.1em">OU</span>
+              <div style="flex:1;height:1px;background:#E0DACB"></div>
             </div>
             """, unsafe_allow_html=True)
             try:
                 from utils.google_auth_component import google_login_button
                 google_login_button()
                 st.markdown(
-                    '<p style="text-align:center;color: rgba(245,240,232,0.45); font-size: 0.78rem; margin-top: 4px;">'
+                    '<p style="text-align:center;color: #6B7C94; font-size: 0.78rem; margin-top: 4px;">'
                     'Ao continuar com o Google, sua conta é criada automaticamente '
                     'e você concorda com os termos acima.</p>',
                     unsafe_allow_html=True
@@ -99,7 +99,7 @@ def show():
             # Texto centralizado
             st.markdown("""
             <div style="text-align: center; margin-top: 1rem;">
-                <p style="color: rgba(245,240,232,0.45); font-size: 0.9rem;">
+                <p style="color: #6B7C94; font-size: 0.9rem;">
                     Já tem uma conta?
                 </p>
             </div>

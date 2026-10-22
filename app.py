@@ -275,8 +275,10 @@ if not st.session_state.authenticated:
 
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 
+    /* Mesmo layout do cartão de login da landing (promo.plannerorganiza.com.br): fundo creme com
+       brilho dourado, cartão branco, título em Cormorant, Entrar azul-marinho e criar conta em dourado. */
     section[data-testid="stSidebar"],
     [data-testid="collapsedControl"],
     header[data-testid="stHeader"],
@@ -285,176 +287,135 @@ if not st.session_state.authenticated:
     [data-testid="stDeployButton"],
     footer { display: none !important; }
 
-    /* Fundo escuro em tudo */
     html, body, .stApp,
     [data-testid="stAppViewContainer"],
     [data-testid="stHeader"] {
-        background: #0D1B35 !important;
+        background: #F7F5F0 !important;
         margin: 0 !important; padding: 0 !important;
     }
     .stApp {
         background:
-            radial-gradient(ellipse 60% 50% at 30% 20%, rgba(201,168,76,0.08) 0%, transparent 60%),
-            radial-gradient(ellipse 40% 60% at 70% 80%, rgba(26,48,96,0.4) 0%, transparent 60%),
-            #0D1B35 !important;
+            radial-gradient(ellipse 60% 80% at 70% 30%, rgba(184,151,60,.10) 0%, transparent 70%),
+            radial-gradient(ellipse 40% 50% at 10% 85%, rgba(13,27,53,.06) 0%, transparent 60%),
+            #F7F5F0 !important;
         min-height: 100vh !important;
     }
 
-    /* Container principal centralizado e estreito */
+    /* o próprio container do Streamlit é o cartão branco */
     .main .block-container,
     [data-testid="stMainBlockContainer"] {
         max-width: 420px !important;
-        margin: 0 auto !important;
-        padding: 3rem 1rem 2rem !important;
-        background: rgba(255,255,255,0.04) !important;
-        border: 1px solid rgba(201,168,76,0.18) !important;
+        margin: 4vh auto 2rem !important;
+        padding: 2rem 2rem 1.5rem !important;
+        background: #FFFFFF !important;
+        border: 1px solid #E0DACB !important;
         border-radius: 20px !important;
-        backdrop-filter: blur(20px) !important;
+        box-shadow: 0 20px 60px rgba(13,27,53,.12), 0 4px 16px rgba(184,151,60,.08) !important;
     }
+    /* elementos invisíveis (estilos e scripts injetados) não ocupam espaço no cartão */
+    div[data-testid="stElementContainer"]:has(iframe[height="0"]),
+    div[data-testid="stElementContainer"]:has(div[data-testid="stMarkdownContainer"] > style:only-child),
+    div[data-testid="stElementContainer"]:has(div[data-testid="stMarkdownContainer"] link),
+    div[data-testid="stElementContainer"]:empty { display: none !important; }
+    [data-testid="stVerticalBlock"] { gap: 0.6rem !important; }
+    div[data-testid="stForm"] [data-testid="stVerticalBlock"] { gap: 0.75rem !important; }
 
-    /* Logo acima do card — sem fundo */
-    .login-logo {
-        background: transparent !important;
-        border: none !important;
-    }
-
-    /* Tirar gap entre elementos */
-    [data-testid="stVerticalBlock"] { gap: 0 !important; }
-
-    /* Logo centralizado */
-    .login-logo { text-align: center; margin-bottom: 2rem; margin-top: 1rem; }
+    .login-logo { text-align: center; margin: 0 0 1rem; }
     .login-logo h1 {
         font-family: 'Cormorant Garamond', serif;
         font-size: 2rem; font-weight: 600;
-        color: #F5F0E8; margin: 0; letter-spacing: 0.02em;
+        color: #0D1B2A; margin: 0; letter-spacing: 0.01em;
+    }
+    .login-logo h1::before {
+        content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px;
+        background: #C9A84C; margin-right: 10px; vertical-align: 6px;
     }
     .login-logo p {
-        font-size: 0.72rem; color: rgba(245,240,232,0.38);
-        text-transform: uppercase; letter-spacing: 0.15em; margin: 5px 0 0;
-    }
-
-    .login-card {
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(201,168,76,0.18);
-        border-radius: 20px;
-        padding: 2.5rem 2rem;
-        width: 100%; max-width: 400px;
-        backdrop-filter: blur(20px);
+        font-size: 0.7rem; color: #B8942F; font-weight: 500;
+        text-transform: uppercase; letter-spacing: 0.15em; margin: 6px 0 0;
     }
     .login-card-title {
         font-family: 'Cormorant Garamond', serif;
         font-size: 1.5rem; font-weight: 500;
-        color: #F5F0E8; text-align: center; margin: 0 0 0.2rem;
+        color: #0D1B2A; text-align: center; margin: 0 0 0.2rem;
     }
     .login-card-sub {
-        font-size: 0.8rem; color: rgba(245,240,232,0.38);
-        text-align: center; margin: 0 0 1.75rem;
+        font-size: 0.82rem; color: #6B7C94; font-weight: 300;
+        text-align: center; margin: 0 0 1.5rem;
     }
 
-    /* Inputs */
-    .stTextInput > div > div > input {
-        background: rgba(255,255,255,0.06) !important;
-        border: 1px solid rgba(201,168,76,0.22) !important;
-        border-radius: 10px !important;
-        color: #F5F0E8 !important;
-        padding: 0.75rem 1rem !important;
-        font-family: 'DM Sans', sans-serif !important;
-        font-size: 0.875rem !important;
-    }
-    .stTextInput > div > div > input:focus {
-        border-color: rgba(201,168,76,0.55) !important;
-        background: rgba(255,255,255,0.08) !important;
-        box-shadow: 0 0 0 3px rgba(201,168,76,0.08) !important;
-    }
-    .stTextInput > div > div > input::placeholder { color: rgba(245,240,232,0.22) !important; }
-    /* Streamlit 1.66: a caixa em volta do campo (stTextInputRootElement) vinha cinza-clara do tema
-       e o texto creme ficava invisível. O fundo escuro e a borda passam para a caixa. */
+    /* campos brancos com borda creme e foco dourado (caixa do Streamlit 1.66: stTextInputRootElement) */
     [data-testid="stTextInputRootElement"] {
-        background: #16263A !important;
-        border: 1px solid rgba(201,168,76,0.28) !important;
+        background: #FFFFFF !important;
+        border: 1px solid #E0DACB !important;
         border-radius: 10px !important;
+        color-scheme: light;
     }
     [data-testid="stTextInputRootElement"]:focus-within {
-        border-color: rgba(201,168,76,0.6) !important;
-        box-shadow: 0 0 0 3px rgba(201,168,76,0.10) !important;
+        border-color: #B8942F !important;
+        box-shadow: 0 0 0 3px rgba(184,151,60,.14) !important;
     }
-    /* color-scheme: dark faz o navegador usar o tom escuro no preenchimento automático de senha
-       (Chrome/Edge aplicam cores próprias que o CSS da página não consegue sobrescrever) */
-    [data-testid="stTextInputRootElement"] { color-scheme: dark; }
     [data-testid="stTextInputRootElement"] input,
     [data-testid="stTextInputRootElement"] input:focus {
-        background: #16263A !important; border: 0 !important; box-shadow: none !important;
-        color: #F5F0E8 !important; -webkit-text-fill-color: #F5F0E8 !important; caret-color: #C9A84C !important;
+        background: #FFFFFF !important; border: 0 !important; box-shadow: none !important;
+        color: #16283E !important; -webkit-text-fill-color: #16283E !important; caret-color: #B8942F !important;
+        padding: 0.7rem 1rem !important;
+        font-family: 'DM Sans', sans-serif !important; font-size: 0.9rem !important;
     }
-    /* preenchimento automático do navegador: mantém o fundo escuro e o texto creme */
+    [data-testid="stTextInputRootElement"] input::placeholder { color: #A9B4C2 !important; -webkit-text-fill-color: #A9B4C2 !important; }
     [data-testid="stTextInputRootElement"] input:-webkit-autofill {
-        -webkit-box-shadow: 0 0 0 1000px #16263A inset !important;
-        -webkit-text-fill-color: #F5F0E8 !important;
+        -webkit-box-shadow: 0 0 0 1000px #FFFFFF inset !important;
+        -webkit-text-fill-color: #16283E !important;
     }
     [data-testid="stTextInputRootElement"] button,
-    [data-testid="stTextInputRootElement"] button * { background: transparent !important; color: rgba(245,240,232,0.6) !important; }
+    [data-testid="stTextInputRootElement"] button * { background: transparent !important; color: #6B7C94 !important; }
     div[data-testid="InputInstructions"] { display: none !important; }
-    .stTextInput label {
-        color: rgba(245,240,232,0.55) !important;
+    .stTextInput label, .stTextInput label * {
+        color: #3A4E68 !important;
         font-size: 0.72rem !important; font-weight: 500 !important;
-        text-transform: uppercase !important; letter-spacing: 0.09em !important;
+        text-transform: uppercase !important; letter-spacing: 0.06em !important;
     }
 
-    /* Botão submit (Entrar) */
-    .stFormSubmitButton > button {
-        background: linear-gradient(135deg, #C9A84C, #9E7A10) !important;
-        color: #0D1B35 !important; border: none !important;
-        border-radius: 10px !important; font-weight: 700 !important;
-        font-size: 0.875rem !important; letter-spacing: 0.06em !important;
-        padding: 0.75rem !important; width: 100% !important;
+    /* Entrar: azul-marinho, como "Entrar no sistema" da landing */
+    .stFormSubmitButton > button, .stFormSubmitButton > button * {
+        background: #0D1B2A !important; color: #FFFFFF !important; border: none !important;
+        border-radius: 10px !important; font-weight: 600 !important;
+        font-size: 0.92rem !important; letter-spacing: 0.01em !important;
         font-family: 'DM Sans', sans-serif !important;
-        transition: opacity 0.2s !important;
     }
-    .stFormSubmitButton > button:hover { opacity: 0.88 !important; }
+    .stFormSubmitButton > button { padding: 0.8rem !important; width: 100% !important; min-height: 46px !important; }
+    .stFormSubmitButton > button:hover, .stFormSubmitButton > button:hover * { background: #16283E !important; }
+    div[data-testid="stForm"] { border: 0 !important; padding: 0 !important; }
 
-    /* Botões secundários */
+    /* Esqueci a senha (contorno discreto) e Criar conta grátis (contorno dourado, como na landing) */
     div[data-testid="stHorizontalBlock"] .stButton > button {
-        background: transparent !important;
-        border: 1px solid rgba(201,168,76,0.22) !important;
-        color: rgba(245,240,232,0.55) !important;
-        border-radius: 10px !important;
-        font-family: 'DM Sans', sans-serif !important;
-        font-size: 0.78rem !important;
-        padding: 0.65rem !important;
-        transition: all 0.2s !important;
+        background: #FFFFFF !important; border: 1px solid #E0DACB !important; color: #3A4E68 !important;
+        border-radius: 10px !important; font-family: 'DM Sans', sans-serif !important;
+        font-size: 0.82rem !important; padding: 0.65rem !important; min-height: 42px !important;
     }
-    div[data-testid="stHorizontalBlock"] .stButton > button:hover {
-        border-color: rgba(201,168,76,0.5) !important;
-        color: #C9A84C !important;
-        background: rgba(201,168,76,0.06) !important;
+    div[data-testid="stHorizontalBlock"] .stButton > button * { color: inherit !important; }
+    div[data-testid="stHorizontalBlock"] .stButton > button:hover { border-color: #B8942F !important; color: #0D1B2A !important; }
+    div[data-testid="stHorizontalBlock"] .st-key-btn_criar_conta .stButton > button {
+        border: 1.5px solid #B8942F !important; color: #8A6D12 !important; font-weight: 600 !important;
     }
+    div[data-testid="stHorizontalBlock"] .st-key-btn_criar_conta .stButton > button:hover { background: #C9A84C !important; color: #0D1B2A !important; }
 
     .stAlert { border-radius: 10px !important; font-size: 0.85rem !important; }
+    .stCheckbox label span, .stCheckbox label p, .stCheckbox label { color: #3A4E68 !important; font-size: 0.85rem !important; }
+    /* botões soltos (Voltar ao login etc.) */
+    .stButton > button { color: #3A4E68 !important; }
 
-    /* Checkbox (termos de uso na tela de registro) */
-    .stCheckbox label span,
-    .stCheckbox label p,
-    .stCheckbox label {
-        color: rgba(245,240,232,0.7) !important;
-        font-size: 0.85rem !important;
-    }
-    /* Botão genérico (Voltar ao login, etc) */
-    .stButton > button {
-        color: rgba(245,240,232,0.55) !important;
-    }
-
-    .login-footer {
-        text-align: center; margin-top: 1.5rem; font-size: 0.75rem;
-    }
-    .login-footer a {
-        color: rgba(245,240,232,0.3); text-decoration: none; transition: color 0.2s;
-    }
-    .login-footer a:hover { color: rgba(245,240,232,0.65); }
-    .login-footer span { color: rgba(245,240,232,0.12); margin: 0 0.4rem; }
+    .login-footer { text-align: center; margin-top: 1.5rem; font-size: 0.75rem; }
+    .login-footer a { color: #6B7C94; text-decoration: none; transition: color 0.2s; }
+    .login-footer a:hover { color: #0D1B2A; text-decoration: underline; }
+    .login-footer span { color: #CBD2DB; margin: 0 0.4rem; }
 
     @media (max-width: 480px) {
-        .login-card { padding: 2rem 1.25rem; }
-        .login-logo h1 { font-size: 1.6rem; }
+        .main .block-container, [data-testid="stMainBlockContainer"] {
+            margin: 0 auto !important; border-radius: 0 !important; border: 0 !important;
+            box-shadow: none !important; padding: 2rem 1.25rem !important; min-height: 100vh;
+        }
+        .login-logo h1 { font-size: 1.7rem; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -548,10 +509,10 @@ if not st.session_state.authenticated:
 
     # Botão Google
     st.markdown("""
-    <div style="display:flex;align-items:center;gap:10px;margin:16px 0 6px;">
-      <div style="flex:1;height:1px;background:rgba(245,240,232,0.1)"></div>
-      <span style="font-size:0.72rem;color:rgba(245,240,232,0.3);letter-spacing:0.1em">OU</span>
-      <div style="flex:1;height:1px;background:rgba(245,240,232,0.1)"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin:6px 0 2px;">
+      <div style="flex:1;height:1px;background:#E0DACB"></div>
+      <span style="font-size:0.72rem;color:#6B7C94;letter-spacing:0.1em">ou</span>
+      <div style="flex:1;height:1px;background:#E0DACB"></div>
     </div>
     """, unsafe_allow_html=True)
 

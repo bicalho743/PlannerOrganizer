@@ -9,19 +9,19 @@ def show():
     """
     Exibe o formulário de recuperação de senha
     """
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem; color: #C9A84C;">Recuperar Senha</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="font-size: 1.9rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 0.25rem; color: #0D1B2A; font-family: Cormorant Garamond, serif; text-align: center;">Recuperar Senha</h1>', unsafe_allow_html=True)
     
     if 'email_enviado' not in st.session_state:
         st.session_state.email_enviado = False
     
     with st.container():
-        col1, col2, col3 = st.columns([1, 3, 1])
+        col2 = st.container()  # o cartão da tela de entrada já centraliza e limita a largura
         
         with col2:
             st.markdown("""
             <div style="text-align: center; margin-bottom: 1.5rem;">
-                <h3 style="color: rgba(245,240,232,0.9); margin-bottom: 0.5rem;">Esqueceu sua senha?</h3>
-                <p style="color: rgba(245,240,232,0.55); font-size: 0.9rem;">
+                <p style="font-family: Cormorant Garamond, serif; font-size: 1.35rem; font-weight: 500; color: #16283E; margin-bottom: 0.3rem;">Esqueceu sua senha?</p>
+                <p style="color: #6B7C94; font-size: 0.9rem;">
                     Informe seu email para receber um link de redefinição de senha
                 </p>
             </div>

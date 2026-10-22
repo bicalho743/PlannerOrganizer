@@ -6401,7 +6401,15 @@ class Database:
                 ).first()
 
                 if existing:
-                    print(f"Pós-organização já existe para proposta {proposta_id}")
+                    # finalizada de novo (depois de reaberta): os retornos pendentes contam da nova data
+                    if data_final_projeto and existing.data_final_projeto and data_final_projeto != existing.data_final_projeto:
+                        delta = data_final_projeto - existing.data_final_projeto
+                        for a in self.session.query(PostOrganizationAction).filter(
+                                PostOrganizationAction.post_organization_id == existing.id,
+                                PostOrganizationAction.status == 'PENDENTE'):
+                            if a.due_date:
+                                a.due_date = a.due_date + delta
+                        existing.data_final_projeto = data_final_projeto
                     return existing.id
 
                 # Criar registro principal
@@ -6450,6 +6458,13 @@ class Database:
 
         return self._safe_query(query)
 
+    @staticmethod
+    def _servico_finalizado(proposta):
+        """Retornos de pós-organização só valem para serviço finalizado: proposta reaberta (voltou a
+        "Em execução") não mostra retorno até ser finalizada de novo."""
+        from utils.proposta_status import normalize, STATUS_FINALIZADA
+        return proposta is not None and normalize(proposta.status or "") == STATUS_FINALIZADA
+
     def get_post_organizations(self, status_filter=None):
         """
         Retorna lista de pós-organizações do usuário.
@@ -6485,6 +6500,8 @@ class Database:
 
                     # Buscar número da proposta
                     proposta = self.session.query(Proposta).filter(Proposta.id == po.proposta_id).first()
+                    if not self._servico_finalizado(proposta):
+                        continue
                     proposta_numero = proposta.numero if proposta else 'N/A'
 
                     df_data.append({
@@ -6693,6 +6710,8 @@ class Database:
                     proposta = self.session.query(Proposta).filter(
                         Proposta.id == post_org.proposta_id
                     ).first() if post_org else None
+                    if not self._servico_finalizado(proposta):
+                        continue
 
                     df_data.append({
                         'action_id': a.id,
