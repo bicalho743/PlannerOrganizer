@@ -565,15 +565,15 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
 
     rc1, rc2 = st.columns(2)
     with rc1:
-        _report_card_download("", "RELATÓRIO CLIENTE", "Proposta de serviço", proposta_id, "cliente", nome_cliente, numero)
+        _report_card_download("", "relatório do cliente", "Proposta de serviço para enviar", proposta_id, "cliente", nome_cliente, numero)
     with rc2:
-        _report_card_download("", "RELATÓRIO INTERNO", "Margens e custos", proposta_id, "interno", nome_cliente, numero)
+        _report_card_download("", "relatório interno", "Margens e custos, só para você", proposta_id, "interno", nome_cliente, numero)
 
     rc3, rc4 = st.columns(2)
     with rc3:
-        _report_card_download("", "RELATÓRIO FORNECEDORES", "Lista de terceiros", proposta_id, "fornecedores", nome_cliente, numero)
+        _report_card_download("", "relatório de fornecedores", "Lista de terceiros", proposta_id, "fornecedores", nome_cliente, numero)
     with rc4:
-        _report_card_download("", "VENDAS DO PRODUTO", "Produtos organizados", proposta_id, "vendas", nome_cliente, numero)
+        _report_card_download("", "relatório de produtos", "Produtos vendidos na organização", proposta_id, "vendas", nome_cliente, numero)
 
     st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
     if status_atual == STATUS_RECUSADA:
@@ -758,35 +758,45 @@ def _gerar_report_pdf(proposta_id, report_type, nome_cliente="Cliente", numero_p
 
 
 def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_cliente="Cliente", numero_proposta=None):
-    """Card de relatório com geração SOB DEMANDA (lazy).
+    """Botão "Baixar <relatório>": um clique só.
 
-    O PDF só é gerado quando o usuário clica em 'Gerar' — evita gerar todos os
-    relatórios ao abrir o detalhe da proposta (grande ganho de velocidade).
-    Uma vez gerado na sessão, o card passa a oferecer 'Baixar' direto."""
+    O PDF só é gerado no clique (abrir a proposta não gera os 4 relatórios). Depois de gerar,
+    a tela volta com o botão de download no mesmo lugar e um script o aciona sozinho, então a
+    pessoa clica uma vez e o arquivo baixa. Na mesma sessão, os cliques seguintes baixam direto.
+    (O download_button aceita gerar o arquivo no clique, mas roda fora da sessão: o PDF ficaria
+    sem o banco e o perfil da conta.)"""
     state_key = f"_report_pdf_{report_type}_{proposta_id}"
-    # estilo dos cartões em .streamlit/style.css (containers st-key-dl_card_* e st-key-gen_card_*)
+    auto_key = f"{state_key}_auto"
+    rotulo = f"Baixar {title}"
+    dl_key = f"dl_btn_{report_type}_{proposta_id}"
 
     saved = st.session_state.get(state_key)
     if isinstance(saved, dict) and saved.get('path') and os.path.exists(saved['path']):
         with open(saved['path'], "rb") as f:
             pdf_bytes = f.read()
-        with st.container(key=f"dl_card_{report_type}_{proposta_id}"):
-            st.download_button(
-                label=f"{title}", data=pdf_bytes, file_name=saved['name'],
-                mime="application/pdf", key=f"dl_btn_{report_type}_{proposta_id}",
-                use_container_width=True,
-            )
-        st.caption(f"Pronto — {subtitle}")
+        st.download_button(rotulo, data=pdf_bytes, file_name=saved['name'], mime="application/pdf",
+                           key=dl_key, icon=":material/download:", use_container_width=True)
+        st.caption(subtitle)
+        if st.session_state.pop(auto_key, False):
+            components.html(f"""<script>
+(function(){{
+  var n = 0, t = setInterval(function(){{
+    var b = window.parent.document.querySelector('.st-key-{dl_key} button');
+    if (b) {{ clearInterval(t); b.click(); }} else if (++n > 40) clearInterval(t);
+  }}, 100);
+}})();
+</script>""", height=0)
         return
 
-    with st.container(key=f"gen_card_{report_type}_{proposta_id}"):
-        gerar = st.button(f"{title}", key=f"gen_btn_{report_type}_{proposta_id}", use_container_width=True)
+    gerar = st.button(rotulo, key=f"gen_btn_{report_type}_{proposta_id}", icon=":material/download:",
+                      use_container_width=True)
     st.caption(subtitle)
     if gerar:
-        with st.spinner("Gerando relatório…"):
+        with st.spinner("Preparando o PDF…"):
             path, name, err = _gerar_report_pdf(proposta_id, report_type, nome_cliente, numero_proposta)
         if path:
             st.session_state[state_key] = {'path': path, 'name': name}
+            st.session_state[auto_key] = True
             st.rerun()
         else:
             st.error(err or "Erro ao gerar relatório.")

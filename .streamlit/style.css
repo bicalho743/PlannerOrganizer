@@ -499,17 +499,6 @@ div[data-testid="stDownloadButton"] > button {
     text-decoration: none !important; box-shadow: none !important;
 }
 div[data-testid="stDownloadButton"] > button:hover { background: #F9FAFB !important; border-color: #98A2B3 !important; }
-/* cartões de relatório da proposta (propostas_unificado._report_card_download): azul-marinho com texto dourado */
-[class*="st-key-dl_card_"] div[data-testid="stDownloadButton"] > button,
-[class*="st-key-gen_card_"] .stButton > button {
-    background: var(--navy) !important; border: 1px solid var(--navy) !important; border-radius: 10px !important;
-    padding: 16px !important; min-height: 80px !important; width: 100% !important;
-    display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important;
-}
-[class*="st-key-dl_card_"] div[data-testid="stDownloadButton"] > button:hover,
-[class*="st-key-gen_card_"] .stButton > button:hover { background: var(--navy-hover) !important; border-color: var(--navy-hover) !important; }
-[class*="st-key-dl_card_"] div[data-testid="stDownloadButton"] > button *,
-[class*="st-key-gen_card_"] .stButton > button * { color: var(--gold) !important; font-weight: 700 !important; font-size: 12px !important; }
 div[data-testid="stDownloadButton"] > button *,
 div[data-testid="stDownloadButton"] * {
     color: var(--navy) !important; text-decoration: none !important;
