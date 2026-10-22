@@ -17,7 +17,7 @@ from utils.trial import DIAS_TRIAL
 # Mesma identidade do app e da landing: azul-marinho, dourado e creme; títulos com serifa
 # (a landing usa Cormorant Garamond; no PDF, Times é a serifa disponível sem arquivo de fonte).
 # O conteúdo descreve o app como ele é: ao mudar uma tela, mude o capítulo correspondente.
-VERSAO = "2.0"
+VERSAO = "2.1"
 
 NAVY_RGB = colors.HexColor('#0D1B2A')
 GOLD_RGB = colors.HexColor('#C9A84C')
@@ -290,17 +290,18 @@ def gerar_manual_sistema(verificar_auth=True):
     # ── APRESENTAÇÃO ───────────────────────────────────────────────────
     capitulo("Bem-vinda ao Planner Organizer", intro=(
         "O Planner Organizer reúne num só lugar o que uma Personal Organizer usa no dia a dia: "
-        "clientes, propostas, vendas de produtos, financeiro e os retornos depois do serviço. "
+        "agenda, clientes, propostas, vendas de produtos, financeiro, MEI e os retornos depois do serviço. "
         "Este manual segue o menu do sistema, na mesma ordem e com os mesmos nomes."))
     secao("O menu")
     tabela([
         ["Menu", "Para que serve"],
         ['<font color="%s">■</font> Início' % CORES_MODULO["Dashboard"], "Os números do mês e tudo o que precisa de atenção hoje."],
+        ['<font color="%s">■</font> Agenda' % CORES_MODULO["Agenda"], "Compromissos e tudo o que tem data: serviços, retornos e contas."],
         ['<font color="%s">■</font> Clientes' % CORES_MODULO["Clientes"], "Cadastro, busca e importação de clientes."],
         ['<font color="%s">■</font> Propostas' % CORES_MODULO["Propostas"], "Do orçamento à finalização do serviço, com os PDFs para a cliente."],
         ['<font color="%s">■</font> Vendas' % CORES_MODULO["Vendas"], "Venda de produtos, recebimento, parcelas, estoque e lucro."],
         ['<font color="%s">■</font> Pós-organização' % CORES_MODULO["PosOrganizacao"], "Retornos para a cliente depois do serviço, com mensagem pronta no WhatsApp."],
-        ['<font color="%s">■</font> Financeiro' % CORES_MODULO["Financeiro"], "O mês em números, contas a receber e a pagar, limite do MEI."],
+        ['<font color="%s">■</font> Financeiro' % CORES_MODULO["Financeiro"], "O mês em números, contas a receber e a pagar e a aba MEI (DAS e declaração)."],
         ['<font color="%s">■</font> Relatórios' % CORES_MODULO["Relatórios"], "Resultado, clientes, propostas e trabalhos por período, com Excel."],
         ['<font color="%s">■</font> Cadastros' % CORES_MODULO["Cadastros"], "Fornecedores, parceiros, assistentes e produtos."],
         ['<font color="%s">■</font> Perfil e marca' % CORES_MODULO["Perfil"], "Seu logotipo, cores e contatos em todos os PDFs."],
@@ -311,7 +312,7 @@ def gerar_manual_sistema(verificar_auth=True):
     e.append(_draw_botoes())
     e.append(Spacer(1, 4))
     texto("<b>No celular</b>, uma barra embaixo leva ao Início, às Propostas e ao Financeiro; o botão "
-          "<b>+</b> cria uma proposta, uma cliente ou um lançamento, e <b>Menu</b> abre o menu completo.")
+          "<b>+</b> cria uma proposta, uma cliente, um compromisso ou um lançamento, e <b>Menu</b> abre o menu completo.")
 
     # ── INÍCIO ─────────────────────────────────────────────────────────
     capitulo("Início", "Dashboard",
@@ -329,6 +330,19 @@ def gerar_manual_sistema(verificar_auth=True):
     texto("O funil mostra propostas enviadas, fechadas e concluídas nos últimos 90 dias. Ao lado, as propostas "
           "aprovadas e em execução. Numa conta nova, o Início mostra os <b>Primeiros passos</b>: colocar a "
           "marca, cadastrar a primeira cliente e criar a primeira proposta.")
+
+    # ── AGENDA ─────────────────────────────────────────────────────────
+    capitulo("Agenda", "Agenda",
+             "Seus compromissos e tudo o que já tem data no sistema, por semana ou por mês.")
+    bullet("<b>Novo compromisso</b> (botão dourado): o que é, dia, hora, cliente, local e valor. Serve para "
+           "diárias, visitas de orçamento e reuniões.")
+    bullet("<b>Com valor</b>, o compromisso entra sozinho em <b>A receber</b> no Financeiro, na data dele. Mudar o "
+           "valor ou a data muda o lançamento; excluir o compromisso tira o que ainda não foi recebido.")
+    bullet("Clique no compromisso para <b>Recebi</b>, <b>Editar</b> ou <b>Excluir</b>.")
+    bullet("A agenda também mostra, cada um com sua cor: início e fim dos serviços aprovados ou em execução, "
+           "retornos de pós-organização e contas a receber e a pagar que vencem no período.")
+    destaque("<b>Assistente de organizer?</b> Cadastre em <b>Clientes</b> as organizers que contratam você e lance "
+             "cada diária como compromisso: a agenda e o que você tem a receber ficam no mesmo lugar.")
 
     # ── CLIENTES ───────────────────────────────────────────────────────
     capitulo("Clientes", "Clientes", "A base de clientes usada em propostas, vendas e mensagens.")
@@ -402,6 +416,7 @@ def gerar_manual_sistema(verificar_auth=True):
     texto("<b>Entrou</b>, <b>Gastou</b>, <b>Retirado para você</b> (o que foi para a sua conta pessoal) e <b>Sobrou</b>, "
           "com <b>de onde veio</b> e <b>para onde foi</b> o dinheiro por categoria. Para quem é MEI, o "
           "<b>limite do MEI</b> mostra quanto do faturamento do ano já foi usado.")
+    texto("O Financeiro tem duas abas: <b>Lançamentos</b> (tudo o que está abaixo) e <b>MEI</b>.")
     e.append(_draw_board("O quadro do Financeiro", [
         ("A receber", GREEN_RGB, ["Propostas aprovadas", "Vendas e parcelas", "Comissões"]),
         ("A pagar", CORAL_RGB, ["Assistentes", "Contas e fornecedores", "Lançamentos manuais"]),
@@ -412,6 +427,13 @@ def gerar_manual_sistema(verificar_auth=True):
     bullet("Clique num cartão para ver os detalhes: <b>Receber</b> ou <b>Pagar</b> marca a data, <b>Editar</b> muda os "
            "dados e <b>Excluir</b> pede confirmação.")
     bullet("<b>Histórico financeiro</b> com filtros e <b>Últimos 6 meses</b> com a evolução do que entrou e saiu.")
+    secao("Aba MEI")
+    bullet("<b>Limite do ano</b>: quanto já foi faturado (só o que foi recebido) dos R$ 81 mil e a projeção para o "
+           "ano no ritmo atual.")
+    bullet("<b>DAS mês a mês</b>: pago, a vencer, atrasado ou futuro. O DAS de cada mês vence no dia 20 do mês "
+           "seguinte. <b>Lançar DAS pago</b> registra o pagamento; <b>Gerar a guia do DAS</b> abre o PGMEI da Receita.")
+    bullet("<b>Declaração anual (DASN-SIMEI)</b>: o prazo (31 de maio) e a receita bruta do ano separada em serviços "
+           "e venda de produtos, como a declaração pede.")
 
     # ── RELATÓRIOS ─────────────────────────────────────────────────────
     capitulo("Relatórios", "Relatórios",
@@ -449,7 +471,8 @@ def gerar_manual_sistema(verificar_auth=True):
     bullet("Coloque sua marca em <b>Perfil e marca</b> antes de enviar a primeira proposta.")
     bullet("Aprove a proposta no sistema assim que a cliente aceitar, com o sinal: o Financeiro fica certo desde o início.")
     bullet("Finalize o projeto quando terminar: vendas, comissões, pagamentos e retornos são lançados sozinhos.")
-    bullet("Abra o <b>Início</b> todo dia e resolva a lista <b>Para fazer</b>.")
+    bullet("Abra o <b>Início</b> todo dia e resolva a lista <b>Para fazer</b>; na <b>Agenda</b>, veja a semana.")
+    bullet("Sendo MEI, lance o DAS todo mês e confira a aba <b>MEI</b> antes de 31 de maio.")
     bullet("Marque recebimentos e pagamentos no Financeiro para o lucro e o saldo baterem com o banco.")
     bullet("Uma vez por mês, veja os <b>Relatórios</b> e baixe o Excel para o contador.")
     e.append(Spacer(1, 14))

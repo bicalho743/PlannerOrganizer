@@ -228,6 +228,7 @@ _components.html("""
   folha.id = 'barra-cel-folha';
   [['acao_nova_proposta', 'Nova proposta', 'Orçamento para uma cliente'],
    ['acao_nova_cliente', 'Nova cliente', 'Nome e telefone já bastam'],
+   ['acao_novo_compromisso', 'Novo compromisso', 'Diária, visita ou orçamento na agenda'],
    ['acao_novo_lancamento', 'Novo lançamento', 'Receita ou despesa no financeiro']].forEach(function(o) {
     var b = doc.createElement('button');
     b.type = 'button';
@@ -777,7 +778,8 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
         pass
 
     MENU_PRINCIPAL = [
-        (None, [("Início", "Dashboard", ":material/home:")]),
+        (None, [("Início", "Dashboard", ":material/home:"),
+                ("Agenda", "Agenda", ":material/calendar_month:")]),
         ("Comercial", [
             ("Clientes", "Clientes", ":material/group:"),
             ("Propostas", "Propostas", ":material/request_quote:"),
@@ -811,6 +813,7 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
     with st.sidebar.container(key="acoes_rapidas"):
         for _chave, _pagina, _flag in (("acao_nova_proposta", "Propostas", "kanban_nova_proposta_open"),
                                        ("acao_nova_cliente", "Clientes", "abrir_nova_cliente"),
+                                       ("acao_novo_compromisso", "Agenda", "ag_novo_open"),
                                        ("acao_novo_lancamento", "Financeiro", "fin_nova_transacao_open")):
             if st.button(_chave, key=_chave):
                 st.session_state.current_page = _pagina
@@ -875,6 +878,8 @@ apply_page_footer()
 try:
     if st.session_state.current_page == "Dashboard":
         from pages.dashboard import show; show()
+    elif st.session_state.current_page == "Agenda":
+        from pages.agenda import show; show()
     elif st.session_state.current_page == "Clientes":
         from pages.cadastros import show; show(modo="clientes")
     elif st.session_state.current_page == "Cadastros":

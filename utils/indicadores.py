@@ -205,3 +205,88 @@ def funil(propostas, hoje, dias=90):
         "conversao": (len(fechadas) / decididas) if decididas else None,
         "dias": dias,
     }
+
+
+def _eh_das(categoria, descricao):
+    return bool(re.search(r"\bdas\b|imposto|simples nacional", _chave(f"{categoria} {descricao}")))
+
+
+def _competencia_no_texto(descricao):
+    """(ano, mês) de "competência 03/2026" na descrição, se houver."""
+    m = re.search(r"competencia\s+(\d{1,2})/(\d{4})", _chave(descricao))
+    if m and 1 <= int(m.group(1)) <= 12:
+        return int(m.group(2)), int(m.group(1))
+    return None
+
+
+def das_do_ano(mov, ano, hoje):
+    """Situação do DAS de cada mês (competência) do ano.
+
+    O DAS de um mês vence no dia 20 do mês seguinte. Um pagamento conta para a competência
+    escrita na descrição ("competência 03/2026", como o app lança); os demais pagamentos de
+    imposto vão, em ordem de data, para o mês mais antigo ainda em aberto cujo vencimento já
+    começou a correr (pago a partir do 1º dia do mês seguinte à competência).
+
+    Devolve 12 dicts: mes, vencimento, situacao ('pago', 'atrasado', 'a vencer', 'futuro'),
+    pago_em, valor_pago."""
+    pagos = []
+    if not mov.empty:
+        sai = mov[(mov["lado"] == "sai") & mov["realizado"]]
+        for _, r in sai.iterrows():
+            if r["quando"] and _eh_das(r["categoria"], r["descricao"]):
+                pagos.append((r["quando"], float(r["valor"]), _competencia_no_texto(r["descricao"])))
+    pagos.sort(key=lambda p: p[0])
+
+    meses = []
+    for mes in range(1, 13):
+        venc = date(ano + (mes == 12), mes % 12 + 1, 20)
+        meses.append({"mes": mes, "vencimento": venc, "pago_em": None, "valor_pago": 0.0})
+    livres = []
+    for quando, valor, comp in pagos:
+        if comp and comp[0] == ano:
+            m = meses[comp[1] - 1]
+            if m["pago_em"] is None:
+                m["pago_em"], m["valor_pago"] = quando, valor
+                continue
+        if comp is None:
+            livres.append((quando, valor))
+    for quando, valor in livres:
+        for m in meses:
+            inicio_pagto = date(ano + (m["mes"] == 12), m["mes"] % 12 + 1, 1)
+            if m["pago_em"] is None and quando >= inicio_pagto:
+                m["pago_em"], m["valor_pago"] = quando, valor
+                break
+    for m in meses:
+        if m["pago_em"]:
+            m["situacao"] = "pago"
+        elif date(ano, m["mes"], 1) > hoje:
+            m["situacao"] = "futuro"
+        elif m["vencimento"] < hoje:
+            m["situacao"] = "atrasado"
+        else:
+            m["situacao"] = "a vencer"
+    return meses
+
+
+def faturamento_ano(mov, ano):
+    """Receita bruta recebida no ano, separada como pede a declaração anual do MEI (DASN-SIMEI):
+    venda de produtos (comércio) e serviços."""
+    vazio = {"total": 0.0, "comercio": 0.0, "servicos": 0.0}
+    if mov.empty:
+        return vazio
+    rec = mov[(mov["lado"] == "entra") & mov["realizado"]]
+    rec = rec[rec["quando"].apply(lambda d: bool(d) and d.year == ano)]
+    if rec.empty:
+        return vazio
+    eh_produto = rec["categoria"].apply(lambda c: bool(re.search(r"produto|\bvenda", _chave(c))))
+    comercio = float(rec[eh_produto]["valor"].sum())
+    total = float(rec["valor"].sum())
+    return {"total": total, "comercio": comercio, "servicos": total - comercio}
+
+
+def prazo_dasn(hoje):
+    """Próximo prazo da declaração anual (DASN-SIMEI): (ano declarado, data limite, dias que faltam)."""
+    limite = date(hoje.year, 5, 31)
+    if hoje > limite:
+        limite = date(hoje.year + 1, 5, 31)
+    return limite.year - 1, limite, (limite - hoje).days

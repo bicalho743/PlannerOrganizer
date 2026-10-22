@@ -362,6 +362,25 @@ def Despesa(**kwargs):
     # Criar e retornar a transação
     return Transacao(**transacao_kwargs)
 
+class Compromisso(Base):
+    """Compromisso da Agenda (diária, visita, orçamento, reunião). Com valor, gera uma receita
+    pendente no Financeiro (transacao_id), mantida em sincronia por Database.salvar_compromisso."""
+    __tablename__ = 'compromissos'
+    id = Column(Integer, primary_key=True)
+    data = Column(Date, nullable=False)
+    hora = Column(String)  # "HH:MM" ou vazio (dia todo)
+    titulo = Column(String, nullable=False)
+    cliente_id = Column(Integer, ForeignKey('clientes.id'), nullable=True)
+    local = Column(String)
+    valor = Column(Float, default=0)
+    observacoes = Column(String)
+    transacao_id = Column(Integer, nullable=True)
+    usuario_id = Column(String, nullable=True)  # Multi-tenant
+
+    __table_args__ = (
+        Index('idx_compromisso_usuario_data', 'usuario_id', 'data'),
+    )
+
 class AcrescimoProposta(Base):
     __tablename__ = 'acrescimos_proposta'
     id = Column(Integer, primary_key=True)
