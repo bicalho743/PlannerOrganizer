@@ -931,7 +931,7 @@ if st.session_state.mostrar_termos:
         st.markdown("---")
         from pages.termos_de_uso import get_termos_conteudo
         st.markdown(get_termos_conteudo(), unsafe_allow_html=True)
-        if st.button("Fechar", key="fechar_termos", use_container_width=True):
+        if st.button("Fechar", key="fechar_termos", type="tertiary"):
             st.session_state.mostrar_termos = False
 
 if st.session_state.mostrar_politica:
@@ -940,5 +940,5 @@ if st.session_state.mostrar_politica:
         st.markdown("---")
         from pages.politica_privacidade import get_politica_conteudo
         st.markdown(get_politica_conteudo(), unsafe_allow_html=True)
-        if st.button("Fechar", key="fechar_politica", use_container_width=True):
+        if st.button("Fechar", key="fechar_politica", type="tertiary"):
             st.session_state.mostrar_politica = False

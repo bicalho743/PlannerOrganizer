@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 from datetime import datetime
+from utils.ui import botao_documento
 
 # Links de checkout do Stripe (mesmos usados no app mobile)
 STRIPE_CHECKOUT_MENSAL = "https://buy.stripe.com/4gMcN5dQC9vX6yVfQO18c01"
@@ -253,7 +254,7 @@ def show():
     st.markdown("**Como fica no PDF**")
     st.markdown(_previa_html(perfil), unsafe_allow_html=True)
     st.caption("A prévia mostra o que está salvo. Depois de alterar, clique em Salvar para atualizar.")
-    if st.button("Gerar PDF de exemplo", icon=":material/picture_as_pdf:", key="pm_pdf_exemplo"):
+    if botao_documento("Gerar PDF de exemplo", icon=":material/picture_as_pdf:", key="pm_pdf_exemplo"):
         try:
             st.session_state["pm_pdf_bytes"] = _pdf_exemplo(perfil)
         except Exception as e:

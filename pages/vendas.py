@@ -18,7 +18,7 @@ from datetime import datetime, date, timedelta
 import os
 import tempfile
 from utils.custom_components import custom_info, custom_warning
-from utils.ui import botao_excluir, cartao_clicavel
+from utils.ui import botao_excluir, botao_editar, botao_documento, cartao_clicavel
 from utils.design_tokens import (
     NAVY, NAVY_HOVER, GOLD,
 )
@@ -314,9 +314,10 @@ def _render_detail_panel(venda_id, venda_row):
         except Exception as e:
             st.caption(f"Itens: {str(e)}")
 
-    col_edit, col_canc, col_space = st.columns([1, 1, 3])
+    # editar à esquerda; cancelar/excluir (vermelho) menor, à direita — mesmo arranjo do Financeiro
+    col_edit, _, col_canc = st.columns([2, 3, 1.4])
     with col_edit:
-        if not cancelada and st.button("Editar", key=f"det_edit_{venda_id}", use_container_width=True):
+        if not cancelada and botao_editar("Editar itens", key=f"det_edit_{venda_id}", use_container_width=True):
             st.session_state[f"editando_venda_{venda_id}"] = not st.session_state.get(f"editando_venda_{venda_id}", False)
             st.rerun()
     with col_canc:
@@ -478,7 +479,7 @@ def _render_detail_panel(venda_id, venda_row):
                         st.rerun()
             except Exception as e:
                 st.error(f"Erro: {str(e)}")
-                if st.button("Fechar", key=f"canc_edit_err_{venda_id}"):
+                if st.button("Fechar", key=f"canc_edit_err_{venda_id}", type="tertiary"):
                     st.session_state[f"editando_venda_{venda_id}"] = False
                     st.rerun()
 
@@ -642,7 +643,7 @@ def show():
         st.success("Venda finalizada! Gere o relatório abaixo.")
         rc1, rc2 = st.columns(2)
         with rc1:
-            if st.button("GERAR RELATÓRIO", type="primary", use_container_width=True, key="btn_rel_pos"):
+            if botao_documento("Gerar relatório", use_container_width=True, key="btn_rel_pos"):
                 try:
                     vid = st.session_state.venda_recente_id
                     vrow = vendas_df[vendas_df["id"] == vid].iloc[0]
@@ -722,7 +723,7 @@ def show():
             def _modal_venda():
                 _render_detail_panel(selected_id, venda_sel)
                 st.markdown("---")
-                if st.button("Fechar", key=f"venda_fechar_modal_{selected_id}", use_container_width=True):
+                if st.button("Fechar", key=f"venda_fechar_modal_{selected_id}", type="tertiary"):
                     st.session_state["venda_selecionada"] = None
                     st.rerun()
 

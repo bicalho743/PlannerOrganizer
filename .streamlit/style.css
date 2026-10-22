@@ -420,6 +420,11 @@ div[data-testid="stExpander"] button[data-testid="stBaseButton-primary"],
 div[data-testid="stExpander"] button[data-testid="stBaseButton-primary"] *,
 div[data-testid="stExpander"] button[data-testid$="FormSubmit"],
 div[data-testid="stExpander"] button[data-testid$="FormSubmit"] * { color: #FFFFFF !important; }
+/* ...exceto a chamada dourada, que tem texto azul-marinho */
+div[data-testid="stExpander"] [class*="st-key-cta_"] .stButton > button,
+div[data-testid="stExpander"] [class*="st-key-cta_"] .stButton > button *,
+div[data-testid="stExpander"] [class*="st-key-gold_"] .stButton > button,
+div[data-testid="stExpander"] [class*="st-key-gold_"] .stButton > button * { color: var(--navy) !important; }
 /* cabeçalho do expander é texto, não botão */
 div[data-testid="stExpander"] summary, div[data-testid="stExpander"] summary * { color: #101828 !important; font-weight: 600 !important; }
 /* Campo de DATA — Streamlit moderno (>=1.4x) renderiza o campo como
@@ -492,18 +497,29 @@ div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] * {
 /* ========================================
    DOWNLOAD BUTTONS
    ======================================== */
-/* baixar PDF é ação secundária: branco com borda, texto azul-marinho (era verde com degradê) */
-div[data-testid="stDownloadButton"] > button {
-    background: #FFFFFF !important; color: var(--navy) !important; border: 1px solid #D0D5DD !important;
+/* documentos (gerar/baixar PDF): dourado claro com texto marrom-dourado.
+   Vale para todo st.download_button e para os botões em containers "btndoc_" (utils/ui.py). */
+div[data-testid="stDownloadButton"] > button,
+[class*="st-key-btndoc_"] .stButton > button {
+    background: #FBF5E6 !important; color: #5C4712 !important; border: 1px solid #E3CF97 !important;
     border-radius: 8px !important; font-weight: 600 !important; min-height: 40px !important;
     text-decoration: none !important; box-shadow: none !important;
 }
-div[data-testid="stDownloadButton"] > button:hover { background: #F9FAFB !important; border-color: #98A2B3 !important; }
+div[data-testid="stDownloadButton"] > button:hover,
+[class*="st-key-btndoc_"] .stButton > button:hover { background: #F5EACB !important; border-color: #C9A84C !important; }
 div[data-testid="stDownloadButton"] > button *,
-div[data-testid="stDownloadButton"] * {
-    color: var(--navy) !important; text-decoration: none !important;
+div[data-testid="stDownloadButton"] *,
+[class*="st-key-btndoc_"] .stButton > button * {
+    color: #5C4712 !important; font-weight: 600 !important; text-decoration: none !important;
     border-bottom: none !important;
 }
+
+/* editar / reabrir / duplicar: azul claro com texto azul-marinho (containers "btned_", utils/ui.py) */
+[class*="st-key-btned_"] .stButton > button {
+    background: #EAF0F8 !important; color: #1F3A60 !important; border: 1px solid #C7D3E6 !important;
+}
+[class*="st-key-btned_"] .stButton > button:hover { background: #DCE6F3 !important; border-color: #8FA3C0 !important; }
+[class*="st-key-btned_"] .stButton > button * { color: #1F3A60 !important; }
 
 /* botões de excluir e de fechar (utils/ui.py: botao_excluir, link_fechar) */
 [class*="st-key-del_"] button[kind], [class*="st-key-del_"] button[data-testid] {

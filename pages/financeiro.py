@@ -4,7 +4,7 @@ import plotly.express as px
 import html as html_module
 from datetime import datetime, timedelta
 from utils.currency_formatter import fmt_brl
-from utils.ui import botao_excluir, input_moeda, cartao_clicavel
+from utils.ui import botao_excluir, botao_editar, input_moeda, cartao_clicavel
 from utils.indicadores import (movimentos, entrou_gastou, retirado, previsto, por_categoria, mei, cor_categoria,
                                realizados_no_mes, CATEGORIA_IMPOSTO, CATEGORIA_RETIRADA)
 
@@ -305,7 +305,7 @@ def _render_detail_panel(transacao, financeiro_df):
                 st.session_state[confirm_key] = True
                 st.rerun()
         with col_act2:
-            if st.button("Editar", key=f"fin_edit_{tid}", icon=":material/edit:", use_container_width=True):
+            if botao_editar("Editar", key=f"fin_edit_{tid}", use_container_width=True):
                 st.session_state["fin_editando"] = tid
                 st.rerun()
         with col_act3:

@@ -17,7 +17,7 @@ from utils.design_tokens import (
     NAVY, NAVY_HOVER, GOLD,
 )
 from utils.status_execucao import EXEC_EM_EXECUCAO, EXEC_FINALIZADA, EXEC_CANCELADA
-from utils.ui import botao_excluir, link_fechar, input_moeda, cartao_clicavel
+from utils.ui import botao_excluir, link_fechar, input_moeda, cartao_clicavel, baixar_pdf, botao_editar, botao_documento
 
 
 def _safe_float(val, default=0.0):
@@ -299,33 +299,19 @@ def _resumo_financeiro_rows_html(valor, sinal):
 
 
 def _pdf_gerar_baixar(proposta_id, key_sufixo):
-    """Ação operacional independente: gera o PDF da proposta (lógica existente)
-    e mantém o botão Baixar disponível enquanto o modal ficar aberto."""
-    state_key = f"pdf_open_{proposta_id}"
-    if st.button("Gerar proposta", key=f"btn_pdf_proposta_{key_sufixo}_{proposta_id}",
-                 use_container_width=True, type="secondary",
-                 help="Gera o documento PDF da proposta para entregar ao cliente."):
+    """Baixar a proposta em PDF para entregar à cliente: um clique gera e baixa."""
+    def _gerar():
+        from utils.propostas_helper import gerar_pdf_cliente_proposta
         try:
-            from utils.propostas_helper import gerar_pdf_cliente_proposta
             sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(
                 st.session_state.db, proposta_id, tipo_documento="proposta")
-            if sucesso and arquivo:
-                st.session_state[state_key] = arquivo
-            else:
-                st.session_state[state_key] = None
-                st.error(f"Erro: {mensagem}")
         except Exception as e:
-            st.session_state[state_key] = None
-            st.error(str(e))
-        st.rerun()
+            return None, None, str(e)
+        if sucesso and arquivo:
+            return arquivo, os.path.basename(arquivo), None
+        return None, None, mensagem
 
-    arquivo = st.session_state.get(state_key)
-    if arquivo and os.path.exists(arquivo):
-        st.success("PDF gerado!")
-        with open(arquivo, "rb") as f:
-            st.download_button("Baixar", f.read(), os.path.basename(arquivo),
-                               "application/pdf", key=f"dl_proposta_{key_sufixo}_{proposta_id}",
-                               use_container_width=True)
+    baixar_pdf("Baixar proposta em PDF", f"proposta_{key_sufixo}_{proposta_id}", _gerar)
 
 
 def _mais_acoes_proposta(proposta_id, proposta):
@@ -370,7 +356,7 @@ def _mais_acoes_proposta(proposta_id, proposta):
         st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
 
         # ── Duplicar proposta ────────────────────────────────────────────
-        if st.button("Duplicar proposta", key=f"btn_dup_{proposta_id}", use_container_width=True):
+        if botao_editar("Duplicar proposta", key=f"btn_dup_{proposta_id}", icon=":material/content_copy:", use_container_width=True):
             try:
                 from utils.proposta_status import STATUS_EM_ABERTO
                 novo = st.session_state.db.add_proposta(
@@ -580,7 +566,7 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
         st.info("Ao reabrir, a proposta recusada voltará para o status 'Em aberto'.")
     else:
         st.info("Ao reabrir, a proposta voltará para o status 'Em execução'.")
-    if st.button("Reabrir proposta", key=f"btn_reabrir_fin_{proposta_id}", use_container_width=True, type="secondary"):
+    if botao_editar("Reabrir proposta", key=f"btn_reabrir_fin_{proposta_id}", icon=":material/replay:", use_container_width=True):
         try:
             from reabrir_proposta import reabrir_proposta_finalizada
             res = reabrir_proposta_finalizada(proposta_id)
@@ -758,48 +744,11 @@ def _gerar_report_pdf(proposta_id, report_type, nome_cliente="Cliente", numero_p
 
 
 def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_cliente="Cliente", numero_proposta=None):
-    """Botão "Baixar <relatório>": um clique só.
-
-    O PDF só é gerado no clique (abrir a proposta não gera os 4 relatórios). Depois de gerar,
-    a tela volta com o botão de download no mesmo lugar e um script o aciona sozinho, então a
-    pessoa clica uma vez e o arquivo baixa. Na mesma sessão, os cliques seguintes baixam direto.
-    (O download_button aceita gerar o arquivo no clique, mas roda fora da sessão: o PDF ficaria
-    sem o banco e o perfil da conta.)"""
-    state_key = f"_report_pdf_{report_type}_{proposta_id}"
-    auto_key = f"{state_key}_auto"
-    rotulo = f"Baixar {title}"
-    dl_key = f"dl_btn_{report_type}_{proposta_id}"
-
-    saved = st.session_state.get(state_key)
-    if isinstance(saved, dict) and saved.get('path') and os.path.exists(saved['path']):
-        with open(saved['path'], "rb") as f:
-            pdf_bytes = f.read()
-        st.download_button(rotulo, data=pdf_bytes, file_name=saved['name'], mime="application/pdf",
-                           key=dl_key, icon=":material/download:", use_container_width=True)
-        st.caption(subtitle)
-        if st.session_state.pop(auto_key, False):
-            components.html(f"""<script>
-(function(){{
-  var n = 0, t = setInterval(function(){{
-    var b = window.parent.document.querySelector('.st-key-{dl_key} button');
-    if (b) {{ clearInterval(t); b.click(); }} else if (++n > 40) clearInterval(t);
-  }}, 100);
-}})();
-</script>""", height=0)
-        return
-
-    gerar = st.button(rotulo, key=f"gen_btn_{report_type}_{proposta_id}", icon=":material/download:",
-                      use_container_width=True)
-    st.caption(subtitle)
-    if gerar:
-        with st.spinner("Preparando o PDF…"):
-            path, name, err = _gerar_report_pdf(proposta_id, report_type, nome_cliente, numero_proposta)
-        if path:
-            st.session_state[state_key] = {'path': path, 'name': name}
-            st.session_state[auto_key] = True
-            st.rerun()
-        else:
-            st.error(err or "Erro ao gerar relatório.")
+    """Botão "Baixar <relatório>" de um clique; o PDF só é gerado quando a pessoa pede
+    (abrir a proposta não gera os quatro relatórios)."""
+    baixar_pdf(f"Baixar {title}", f"rel_{report_type}_{proposta_id}",
+               lambda: _gerar_report_pdf(proposta_id, report_type, nome_cliente, numero_proposta),
+               legenda=subtitle)
 
 
 def _tab_detalhes(proposta_id, proposta):
@@ -963,7 +912,7 @@ def _tab_produtos(proposta_id):
 
             # PDF dos produtos
             st.markdown("---")
-            if st.button(" Gerar Relatório de Venda dos Produtos", use_container_width=True, key=f"btn_pdf_produtos_proposta_{proposta_id}"):
+            if botao_documento("Gerar relatório de venda dos produtos", use_container_width=True, key=f"btn_pdf_produtos_proposta_{proposta_id}"):
                 try:
                     from utils.pdf_generator_v2 import gerar_pdf_venda_v2
                     from sqlalchemy import text as _text
@@ -1729,19 +1678,19 @@ def _tab_acoes(proposta_id, proposta):
 
         col1, col2, col3 = st.columns(3)
         with col1:
-            if st.button("Gerar para Cliente", use_container_width=True, key=f"btn_rel_cliente_{proposta_id}"):
+            if botao_documento("Gerar para a cliente", use_container_width=True, key=f"btn_rel_cliente_{proposta_id}"):
                 try:
                     st_gerar_pdf_cliente(proposta_id)
                 except Exception as e:
                     st.error(str(e))
         with col2:
-            if st.button("Gerar Interno", use_container_width=True, key=f"btn_rel_interno_{proposta_id}"):
+            if botao_documento("Gerar interno", use_container_width=True, key=f"btn_rel_interno_{proposta_id}"):
                 try:
                     st_gerar_pdf_interno(proposta_id)
                 except Exception as e:
                     st.error(str(e))
         with col3:
-            if st.button(" Gerar Fornecedores", use_container_width=True, key=f"btn_rel_forn_{proposta_id}"):
+            if botao_documento("Gerar fornecedores", use_container_width=True, key=f"btn_rel_forn_{proposta_id}"):
                 try:
                     st_gerar_pdf_fornecedores(proposta_id)
                 except Exception as e:
@@ -1749,7 +1698,7 @@ def _tab_acoes(proposta_id, proposta):
 
         with st.expander(" Reabrir Proposta Finalizada"):
             st.warning("Esta ação retornará a proposta para o status 'Em Execução'.")
-            if st.button("REABRIR PROPOSTA", key=f"btn_reabrir_{proposta_id}", type="primary", use_container_width=True):
+            if botao_editar("Reabrir proposta", key=f"btn_reabrir_{proposta_id}", icon=":material/replay:", use_container_width=True):
                 try:
                     from reabrir_proposta import reabrir_proposta_finalizada
                     res = reabrir_proposta_finalizada(proposta_id)
@@ -1770,7 +1719,7 @@ def _tab_acoes(proposta_id, proposta):
 
     # ── Gerar PDF da proposta (sempre disponível) ─────────────────────────
     st.markdown("---")
-    if st.button(" Gerar PDF da Proposta (cliente)", key=f"btn_pdf_proposta_{proposta_id}", use_container_width=True):
+    if botao_documento("Gerar PDF da proposta (cliente)", key=f"btn_pdf_proposta_{proposta_id}", use_container_width=True):
         try:
             sucesso, mensagem, arquivo = gerar_pdf_proposta(db=st.session_state.db, proposta_id=proposta_id)
             if sucesso and arquivo:

@@ -358,7 +358,7 @@ def _view_detalhes(templates):
 
         c1, c2, _ = st.columns([1.5, 1.5, 4])
         with c1:
-            if st.button("Sim, agendar", key="btn_sim_retorno", use_container_width=True):
+            if st.button("Sim, agendar", key="btn_sim_retorno", type="primary", use_container_width=True):
                 st.session_state.agendar_retorno = True
         with c2:
             if st.button("Não precisa", key="btn_nao_retorno", use_container_width=True):

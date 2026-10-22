@@ -6,7 +6,7 @@ import pandas as pd
 from utils.importador import importar_cadastros, gerar_template_csv
 from utils.custom_components import custom_info
 from utils.tooltip_helper import create_tooltip, input_with_tooltip
-from utils.ui import botao_excluir, input_moeda
+from utils.ui import botao_excluir, botao_editar, input_moeda
 
 def show(modo="todos"):
     """modo: "clientes" (só a aba de clientes, item próprio no menu), "outros" (fornecedores,
@@ -160,7 +160,7 @@ def show(modo="todos"):
                             )
 
                         # Botão de confirmação
-                        if st.button(f"Confirmar {acao}", disabled=cliente_id is None):
+                        if st.button(f"Confirmar {acao}", type="primary", disabled=cliente_id is None):
                             if cliente_id is None:
                                 st.error("Nenhum cliente selecionado.")
                             elif acao == "Editar":
@@ -419,7 +419,7 @@ def show(modo="todos"):
             )
             
             if arquivo:
-                if st.button("Importar Clientes"):
+                if st.button("Importar clientes", type="primary"):
                     with st.spinner("Importando dados..."):
                         sucesso, mensagem = importar_cadastros(arquivo, "Cliente", st.session_state.db)
                         if sucesso:
@@ -547,7 +547,7 @@ def show(modo="todos"):
                         # Botões de ação lado a lado
                         col1, col2 = st.columns(2)
                         with col1:
-                            if st.button("Editar Fornecedor", key=f"edit_fornecedor_{fornecedor_id}"):
+                            if botao_editar("Editar fornecedor", key=f"edit_fornecedor_{fornecedor_id}"):
                                 st.session_state['editing_fornecedor_id'] = fornecedor_id
                                 st.rerun()
                         
@@ -641,7 +641,7 @@ def show(modo="todos"):
                 key="fornecedor_file_uploader"
             )
             if arquivo:
-                if st.button("Importar Fornecedores"):
+                if st.button("Importar fornecedores", type="primary"):
                     with st.spinner("Importando dados..."):
                         sucesso, mensagem = importar_cadastros(arquivo, "Fornecedor", st.session_state.db)
                         if sucesso:
@@ -750,7 +750,7 @@ def show(modo="todos"):
                         # Botões de ação lado a lado
                         col1, col2 = st.columns(2)
                         with col1:
-                            if st.button("Editar Parceiro", key=f"edit_parceiro_{parceiro_id}"):
+                            if botao_editar("Editar parceiro", key=f"edit_parceiro_{parceiro_id}"):
                                 st.session_state['editing_parceiro_id'] = parceiro_id
                                 st.rerun()
                         
@@ -837,7 +837,7 @@ def show(modo="todos"):
             )
 
             if arquivo:
-                if st.button("Importar Parceiros"):
+                if st.button("Importar parceiros", type="primary"):
                     with st.spinner("Importando dados..."):
                         sucesso, mensagem = importar_cadastros(arquivo, "Parceiro", st.session_state.db)
                         if sucesso:
@@ -931,7 +931,7 @@ def show(modo="todos"):
                         # Botões de ação lado a lado
                         col1, col2 = st.columns(2)
                         with col1:
-                            if st.button("Editar Assistente", key=f"edit_assistente_{assistente_id}"):
+                            if botao_editar("Editar assistente", key=f"edit_assistente_{assistente_id}"):
                                 st.session_state['editing_assistente_id'] = assistente_id
                                 st.rerun()
                         
@@ -972,7 +972,7 @@ def show(modo="todos"):
             )
 
             if arquivo:
-                if st.button("Importar Assistentes", key="assistente_import_button"):
+                if st.button("Importar assistentes", key="assistente_import_button", type="primary"):
                     with st.spinner("Importando dados..."):
                         sucesso, mensagem = importar_cadastros(arquivo, "Assistente", st.session_state.db)
                         if sucesso:
