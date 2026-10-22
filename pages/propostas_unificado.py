@@ -2013,7 +2013,7 @@ def show():
     col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
     with col_btn:
         with stylable_container(key="gold_nova_proposta", css_styles=list(GOLD_BUTTON_CSS)):
-            nova_btn = st.button("  Nova Proposta", type="primary", use_container_width=True, key="btn_nova_proposta_top")
+            nova_btn = st.button("Nova proposta", type="primary", icon=":material/add:", use_container_width=True, key="btn_nova_proposta_top")
             if nova_btn:
                 st.session_state['kanban_nova_proposta_open'] = not st.session_state['kanban_nova_proposta_open']
 

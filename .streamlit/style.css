@@ -2,6 +2,9 @@
    PLANNER ORGANIZER - ESTILOS CONSOLIDADOS
    ======================================== */
 
+/* fonte dos títulos da landing page e da tela de entrada */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap');
+
 :root {
     --navy: #0D1B2A;
     --navy-hover: #162840;
@@ -24,6 +27,8 @@
     --border-light: #dee2e6;
     --bg-card: #ffffff;
     --bg-subtle: #faf9f7;
+    --bg-app: #F8F6F1;
+    --modulo: #B8943D; /* cor da tela aberta; app.py troca conforme o módulo */
     --font-h1: 2rem;
     --font-h2: 1.5rem;
     --font-h3: 1.15rem;
@@ -41,6 +46,12 @@
 }
 
 * { box-sizing: border-box; }
+
+/* fundo creme da landing page; menu, cartões e campos ficam brancos por cima */
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] { background-color: var(--bg-app) !important; }
+section[data-testid="stSidebar"], section[data-testid="stSidebar"] > div { background-color: #FFFFFF !important; }
+section[data-testid="stSidebar"] { border-right: 1px solid #ECE8DF !important; }
+div[data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"]) { background-color: #FFFFFF; }
 
 html, body, .stApp {
     overscroll-behavior-y: contain !important;
@@ -91,7 +102,9 @@ button[data-testid="collapsedControl"] {
 .app-heading-1 { font-size: var(--font-h1); margin: 0 0 var(--space-md) 0; line-height: 1.1; }
 .app-heading-2 { font-size: var(--font-h2); margin: 0 0 var(--space-sm) 0; line-height: 1.2; }
 .app-heading-3 { font-size: var(--font-h3); margin: 0 0 var(--space-sm) 0; line-height: 1.3; }
-h1.page-title, .page-title { font-size: 1.75rem !important; font-weight: 700 !important; line-height: 1.2 !important; margin: 0 0 var(--space-md) 0 !important; padding: 0 !important; color: var(--navy, #0D1B2A) !important; }
+h1.page-title, .page-title { font-family: 'Cormorant Garamond', Georgia, serif !important; font-size: 2.2rem !important; font-weight: 600 !important; line-height: 1.15 !important; margin: 0 0 var(--space-md) 0 !important; padding: 0 !important; color: var(--navy, #0D1B2A) !important; }
+/* filete na cor do módulo sob o título */
+h1.page-title::after { content: ""; display: block; width: 40px; height: 3px; border-radius: 2px; background: var(--modulo); margin-top: 6px; }
 .section-title { font-size: calc(var(--font-h2) - 0.05rem); font-weight: 600; margin-bottom: var(--space-sm); color: var(--text-primary); }
 .app-breadcrumb { margin-bottom: var(--space-md); font-size: var(--font-base); color: var(--text-secondary); }
 .app-breadcrumb::before { content: "•"; display: inline-block; width: 1rem; color: var(--gold); margin-right: 0.5rem; }
@@ -193,7 +206,7 @@ section[data-testid="stSidebar"] p { color: #344054 !important; }
 
 /* marca e conta no topo */
 .sb-marca { padding: 0 8px 14px; margin-bottom: 6px; border-bottom: 1px solid #EEF0F3; }
-.sb-logo { font-size: 1.05rem; font-weight: 700; color: var(--navy); letter-spacing: -0.01em; }
+.sb-logo { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.3rem; white-space: nowrap; font-weight: 600; color: var(--navy); line-height: 1.2; }
 .sb-logo::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px;
     background: var(--gold); margin-right: 8px; vertical-align: 1px; }
 .sb-conta { font-size: 0.8rem; color: #667085; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -224,6 +237,11 @@ section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button * 
 }
 section[data-testid="stSidebar"] .stButton > button [data-testid="stIconMaterial"],
 section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button [data-testid="stIconMaterial"] { color: #667085 !important; font-size: 1.15rem !important; }
+/* itens dos módulos: ícone num selo na cor do módulo (cores em app.py, CORES_MODULO) */
+section[data-testid="stSidebar"] [class*="st-key-main_menu_"] .stButton > button [data-testid="stIconMaterial"] {
+    width: 28px; height: 28px; border-radius: 7px; display: inline-flex !important; align-items: center; justify-content: center;
+    font-size: 1.05rem !important; color: var(--cor-item, #667085) !important; background: var(--cor-item-bg, #F2F4F7);
+}
 section[data-testid="stSidebar"] .stButton > button:hover,
 section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button:hover {
     background: #F2F4F7 !important; color: #101828 !important; transform: none !important; box-shadow: none !important;
@@ -231,11 +249,15 @@ section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button:ho
 /* tela aberta */
 section[data-testid="stSidebar"] .stButton > button[kind="primary"],
 section[data-testid="stSidebar"] .stButton > button[data-testid="stBaseButton-primary"] {
-    background: #EEF1F6 !important; color: var(--navy) !important; font-weight: 600 !important;
-    box-shadow: inset 3px 0 0 var(--gold) !important;
+    background: var(--cor-item-bg, #EEF1F6) !important; color: var(--navy) !important; font-weight: 600 !important;
+    box-shadow: inset 3px 0 0 var(--cor-item, var(--gold)) !important;
 }
 section[data-testid="stSidebar"] .stButton > button[kind="primary"] [data-testid="stIconMaterial"],
-section[data-testid="stSidebar"] .stButton > button[data-testid="stBaseButton-primary"] [data-testid="stIconMaterial"] { color: var(--navy) !important; }
+section[data-testid="stSidebar"] .stButton > button[data-testid="stBaseButton-primary"] [data-testid="stIconMaterial"] { color: var(--cor-item, var(--navy)) !important; }
+section[data-testid="stSidebar"] [class*="st-key-main_menu_"] .stButton > button[kind="primary"] [data-testid="stIconMaterial"],
+section[data-testid="stSidebar"] [class*="st-key-main_menu_"] .stButton > button[data-testid="stBaseButton-primary"] [data-testid="stIconMaterial"] {
+    background: var(--cor-item, var(--navy)); color: #FFFFFF !important;
+}
 section[data-testid="stSidebar"] .stButton > button:focus:not(:focus-visible) { outline: none !important; }
 
 /* ========================================
@@ -272,6 +294,23 @@ button[data-testid="stBaseButton-primaryFormSubmit"]:hover, button[kind="primary
 button[data-testid="stBaseButton-secondaryFormSubmit"]:hover, button[kind="secondaryFormSubmit"]:hover {
     background: var(--navy-hover) !important; border-color: var(--navy-hover) !important;
 }
+/* chamada da tela (Nova cliente, Nova proposta, Nova venda, Novo lançamento): dourado com texto
+   azul-marinho, como o botão da landing page. Containers com key "cta_..." ou "gold_...". */
+[class*="st-key-cta_"] .stButton > button, [class*="st-key-gold_"] .stButton > button {
+    background: var(--gold) !important; color: var(--navy) !important; border: 1px solid var(--gold) !important;
+    font-weight: 700 !important; min-height: 44px !important; box-shadow: 0 4px 14px rgba(184,148,61,.28) !important;
+}
+[class*="st-key-cta_"] .stButton > button:hover, [class*="st-key-gold_"] .stButton > button:hover {
+    background: var(--gold-dark) !important; border-color: var(--gold-dark) !important;
+}
+/* o cadastro de cliente abre num expander: o cabeçalho dele vira a chamada dourada */
+[class*="st-key-cta_"] div[data-testid="stExpander"] { border-color: var(--gold) !important; overflow: hidden; }
+[class*="st-key-cta_"] div[data-testid="stExpander"] details { border: 0 !important; }
+[class*="st-key-cta_"] div[data-testid="stExpander"] summary { background: var(--gold) !important; min-height: 46px; }
+[class*="st-key-cta_"] div[data-testid="stExpander"] summary:hover { background: var(--gold-dark) !important; }
+[class*="st-key-cta_"] div[data-testid="stExpander"] summary,
+[class*="st-key-cta_"] div[data-testid="stExpander"] summary * { color: var(--navy) !important; font-weight: 700 !important; }
+
 /* terciário: só texto */
 button[data-testid="stBaseButton-tertiary"], button[kind="tertiary"] {
     background: transparent !important; color: #475467 !important; border: 0 !important;
@@ -367,6 +406,9 @@ div[data-testid="stExpander"] {
     border-radius: 8px !important; margin: 0.5rem 0 !important;
 }
 div[data-testid="stExpander"] * { color: #262730 !important; }
+/* a regra acima escurecia o texto dos botões azul-marinho dentro de um expander */
+div[data-testid="stExpander"] button[data-testid="stBaseButton-primary"],
+div[data-testid="stExpander"] button[data-testid$="FormSubmit"] { color: #FFFFFF !important; }
 /* cabeçalho do expander é texto, não botão */
 div[data-testid="stExpander"] summary, div[data-testid="stExpander"] summary * { color: #101828 !important; font-weight: 600 !important; }
 /* Campo de DATA — Streamlit moderno (>=1.4x) renderiza o campo como
@@ -400,6 +442,7 @@ button[role="tab"] {
 }
 button[role="tab"]:hover { color: #101828 !important; }
 .stTabs [aria-selected="true"] { font-weight: 600 !important; color: var(--navy) !important; }
+.stTabs [data-baseweb="tab-highlight"] { background-color: var(--modulo) !important; }
 div[data-testid="stDataFrame"] table th {
     background-color: #0D1B2A !important; color: white !important;
     font-weight: 600 !important; padding: 0.75rem !important;

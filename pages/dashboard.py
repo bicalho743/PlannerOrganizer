@@ -87,25 +87,34 @@ def _primeiro_nome():
     return (nome or "").split(" ")[0]
 
 
-def _kpi(rotulo, valor, sub, destaque=False):
-    cls = "ini-kpi destaque" if destaque else "ini-kpi"
+def _kpi(rotulo, valor, sub, destaque=False, tom=""):
+    """tom: rec (verde), pag (coral) ou conv (azul) — filete colorido no topo do cartão."""
+    cls = "ini-kpi destaque" if destaque else f"ini-kpi {tom}".strip()
     return (f'<div class="{cls}"><span class="rot">{rotulo}</span>'
             f'<div class="val">{valor}</div><span class="sub">{sub}</span></div>')
 
 
 CSS = """
 <style>
-h1.ini-titulo { margin: 0 0 2px !important; padding: 0 !important; font-size: 1.75rem !important; font-weight: 700 !important; color: var(--navy) !important; line-height: 1.2 !important; }
+h1.ini-titulo { margin: 0 0 2px !important; padding: 0 !important; font-family: 'Cormorant Garamond', Georgia, serif !important; font-size: 2.3rem !important; font-weight: 600 !important; color: var(--navy) !important; line-height: 1.2 !important; }
 .ini-data { color: #667085; font-size: 0.92rem; margin-bottom: 18px; }
 .ini-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
 .ini-kpi { background: #fff; border: 1px solid #E4E7EC; border-radius: 12px; padding: 16px 18px; }
 .ini-kpi .rot { font-size: 0.72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #667085; }
 .ini-kpi .val { font-size: 1.55rem; font-weight: 700; color: #101828; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
 .ini-kpi .sub { font-size: 0.8rem; color: #667085; line-height: 1.4; display: block; }
-.ini-kpi.destaque { background: var(--navy); border-color: var(--navy); }
-.ini-kpi.destaque .rot, .ini-kpi.destaque .sub { color: #C8D1DC; }
+.ini-kpi.rec { border-top: 3px solid #2F855A; }
+.ini-kpi.pag { border-top: 3px solid #D9653B; }
+.ini-kpi.conv { border-top: 3px solid #3D6BB3; }
+.ini-kpi.rec .rot { color: #2F855A; }
+.ini-kpi.pag .rot { color: #C2552E; }
+.ini-kpi.conv .rot { color: #3D6BB3; }
+.ini-kpi.destaque { background: var(--navy); border-color: var(--navy); border-top: 3px solid var(--gold); }
+.ini-kpi.destaque .rot { color: var(--gold); }
+.ini-kpi.destaque .sub { color: #C8D1DC; }
 .ini-kpi.destaque .val { color: #fff; }
 .ini-secao { font-size: 0.78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #667085; margin: 6px 0 8px; }
+.ini-secao::before { content: ""; display: inline-block; width: 14px; height: 2px; background: var(--gold); margin-right: 8px; vertical-align: 3px; }
 .ini-item { display: flex; gap: 12px; align-items: flex-start; }
 .ini-tag { flex: none; font-size: 0.7rem; font-weight: 600; padding: 3px 8px; border-radius: 999px; margin-top: 2px; white-space: nowrap; }
 .ini-tag.pos { background: #EEF1F6; color: var(--navy); }
@@ -138,6 +147,9 @@ h1.ini-titulo { margin: 0 0 2px !important; padding: 0 !important; font-size: 1.
 .ini-fu .nm { color: #475467; }
 .ini-fu .bar { height: 10px; background: #F2F4F7; border-radius: 999px; overflow: hidden; }
 .ini-fu .bar i { display: block; height: 100%; background: var(--navy); border-radius: 999px; }
+.ini-fu.e1 .bar i { background: #3D6BB3; }
+.ini-fu.e2 .bar i { background: var(--gold); }
+.ini-fu.e3 .bar i { background: #2F855A; }
 .ini-fu b { text-align: right; font-variant-numeric: tabular-nums; }
 .ini-fu .ex { color: #067647; font-size: .8rem; font-weight: 600; white-space: nowrap; min-width: 0; }
 .ini-fu-rod { margin-top: 8px; padding-top: 8px; border-top: 1px solid #F2F4F7; font-size: .8rem; color: #667085; }
@@ -173,8 +185,8 @@ def _funil_html(fn):
               ("Fechadas", fn["fechadas"], fmt_brl(fn["valor_fechado"])),
               ("Concluídas", fn["concluidas"], "")]
     html = ""
-    for nome, n, extra in etapas:
-        html += (f'<div class="ini-fu"><span class="nm">{nome}</span>'
+    for i, (nome, n, extra) in enumerate(etapas, 1):
+        html += (f'<div class="ini-fu e{i}"><span class="nm">{nome}</span>'
                  f'<span class="bar"><i style="width:{max(n / base * 100, 2 if n else 0):.0f}%"></i></span>'
                  f'<b>{n}</b><span class="ex">{extra}</span></div>')
     html += (f'<div class="ini-fu-rod">{fn["aguardando"]} aguardando resposta ({fmt_brl(fn["valor_aguardando"])})'
@@ -304,12 +316,12 @@ def show():
         _kpi(f"Lucro de {MESES[hoje.month - 1]}", fmt_brl(lucro),
              f"entrou {fmt_brl(entrou)} · gastou {fmt_brl(gastou)}", destaque=True) +
         _kpi("A receber", fmt_brl(rec_pend["valor"].sum()),
-             f'<span class="ini-atraso">{len(atras_rec)} em atraso</span>' if len(atras_rec) else f"{len(rec_pend)} lançamento(s) pendente(s)") +
+             f'<span class="ini-atraso">{len(atras_rec)} em atraso</span>' if len(atras_rec) else f"{len(rec_pend)} lançamento(s) pendente(s)", tom="rec") +
         _kpi("A pagar", fmt_brl(desp_pend["valor"].sum()),
-             f"{len(prox7_pag)} vence(m) em até 7 dias" if len(prox7_pag) else f"{len(desp_pend)} conta(s) em aberto") +
+             f"{len(prox7_pag)} vence(m) em até 7 dias" if len(prox7_pag) else f"{len(desp_pend)} conta(s) em aberto", tom="pag") +
         _kpi("Conversão", f"{conv:.0%}" if conv is not None else "—",
              f"fechou {fn['fechadas']} de {fn['fechadas'] + fn['recusadas']} respondidas · {fn['dias']} dias"
-             if conv is not None else "nenhuma proposta respondida em 90 dias") +
+             if conv is not None else "nenhuma proposta respondida em 90 dias", tom="conv") +
         '</div>', unsafe_allow_html=True)
 
     if not perfil.get("logo") and not st.session_state.get("ini_sem_logo_ok"):

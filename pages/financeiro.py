@@ -571,7 +571,7 @@ def show():
         concluidas = financeiro_df[financeiro_df['status'].isin(['Aprovado', 'Recebido', 'Pago'])].copy()
 
     col_btn, _ = st.columns([1, 3])
-    with col_btn:
+    with col_btn, st.container(key="cta_novo_lancamento"):
         if st.button("Novo lançamento", type="primary", icon=":material/add:", use_container_width=True, key="btn_nova_transacao"):
             st.session_state["fin_nova_transacao_open"] = not st.session_state["fin_nova_transacao_open"]
     if st.session_state["fin_nova_transacao_open"]:

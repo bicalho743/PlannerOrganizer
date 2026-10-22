@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 import streamlit as st
 import logging
 import pandas as pd
@@ -847,6 +848,14 @@ if st.session_state.authenticated:
     if 'current_page' not in st.session_state or st.session_state.get('show_welcome', True):
         st.session_state.current_page = "Dashboard"
         st.session_state.show_welcome = False
+
+# Cor de cada módulo: selo do ícone no menu, filete do título e aba ativa da tela aberta
+from utils.design_tokens import CORES_MODULO, GOLD_DARK
+st.markdown("<style>" + "".join(
+    f'section[data-testid="stSidebar"] .st-key-main_menu_{re.sub(r"[^a-z0-9_-]", "-", _pg.lower())} {{ --cor-item: {_cor}; --cor-item-bg: {_cor}1F; }}'
+    for _pg, _cor in CORES_MODULO.items())
+    + f':root {{ --modulo: {CORES_MODULO.get(st.session_state.get("current_page"), GOLD_DARK)}; }}</style>',
+    unsafe_allow_html=True)
 
 from utils.page_config import apply_page_header, apply_page_footer
 apply_page_header()

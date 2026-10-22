@@ -21,6 +21,24 @@ BORDER = "#e2e8f0"
 BORDER_LIGHT = "#dee2e6"
 BG_CARD = "#fff"
 BG_SUBTLE = "#faf9f7"
+# Fundo das telas: o creme da landing page (plannerorganiza.com.br), um pouco mais claro
+# para uso o dia todo. Os cartões brancos se destacam sobre ele.
+BG_APP = "#F8F6F1"
+
+# Cor de cada módulo: ícone no menu, filete sob o título e aba ativa da tela.
+# Tons médios que convivem com o azul-marinho e o dourado da marca.
+CORES_MODULO = {
+    "Dashboard": "#B8943D",       # dourado
+    "Clientes": "#C05A7B",        # rosa
+    "Propostas": "#3D6BB3",       # azul
+    "Vendas": "#0E8A7D",          # verde-azulado
+    "PosOrganizacao": "#7356BF",  # lilás
+    "Financeiro": "#2F855A",      # verde
+    "Relatórios": "#C77D1A",      # âmbar
+    "Cadastros": "#5B6B80",       # cinza-azulado
+    "Perfil": "#B8943D",          # dourado
+    "Plano": "#33507A",           # azul-marinho médio da landing
+}
 
 FONT_SIZE_H1 = "2rem"
 FONT_SIZE_H2 = "1.5rem"
@@ -62,6 +80,7 @@ GLOBAL_CSS_VARS = f"""
     --border-light: {BORDER_LIGHT};
     --bg-card: {BG_CARD};
     --bg-subtle: {BG_SUBTLE};
+    --bg-app: {BG_APP};
     --font-h1: {FONT_SIZE_H1};
     --font-h2: {FONT_SIZE_H2};
     --font-h3: {FONT_SIZE_H3};
@@ -80,16 +99,16 @@ GLOBAL_CSS_VARS = f"""
 """
 
 GOLD_GRADIENT = f"linear-gradient(135deg, {GOLD}, {GOLD_DARK})"
-# Botão da ação principal da tela (Nova proposta, Nova venda, Nova transação).
-# Era dourado com sombra; agora segue o botão primário do sistema (azul-marinho).
-# O nome ficou por compatibilidade com as páginas que o importam.
+# Botão da ação principal da tela (Nova proposta, Nova venda): dourado com texto azul-marinho,
+# o mesmo botão de chamada da landing page. Uma tela tem no máximo um botão assim.
+# A regra .streamlit/style.css ([class*="st-key-gold_"]) garante a cor; esta lista repete o estilo.
 # Lista de blocos: o stylable_container prefixa cada item com a classe do container;
 # num texto único só a primeira regra seria prefixada e o resto valeria para a página toda.
 # Passe uma cópia (list(GOLD_BUTTON_CSS)): o stylable_container acrescenta itens à lista recebida.
 GOLD_BUTTON_CSS = [
-    f"button {{ background: {NAVY} !important; color: #fff !important; font-weight: 600 !important;"
-    f" border-radius: 8px !important; border: 1px solid {NAVY} !important; box-shadow: none !important; }}",
-    f"button:hover {{ background: {NAVY_HOVER} !important; }}",
+    f"button {{ background: {GOLD} !important; color: {NAVY} !important; font-weight: 700 !important;"
+    f" border-radius: 8px !important; border: 1px solid {GOLD} !important; }}",
+    f"button:hover {{ background: {GOLD_DARK} !important; border-color: {GOLD_DARK} !important; }}",
 ]
 
 NAVY_CARD_CSS = f"""

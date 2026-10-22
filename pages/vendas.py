@@ -627,7 +627,7 @@ def show():
     col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
     with col_btn:
         with stylable_container(key="gold_nova_venda", css_styles=list(GOLD_BUTTON_CSS)):
-            if st.button("Nova Venda", type="primary", use_container_width=True, key="btn_nova_venda_top"):
+            if st.button("Nova venda", type="primary", icon=":material/add:", use_container_width=True, key="btn_nova_venda_top"):
                 st.session_state["vendas_nova_venda_open"] = not st.session_state["vendas_nova_venda_open"]
                 if not st.session_state["vendas_nova_venda_open"]:
                     st.session_state.produtos_venda = []
