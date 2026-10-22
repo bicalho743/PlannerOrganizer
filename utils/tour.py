@@ -19,6 +19,9 @@ PASSOS = [
     ("02_agenda", "Agenda que junta tudo",
      "Marque diárias, visitas e orçamentos. Com valor, o compromisso entra sozinho em A receber. A agenda também "
      "mostra serviços, aniversários, retornos e vencimentos.", "Agenda"),
+    ("02b_aniversario", "Lembrete de aniversário",
+     "No dia do aniversário da cliente, o Início e a Agenda avisam, com o botão Dar parabéns: a mensagem já vai "
+     "pronta no WhatsApp.", "Dashboard"),
     ("03_clientes", "Clientes organizadas",
      "Nome e telefone já bastam. Origem e aniversário ajudam nos relatórios e nas mensagens. Dá para importar de planilha.",
      "Clientes"),
@@ -30,15 +33,16 @@ PASSOS = [
      "cada projeto.", "Precificacao"),
     ("06_vendas", "Venda de produtos",
      "Caixas, cabides e organizadores: a venda baixa o estoque, aceita parcelas e mostra o lucro.", "Vendas"),
-    ("07_pos", "Retornos que fidelizam",
-     "Depois do serviço, cinco retornos no dia certo, com a mensagem pronta para mandar pelo WhatsApp.",
+    ("07_pos", "Nunca mais esqueça de retornar uma cliente",
+     "Ao finalizar o serviço, o app agenda cinco retornos e lembra cada um no dia certo, com a mensagem pronta "
+     "para mandar pelo WhatsApp.",
      "PosOrganizacao"),
     ("08_financeiro", "Financeiro sem planilha",
      "Quanto entrou, quanto gastou e quanto sobrou, com as contas a receber e a pagar. Clique num cartão para "
      "marcar como recebido ou pago.", "Financeiro"),
-    ("09_mei", "MEI em dia",
-     "Na aba MEI: DAS mês a mês, limite do ano e prazo da declaração. Não é MEI? Troque o tipo de empresa ali. "
-     "O app não é contador: em caso de dúvida, procure um.", "Financeiro"),
+    ("09_mei", "MEI e Simples Nacional",
+     "Na aba MEI, escolha o tipo da sua empresa: MEI, Simples Nacional ou outro. Você acompanha o DAS de cada mês, o "
+     "limite do ano e o prazo da declaração. O app não é contador: em caso de dúvida, procure um.", "Financeiro"),
     ("10_relatorios", "Relatórios prontos",
      "Resultado do período, clientes, propostas e trabalhos, comparados com o período anterior, e o Excel "
      "formatado para o contador.", "Relatórios"),
