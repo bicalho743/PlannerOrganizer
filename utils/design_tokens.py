@@ -32,7 +32,7 @@ CORES_MODULO = {
     "Agenda": "#D9643A",          # coral
     "Clientes": "#C05A7B",        # rosa
     "Propostas": "#3D6BB3",       # azul
-    "Precificacao": "#D2693C",    # terracota
+    "Precificacao": "#7A8B2E",    # oliva (o coral ficou com a Agenda)
     "Vendas": "#0E8A7D",          # verde-azulado
     "PosOrganizacao": "#7356BF",  # lilás
     "Financeiro": "#2F855A",      # verde

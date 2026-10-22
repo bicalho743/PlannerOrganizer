@@ -299,6 +299,7 @@ def gerar_manual_sistema(verificar_auth=True):
         ['<font color="%s">■</font> Agenda' % CORES_MODULO["Agenda"], "Compromissos e tudo o que tem data: serviços, retornos e contas."],
         ['<font color="%s">■</font> Clientes' % CORES_MODULO["Clientes"], "Cadastro, busca e importação de clientes."],
         ['<font color="%s">■</font> Propostas' % CORES_MODULO["Propostas"], "Do orçamento à finalização do serviço, com os PDFs para a cliente."],
+        ['<font color="%s">■</font> Precificação' % CORES_MODULO["Precificacao"], "Quanto vale a sua hora e quanto cobrar por um projeto."],
         ['<font color="%s">■</font> Vendas' % CORES_MODULO["Vendas"], "Venda de produtos, recebimento, parcelas, estoque e lucro."],
         ['<font color="%s">■</font> Pós-organização' % CORES_MODULO["PosOrganizacao"], "Retornos para a cliente depois do serviço, com mensagem pronta no WhatsApp."],
         ['<font color="%s">■</font> Financeiro' % CORES_MODULO["Financeiro"], "O mês em números, contas a receber e a pagar e a aba MEI (DAS e declaração)."],
@@ -377,6 +378,16 @@ def gerar_manual_sistema(verificar_auth=True):
     secao("Outras ações")
     bullet("<b>Reabrir proposta</b>: volta para Em execução; os retornos de pós-organização somem até ela ser finalizada de novo.")
     bullet("<b>Duplicar proposta</b>: cria uma nova proposta em aberto a partir de outra. <b>Excluir</b> pede confirmação.")
+
+    # ── PRECIFICAÇÃO ───────────────────────────────────────────────────
+    capitulo("Precificação", "Precificacao",
+             "Para quem está começando ou quer rever os preços: a conta feita com os seus números.")
+    bullet("<b>Sua hora</b>: quanto quer ganhar por mês, seus custos fixos (DAS, transporte, ferramentas) e quantas "
+           "horas consegue atender. O sistema mostra a <b>hora mínima</b> (abaixo dela a conta do mês não fecha) e a "
+           "<b>hora sugerida</b>, com a sua margem. <b>Salvar meus números</b> guarda tudo para a próxima vez.")
+    bullet("<b>Preço de um projeto</b>: marque os ambientes, a complexidade, as assistentes e os custos do projeto. "
+           "Aparecem o preço sugerido, o preço mínimo, o sinal e quanto fica para você.")
+    texto("As horas por ambiente são só um ponto de partida: ajuste pela sua experiência.")
 
     # ── VENDAS ─────────────────────────────────────────────────────────
     capitulo("Vendas", "Vendas", "Venda de produtos (caixas, cabides, organizadores), avulsa ou vinda de uma proposta.")
