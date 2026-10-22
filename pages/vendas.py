@@ -601,8 +601,8 @@ def show():
         return df[(d >= i) & (d <= f)] if i else df[d <= f]
 
     vp = _no_periodo(vendas_df, ini, fim)
-    # a busca procura em todas as datas: é como se consulta uma venda antiga
-    lista = vendas_df if busca else vp
+    # o quadro mostra todas as datas (o período vale para os números do topo); a busca também
+    lista = vendas_df
     if busca and not lista.empty:
         b = busca.strip().lower()
         lista = lista[lista["cliente_nome"].astype(str).str.lower().str.contains(b, regex=False)
@@ -691,7 +691,7 @@ def show():
                         unsafe_allow_html=True)
             if col_df.empty:
                 st.caption("Nenhuma venda nesta situação." if rotulo == "A receber"
-                           else ("Nenhuma venda encontrada." if busca else "Nenhuma venda neste período."))
+                           else ("Nenhuma venda encontrada." if busca else "Nenhuma venda nesta situação."))
                 continue
             col_df = col_df.sort_values("data_venda", ascending=False)
             limite = 30
@@ -714,12 +714,12 @@ def show():
                     st.session_state["venda_selecionada"] = vid
                     st.rerun()
             if len(col_df) > limite:
-                st.caption(f"e mais {len(col_df) - limite}. Use a busca ou um período menor.")
+                st.caption(f"e mais {len(col_df) - limite} mais antigas. Busque pelo nome ou veja em “Todas as vendas”.")
     if busca:
         st.caption(f"Busca em todas as datas por “{busca.strip()}”.")
-    elif nome_periodo != "Tudo":
-        st.caption(f"Pagas e canceladas: {nome_periodo.lower()}. Para vendas mais antigas, busque pelo nome "
-                   "da cliente ou escolha “Tudo” no período. “A receber” mostra todas as vendas em aberto.")
+    else:
+        st.caption(f"O quadro mostra vendas de todas as datas, das mais novas para as mais antigas. "
+                   f"O período ({nome_periodo.lower()}) vale para os números do topo.")
 
     _lista_vendas(vendas_df, busca)
 
