@@ -32,11 +32,19 @@ FIREBASE_API_KEY = os.environ.get('FIREBASE_API_KEY', 'AIzaSyAtuIO-4oyI99rQSl9dA
 
 # ── AUTH ──────────────────────────────────────────────────────────────────────
 
+_TOKENS = {}  # id_token -> (uid, validade): o middleware do modo consulta e a rota checam o mesmo token
+_TOKEN_TTL = 300
+
+
 def verify_firebase_token(request: Request) -> str:
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Token não fornecido")
     id_token = auth_header.replace("Bearer ", "").strip()
+    agora = datetime.now().timestamp()
+    em_cache = _TOKENS.get(id_token)
+    if em_cache and em_cache[1] > agora:
+        return em_cache[0]
     try:
         url = f"https://identitytoolkit.googleapis.com/v1/accounts:lookup?key={FIREBASE_API_KEY}"
         response = requests.post(url, json={"idToken": id_token}, timeout=10)
@@ -46,11 +54,50 @@ def verify_firebase_token(request: Request) -> str:
         users = data.get("users", [])
         if not users:
             raise HTTPException(status_code=401, detail="Usuário não encontrado")
+        if len(_TOKENS) > 5000:
+            _TOKENS.clear()
+        _TOKENS[id_token] = (users[0]["localId"], agora + _TOKEN_TTL)
         return users[0]["localId"]
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Erro auth: {str(e)}")
+
+# ── MODO CONSULTA ─────────────────────────────────────────────────────────────
+# Depois do teste grátis, sem assinatura, a conta continua lendo tudo, mas não grava nem gera PDF
+# (mesma regra da web, utils/somente_leitura.py). O perfil e o tipo de empresa continuam liberados.
+
+MODO_CONSULTA = "modo_consulta"
+MENSAGEM_CONSULTA = "Seu teste grátis terminou. Assine para voltar a cadastrar, editar e gerar PDFs."
+_LIVRES_NO_CONSULTA = ("/webhook/", "/perfil", "/impostos/regime", "/api/status")
+
+
+def _uid_da_requisicao(request: Request):
+    try:
+        return verify_firebase_token(request)
+    except HTTPException:
+        return None
+
+
+def _em_modo_consulta(uid: str) -> bool:
+    from utils.trial import trial_expirado
+    try:
+        return trial_expirado(get_db(uid).get_perfil_usuario() or None)
+    except Exception as e:
+        print(f"[modo consulta] {e}")
+        return False  # na dúvida, não bloqueia
+
+
+@api.middleware("http")
+async def bloquear_no_modo_consulta(request: Request, call_next):
+    caminho = request.url.path
+    grava = request.method in ("POST", "PUT", "PATCH", "DELETE")
+    if (grava or caminho.startswith("/pdf/")) and not caminho.startswith(_LIVRES_NO_CONSULTA):
+        uid = _uid_da_requisicao(request)
+        if uid and _em_modo_consulta(uid):
+            return JSONResponse(status_code=402, content={"detail": MENSAGEM_CONSULTA, "codigo": MODO_CONSULTA})
+    return await call_next(request)
+
 
 def get_perfil_dados(uid: str) -> dict:
     """Busca dados do perfil do usuário para personalizar PDFs."""
@@ -742,6 +789,9 @@ async def get_perfil(uid: str = Depends(verify_firebase_token)):
                 if hasattr(perfil, 'to_dict'):
                     perfil = perfil.to_dict()
                 if isinstance(perfil, dict):
+                    from utils.trial import trial_expirado, dias_restantes_trial, is_pro
+                    perfil["modo_consulta"] = trial_expirado(perfil)
+                    perfil["dias_restantes_trial"] = None if is_pro(perfil) else dias_restantes_trial(perfil)
                     # Serializar datas e outros tipos não-JSON para string
                     for k, v in perfil.items():
                         if hasattr(v, 'isoformat'):
@@ -1794,3 +1844,201 @@ async def stripe_portal(uid: str = Depends(verify_firebase_token)):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── AGENDA ────────────────────────────────────────────────────────────────────
+# Mesma montagem da página Agenda da web (utils/agenda.py): compromissos, serviços, retornos de
+# pós-organização, aniversários e vencimentos do Financeiro.
+
+class CompromissoBody(BaseModel):
+    data: str
+    titulo: str
+    hora: Optional[str] = None
+    cliente_id: Optional[int] = None
+    local: Optional[str] = None
+    valor: Optional[float] = 0.0
+    observacoes: Optional[str] = None
+
+
+def _data_iso(txt, campo):
+    try:
+        return datetime.strptime(str(txt)[:10], "%Y-%m-%d").date()
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=422, detail=f"{campo}: use o formato AAAA-MM-DD")
+
+
+def _hora_valida(hora):
+    hora = (hora or "").strip()
+    if not hora:
+        return None
+    try:
+        return datetime.strptime(hora, "%H:%M").strftime("%H:%M")
+    except ValueError:
+        raise HTTPException(status_code=422, detail="hora: use o formato HH:MM")
+
+
+def _json_datas(itens):
+    return [{k: (v.isoformat() if hasattr(v, "isoformat") else v) for k, v in i.items()} for i in itens]
+
+
+@api.get("/agenda")
+async def get_agenda(inicio: str, fim: str, uid: str = Depends(verify_firebase_token)):
+    from utils.agenda import montar_agenda, totais
+    ini, fim_d = _data_iso(inicio, "inicio"), _data_iso(fim, "fim")
+    if fim_d < ini or (fim_d - ini).days > 62:
+        raise HTTPException(status_code=422, detail="Período inválido (até 62 dias).")
+    try:
+        db = get_db(uid)
+        compromissos = db.get_compromissos(ini, fim_d)
+        itens = montar_agenda(ini, fim_d, compromissos=compromissos, propostas=db.get_propostas(),
+                              acoes_pos=db.get_acoes_pos_periodo(ini, fim_d), financeiro=db.get_financeiro(),
+                              clientes=db.get_clientes())
+        entra, sai = totais(itens)
+        return JSONResponse(content={"itens": _json_datas(itens), "entra": round(entra, 2), "sai": round(sai, 2),
+                                     "compromissos": safe_records(compromissos)})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def _salvar_compromisso(uid, compromisso_id, body: CompromissoBody):
+    if not body.titulo.strip():
+        raise HTTPException(status_code=422, detail="Diga o que é o compromisso.")
+    db = get_db(uid)
+    if body.cliente_id:
+        clientes = db.get_clientes()
+        if clientes.empty or int(body.cliente_id) not in set(clientes["id"].astype(int)):
+            raise HTTPException(status_code=404, detail="Cliente não encontrada")
+    cid = db.salvar_compromisso(compromisso_id, data=_data_iso(body.data, "data"), titulo=body.titulo,
+                                hora=_hora_valida(body.hora), cliente_id=body.cliente_id, local=body.local,
+                                valor=body.valor or 0.0, observacoes=body.observacoes)
+    if not cid:
+        raise HTTPException(status_code=404, detail="Compromisso não encontrado")
+    return {"id": cid}
+
+
+@api.post("/compromissos")
+async def create_compromisso(body: CompromissoBody, uid: str = Depends(verify_firebase_token)):
+    return _salvar_compromisso(uid, None, body)
+
+
+@api.put("/compromissos/{compromisso_id}")
+async def update_compromisso(compromisso_id: int, body: CompromissoBody, uid: str = Depends(verify_firebase_token)):
+    return _salvar_compromisso(uid, compromisso_id, body)
+
+
+@api.delete("/compromissos/{compromisso_id}")
+async def delete_compromisso(compromisso_id: int, uid: str = Depends(verify_firebase_token)):
+    if not get_db(uid).excluir_compromisso(compromisso_id):
+        raise HTTPException(status_code=404, detail="Compromisso não encontrado")
+    return {"ok": True}
+
+
+@api.post("/compromissos/{compromisso_id}/recebido")
+async def compromisso_recebido(compromisso_id: int, uid: str = Depends(verify_firebase_token)):
+    """“Recebi”: dá baixa na receita pendente do compromisso, como o botão da web."""
+    db = get_db(uid)
+    comp = db.get_compromissos()
+    linha = comp[comp["id"] == compromisso_id] if not comp.empty else comp
+    if linha.empty:
+        raise HTTPException(status_code=404, detail="Compromisso não encontrado")
+    c = linha.iloc[0]
+    if c["status_receita"] != "Pendente" or pd.isna(c["transacao_id"]):
+        raise HTTPException(status_code=409, detail="Este compromisso não tem valor pendente.")
+    db.atualizar_status_transacao(int(c["transacao_id"]), "Recebido", datetime.now().date())
+    return {"ok": True}
+
+
+# ── IMPOSTOS (MEI, Simples Nacional, outro regime) ───────────────────────────
+# Mesmos cálculos da aba Impostos do Financeiro na web (utils/indicadores.py).
+
+AVISO_CONTADOR = ("O Planner Organiza não é contador e não substitui um. Os valores desta tela são estimativas "
+                  "para você se organizar, calculadas com o que foi lançado no app. Em caso de dúvida, procure "
+                  "um contador.")
+LINKS_IMPOSTOS = {
+    "pgmei": "https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/Identificacao",
+    "dasn": "https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/dasnsimei.app/Identificacao",
+    "pgdasd": "https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/pgdasd2018.app/Identificacao",
+}
+
+
+class RegimeBody(BaseModel):
+    regime: str
+    aliquota: Optional[float] = None
+
+
+class DasBody(BaseModel):
+    ano: int
+    mes: int
+    valor: float
+    pago_em: str
+
+
+def _meses_json(meses):
+    campos = ("mes", "vencimento", "situacao", "pago_em", "valor_pago", "receita", "rbt12", "aliquota", "das_estimado")
+    return _json_datas([{k: m[k] for k in campos if k in m} for m in meses])
+
+
+@api.get("/impostos")
+async def get_impostos(ano: Optional[int] = None, uid: str = Depends(verify_firebase_token)):
+    from utils.indicadores import (movimentos, das_do_ano, faturamento_ano, prazo_dasn, simples_do_ano,
+                                   recebido_no_mes, impostos_pagos_no_mes, LIMITE_MEI, DAS_MEI, CATEGORIA_IMPOSTO)
+    try:
+        hoje = datetime.now().date()
+        ano = ano or hoje.year
+        if ano not in (hoje.year, hoje.year - 1):
+            raise HTTPException(status_code=422, detail="Ano: só o atual ou o anterior.")
+        db = get_db(uid)
+        regime = db.get_regime()
+        mov = movimentos(db.get_financeiro())
+        resp = {"ano": ano, "regime": regime["regime"], "aliquota_informada": regime.get("aliquota"),
+                "aviso": AVISO_CONTADOR, "links": LINKS_IMPOSTOS, "categoria_imposto": CATEGORIA_IMPOSTO}
+        if regime["regime"] == "MEI":
+            fat = faturamento_ano(mov, ano)
+            if ano == hoje.year:
+                dia = hoje.timetuple().tm_yday
+                proj = fat["total"] / dia * (366 if ano % 4 == 0 else 365) if fat["total"] else 0.0
+            else:
+                proj = fat["total"]
+            ano_decl, limite_decl, faltam = prazo_dasn(hoje)
+            resp["mei"] = {"faturado": fat, "limite": LIMITE_MEI, "uso": fat["total"] / LIMITE_MEI,
+                           "projecao": proj, "das_valor": DAS_MEI, "meses": _meses_json(das_do_ano(mov, ano, hoje)),
+                           "declaracao": {"ano": ano_decl, "prazo": limite_decl.isoformat(), "faltam_dias": faltam,
+                                          "faturado": faturamento_ano(mov, ano_decl)}}
+        elif regime["regime"] == "Simples Nacional":
+            meses = simples_do_ano(mov, ano, hoje, regime.get("aliquota"))
+            atual = meses[hoje.month - 1] if ano == hoje.year else meses[-1]
+            resp["simples"] = {"faturado": faturamento_ano(mov, ano)["total"], "rbt12": atual["rbt12"],
+                               "aliquota": atual["aliquota"], "meses": _meses_json(meses)}
+        else:
+            ultimo = hoje.month if ano == hoje.year else 12
+            resp["outro"] = {"meses": [{"mes": m, "recebido": recebido_no_mes(mov, ano, m),
+                                        "impostos": impostos_pagos_no_mes(mov, ano, m)} for m in range(1, ultimo + 1)]}
+        return JSONResponse(content=resp)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@api.put("/impostos/regime")
+async def put_regime(body: RegimeBody, uid: str = Depends(verify_firebase_token)):
+    if body.regime not in Database.REGIMES:
+        raise HTTPException(status_code=422, detail="Regime: MEI, Simples Nacional ou Outro.")
+    if body.aliquota is not None and not 0 < body.aliquota <= 40:
+        raise HTTPException(status_code=422, detail="Alíquota entre 0 e 40%.")
+    aliquota = body.aliquota if body.regime == "Simples Nacional" else None
+    if not get_db(uid).salvar_regime(body.regime, aliquota):
+        raise HTTPException(status_code=404, detail="Perfil não encontrado")
+    return {"regime": body.regime, "aliquota": aliquota}
+
+
+@api.post("/impostos/das")
+async def post_das(body: DasBody, uid: str = Depends(verify_firebase_token)):
+    if not 1 <= body.mes <= 12 or body.valor <= 0:
+        raise HTTPException(status_code=422, detail="Informe o mês e o valor pago.")
+    tid = get_db(uid).lancar_das(body.ano, body.mes, body.valor, _data_iso(body.pago_em, "pago_em"))
+    if not tid:
+        raise HTTPException(status_code=500, detail="Não consegui lançar agora. Tente de novo.")
+    return {"id": tid}
