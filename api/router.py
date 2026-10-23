@@ -20,13 +20,6 @@ ALLOWED_ORIGINS = [
     ).split(",") if o.strip()
 ]
 
-api.add_middleware(
-    CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 FIREBASE_API_KEY = os.environ.get('FIREBASE_API_KEY', 'AIzaSyAtuIO-4oyI99rQSl9dAMu756FI4q10kcY')
 
@@ -97,6 +90,16 @@ async def bloquear_no_modo_consulta(request: Request, call_next):
         if uid and _em_modo_consulta(uid):
             return JSONResponse(status_code=402, content={"detail": MENSAGEM_CONSULTA, "codigo": MODO_CONSULTA})
     return await call_next(request)
+
+
+# CORS por último: o middleware adicionado depois fica por fora, e o 402 acima sai com os cabeçalhos.
+api.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def get_perfil_dados(uid: str) -> dict:
