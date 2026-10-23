@@ -115,7 +115,7 @@ def compra_se_assinante(perfil, uid):
     if (!(w.gtag && w.fbq) && ++n < 50) return;
     clearInterval(t);
     var anual = (w.localStorage.getItem('po_plano') === 'anual');
-    var p = {{value: anual ? 297 : 29.9, currency: 'BRL'}};
+    var p = {{value: anual ? 297 : 39.9, currency: 'BRL'}};
     w.localStorage.setItem(chave, '1');
     if (w.gtag) w.gtag('event', 'purchase', p);
     if (w.fbq) w.fbq('track', 'Purchase', p);

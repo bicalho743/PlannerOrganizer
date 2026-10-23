@@ -4,7 +4,7 @@ from datetime import datetime
 from utils.ui import botao_documento
 
 # Links de checkout do Stripe (mesmos usados no app mobile)
-STRIPE_CHECKOUT_MENSAL = "https://buy.stripe.com/4gMcN5dQC9vX6yVfQO18c01"
+STRIPE_CHECKOUT_MENSAL = "https://buy.stripe.com/aFa00j27UbE5cXjfQO18c02"  # R$ 39,90/mês (desde out/2026)
 STRIPE_CHECKOUT_ANUAL = "https://buy.stripe.com/8x26oHaEqbE5g9vbAy18c00"
 STRIPE_PORTAL_RETURN_URL = "https://plannerorganiza.com.br"
 

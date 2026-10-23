@@ -697,20 +697,20 @@ def _render_bloqueio_trial(perfil=None, uid=None):
       <div class='pw-cards'>
         <div class='pw-card'>
           <div class='pw-plan'>Mensal</div>
-          <div class='pw-price'>R$ 29,90 <span>/mês</span></div>
+          <div class='pw-price'>R$ 39,90 <span>/mês</span></div>
           <ul class='pw-features'>
             <li>Propostas e clientes ilimitados</li>
             <li>Financeiro completo</li>
             <li>Relatórios e PDFs</li>
             <li>Pós-organização</li>
           </ul>
-          <a class='pw-cta outline' href='{_url_mensal}' target='_blank' {rastreamento.onclick_checkout('mensal', 29.9)}>Assinar mensal</a>
+          <a class='pw-cta outline' href='{_url_mensal}' target='_blank' {rastreamento.onclick_checkout('mensal', 39.9)}>Assinar mensal</a>
         </div>
         <div class='pw-card featured'>
           <div class='pw-ribbon'>MELHOR CUSTO-BENEFÍCIO</div>
           <div class='pw-plan'>Anual</div>
           <div class='pw-price'>R$ 297 <span>/ano</span></div>
-          <div class='pw-save'>Economize 2 meses</div>
+          <div class='pw-save'>38% mais barato que o mensal</div>
           <ul class='pw-features'>
             <li>Propostas e clientes ilimitados</li>
             <li>Financeiro completo</li>
@@ -720,8 +720,7 @@ def _render_bloqueio_trial(perfil=None, uid=None):
           <a class='pw-cta primary' href='{_url_anual}' target='_blank' {rastreamento.onclick_checkout('anual', 297)}>Assinar anual</a>
         </div>
       </div>
-      <div class='pw-trust'><b>Preço de fundadora</b> para as 50 primeiras assinantes, garantido enquanto a assinatura
-        estiver ativa. Depois, R$ 39,90/mês e R$ 399/ano.</div>
+      <div class='pw-trust'><b>Cupom de lançamento ORGANIZA:</b> R$ 10 de desconto na primeira cobrança para as 50 primeiras assinantes (o mensal sai por R$ 29,90 no 1º mês). Digite o cupom na tela de pagamento.</div>
       <div class='pw-trust'>Pagamento seguro via Stripe · Cancele quando quiser · Dados sempre preservados</div>
       <div class='pw-manage'>Após assinar, atualize a página (a liberação pode levar alguns minutos).<br>
         Já é assinante? <a href='{STRIPE_PORTAL_LINK}' target='_blank'>Gerencie sua assinatura</a></div>

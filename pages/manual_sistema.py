@@ -492,7 +492,7 @@ def gerar_manual_sistema(verificar_auth=True):
              "cabeçalho e <b>Gerar PDF de exemplo</b> mostra uma proposta pronta antes de enviar a uma cliente.")
     capitulo("Plano e cobrança", "Plano",
              f"Toda conta começa com <b>{DIAS_TRIAL} dias grátis</b>, com tudo liberado e sem cartão. Depois, escolha o "
-             "plano <b>mensal (R$ 29,90)</b> ou <b>anual (R$ 297, o equivalente a R$ 24,75 por mês)</b>, com acesso "
+             "plano <b>mensal (R$ 39,90)</b> ou <b>anual (R$ 297, o equivalente a R$ 24,75 por mês)</b>, com acesso "
              "completo nos dois. Nesta tela também ficam o portal de pagamentos, para trocar o cartão, ver as "
              "faturas ou cancelar.")
     texto("<b>Quando o teste grátis termina</b> sem assinatura, a conta entra em <b>modo consulta</b>: você continua "

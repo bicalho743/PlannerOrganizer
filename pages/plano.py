@@ -95,17 +95,16 @@ def show():
     url_mensal = checkout_url(STRIPE_CHECKOUT_MENSAL, email, uid)
     url_anual = checkout_url(STRIPE_CHECKOUT_ANUAL, email, uid)
     st.markdown(f"""
-    <div class="pl-fundadora"><b>Preço de fundadora</b> para as 50 primeiras assinantes, garantido enquanto a
-      assinatura estiver ativa. Depois, R$ 39,90/mês e R$ 399/ano.</div>
+    <div class="pl-fundadora"><b>Cupom de lançamento ORGANIZA:</b> R$ 10 de desconto na primeira cobrança para as 50 primeiras assinantes (o mensal sai por R$ 29,90 no 1º mês). Digite o cupom na tela de pagamento.</div>
     <div class="pl-cards">
       <div class="pl-card">
         <div class="nome">Mensal</div>
-        <div class="preco">R$ 29,90 <span>/mês</span></div>
+        <div class="preco">R$ 39,90 <span>/mês</span></div>
         <div class="obs">Cancele quando quiser.</div>
-        <a class="cta secundario" href="{url_mensal}" target="_blank" rel="noopener" {onclick_checkout('mensal', 29.9)}>Assinar mensal</a>
+        <a class="cta secundario" href="{url_mensal}" target="_blank" rel="noopener" {onclick_checkout('mensal', 39.9)}>Assinar mensal</a>
       </div>
       <div class="pl-card destaque">
-        <span class="selo">2 MESES GRÁTIS</span>
+        <span class="selo">38% MAIS BARATO</span>
         <div class="nome">Anual</div>
         <div class="preco">R$ 297 <span>/ano</span></div>
         <div class="obs">Equivale a R$ 24,75 por mês.</div>
