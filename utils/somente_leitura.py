@@ -158,7 +158,7 @@ def faixa():
     with st.container(key="aviso_consulta"):
         c1, c2 = st.columns([4, 1.2], vertical_alignment="center")
         c1.markdown('<div class="ro-faixa"><b>Seu teste grátis terminou.</b> Você continua vendo tudo o que '
-                    'cadastrou. Para cadastrar, editar e gerar PDFs, assine o Planner Organizer.</div>',
+                    'cadastrou. Para cadastrar, editar e gerar PDFs, assine o Planner Organiza.</div>',
                     unsafe_allow_html=True)
         with c2, st.container(key="cta_assinar_consulta"):
             if st.button("Assinar agora", key="ro_assinar", icon=":material/workspace_premium:", use_container_width=True):

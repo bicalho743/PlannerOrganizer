@@ -62,7 +62,7 @@ class FirebaseAuth:
                 'email': user['email'],
                 'nome': user['email'].split('@')[0].title(),  # Fallback para nome a partir do email
                 'telefone': '',  # Valor padrão
-                'empresa': 'Planner Organizer',  # Valor padrão
+                'empresa': 'Planner Organiza',  # Valor padrão
                 'role': 'user'  # Papel padrão
             }
             
@@ -184,7 +184,7 @@ class FirebaseAuth:
                             email=email,
                             nome=name if name else email.split('@')[0].title(),
                             telefone="",
-                            empresa="Planner Organizer",
+                            empresa="Planner Organiza",
                             role="user",
                             plano="gratuito"
                         )

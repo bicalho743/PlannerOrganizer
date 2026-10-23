@@ -1,4 +1,4 @@
-# Planner Organizer - Sistema de Gestão
+# Planner Organiza - Sistema de Gestão
 
 ## Overview
 Sistema de gestão avançado para profissionais brasileiros, com foco em propostas, clientes e relatórios. O projeto visa otimizar a gestão de negócios através de uma interface intuitiva e funcionalidades robustas para controle financeiro, de vendas e relacionamento com o cliente.

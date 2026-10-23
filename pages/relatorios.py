@@ -471,7 +471,7 @@ def _excel(exp, titulo):
                                     ", ".join(n for n, df in exp.items() if isinstance(df, pd.DataFrame) and not df.empty)]})
         sobre.to_excel(xw, sheet_name="Sobre", index=False, header=False, startrow=2)
         ws = xw.sheets["Sobre"]
-        ws["A1"] = "Planner Organizer"
+        ws["A1"] = "Planner Organiza"
         ws["A1"].font = Font(bold=True, size=16, color=navy)
         for r in range(3, 7):
             ws.cell(r, 1).font = Font(bold=True, color="667085")
@@ -579,4 +579,4 @@ def show():
     except Exception as e:
         st.caption(f"Não foi possível gerar o Excel: {e}")
     st.caption("Relatórios gerenciais, pela data em que o dinheiro entrou ou saiu. Não substituem a contabilidade da "
-               "empresa: o Planner Organizer não é contador. Em caso de dúvida, procure um contador.")
+               "empresa: o Planner Organiza não é contador. Em caso de dúvida, procure um contador.")

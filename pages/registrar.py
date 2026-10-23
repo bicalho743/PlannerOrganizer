@@ -17,7 +17,7 @@ def show():
         with col2:
             st.markdown("""
             <div style="text-align: center; margin-bottom: 1.5rem;">
-                <p style="font-family: Cormorant Garamond, serif; font-size: 1.35rem; font-weight: 500; color: #16283E; margin-bottom: 0.3rem;">Registre-se no Planner Organizer</p>
+                <p style="font-family: Cormorant Garamond, serif; font-size: 1.35rem; font-weight: 500; color: #16283E; margin-bottom: 0.3rem;">Registre-se no Planner Organiza</p>
                 <p style="color: #6B7C94; font-size: 0.9rem;">
                     Crie sua conta para começar a gerenciar propostas e finanças
                 </p>

@@ -1,5 +1,5 @@
 """
-SQLAlchemy Models para o sistema Planner Organizer
+SQLAlchemy Models para o sistema Planner Organiza
 Contém todas as classes declarativas (Perfil, Usuario, Cliente, etc.)
 """
 import os

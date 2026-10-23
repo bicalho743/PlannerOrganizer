@@ -47,7 +47,7 @@ def _header_footer(canvas, doc):
     canvas.rect(0, h - 31, w, 3, fill=1, stroke=0)
     canvas.setFont(SERIFA, 11)
     canvas.setFillColor(WHITE)
-    canvas.drawString(60, h - 20, "Planner Organizer")
+    canvas.drawString(60, h - 20, "Planner Organiza")
     canvas.setFont('Helvetica', 7)
     canvas.setFillColor(colors.HexColor('#A0AEC0'))
     canvas.drawRightString(w - 60, h - 19, "Manual do sistema")
@@ -55,7 +55,7 @@ def _header_footer(canvas, doc):
     canvas.rect(0, 30, w, 2, fill=1, stroke=0)
     canvas.setFont('Helvetica', 7)
     canvas.setFillColor(GRAY_TEXT)
-    canvas.drawString(60, 16, f"© {datetime.now().year} Planner Organizer — plannerorganiza.com.br")
+    canvas.drawString(60, 16, f"© {datetime.now().year} Planner Organiza — plannerorganiza.com.br")
     canvas.drawRightString(w - 60, 16, f"Página {doc.page}")
     canvas.restoreState()
 
@@ -66,12 +66,12 @@ def _first_page(canvas, doc):
     canvas.setFillColor(NAVY_RGB)
     canvas.rect(0, 0, w, h, fill=1, stroke=0)
     canvas.setFont(SERIFA, 40)
-    largura = canvas.stringWidth("Planner Organizer", SERIFA, 40)
+    largura = canvas.stringWidth("Planner Organiza", SERIFA, 40)
     x0 = (w - largura - 22) / 2  # quadradinho dourado + nome, centralizados juntos (como o logo do app)
     canvas.setFillColor(GOLD_RGB)
     canvas.roundRect(x0, h / 2 + 116, 11, 11, 2, fill=1, stroke=0)
     canvas.setFillColor(WHITE)
-    canvas.drawString(x0 + 22, h / 2 + 110, "Planner Organizer")
+    canvas.drawString(x0 + 22, h / 2 + 110, "Planner Organiza")
     canvas.setFillColor(GOLD_RGB)
     canvas.rect(w / 2 - 40, h / 2 + 88, 80, 2, fill=1, stroke=0)
     canvas.setFont('Helvetica', 11)
@@ -215,9 +215,9 @@ def gerar_manual_sistema(verificar_auth=True):
     pdf_dir = "pdfs"
     if not os.path.exists(pdf_dir):
         os.makedirs(pdf_dir)
-    pdf_path = os.path.join(pdf_dir, "Manual_Planner_Organizer.pdf")
+    pdf_path = os.path.join(pdf_dir, "Manual_Planner_Organiza.pdf")
     doc = SimpleDocTemplate(pdf_path, pagesize=A4, rightMargin=60, leftMargin=60, topMargin=52, bottomMargin=50,
-                            title="Manual do Planner Organizer", author="Planner Organizer")
+                            title="Manual do Planner Organiza", author="Planner Organiza")
 
     estilos = getSampleStyleSheet()
     st_titulo = ParagraphStyle('ManualTitulo', parent=estilos['Heading1'], fontSize=24, leading=28,
@@ -288,11 +288,11 @@ def gerar_manual_sistema(verificar_auth=True):
     e.append(PageBreak())
 
     # ── APRESENTAÇÃO ───────────────────────────────────────────────────
-    capitulo("Bem-vinda ao Planner Organizer", intro=(
-        "O Planner Organizer reúne num só lugar o que uma Personal Organizer usa no dia a dia: "
+    capitulo("Bem-vinda ao Planner Organiza", intro=(
+        "O Planner Organiza reúne num só lugar o que uma Personal Organizer usa no dia a dia: "
         "agenda, clientes, propostas, vendas de produtos, financeiro, MEI e os retornos depois do serviço. "
         "Este manual segue o menu do sistema, na mesma ordem e com os mesmos nomes."))
-    destaque("<b>Importante:</b> o Planner Organizer organiza o seu negócio, mas <b>não é contador e não substitui "
+    destaque("<b>Importante:</b> o Planner Organiza organiza o seu negócio, mas <b>não é contador e não substitui "
              "um</b>. Os números de impostos (DAS, limite do MEI, Simples Nacional, declarações) são estimativas feitas "
              "com o que você lança. Em caso de dúvida, procure um contador.")
     secao("O menu")
@@ -319,7 +319,7 @@ def gerar_manual_sistema(verificar_auth=True):
     e.append(Spacer(1, 4))
     texto("<b>No celular</b>, uma barra embaixo leva ao Início, às Propostas e ao Financeiro; o botão "
           "<b>+</b> cria uma proposta, uma cliente, um compromisso ou um lançamento, e <b>Menu</b> abre o menu completo.")
-    texto("<b>App para Android</b>: o Planner Organizer também está na Google Play. O link fica na tela de entrada e "
+    texto("<b>App para Android</b>: o Planner Organiza também está na Google Play. O link fica na tela de entrada e "
           "no menu, em <b>App para Android</b>.")
 
     # ── INÍCIO ─────────────────────────────────────────────────────────
@@ -514,7 +514,7 @@ def gerar_manual_sistema(verificar_auth=True):
     texto("Dúvidas ou sugestões: <b>contato@plannerorganiza.com.br</b> ou o WhatsApp do suporte, em "
           "plannerorganiza.com.br.")
     e.append(Spacer(1, 10))
-    e.append(Paragraph(f"© {datetime.now().year} Planner Organizer — Versão {VERSAO}", st_rodape))
+    e.append(Paragraph(f"© {datetime.now().year} Planner Organiza — Versão {VERSAO}", st_rodape))
 
     doc.build(e, onFirstPage=_first_page, onLaterPages=_header_footer)
     return pdf_path

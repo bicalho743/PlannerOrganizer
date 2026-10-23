@@ -1,5 +1,5 @@
 """
-Página de Termos de Uso para o sistema Planner Organizer
+Página de Termos de Uso para o sistema Planner Organiza
 """
 import streamlit as st
 import os
@@ -12,7 +12,7 @@ if project_root not in sys.path:
 from utils.texto_legal import CONTATO, para_html, mostrar_pagina
 
 TITULO = "Termos e Condições de Uso"
-INTRO = ("Estes termos regem o uso do Planner Organizer, sistema on-line de gestão para profissionais de "
+INTRO = ("Estes termos regem o uso do Planner Organiza, sistema on-line de gestão para profissionais de "
          "organização (propostas, clientes, vendas, financeiro e relatórios). Ao criar uma conta você declara "
          "que leu e concorda com eles e com a nossa Política de Privacidade.")
 
@@ -41,7 +41,7 @@ SECOES = [
         "Usamos esses dados só para prestar o serviço, como descrito na Política de Privacidade.",
         "Ao cadastrar dados de terceiros, como seus clientes, você é a controladora desses dados perante a LGPD "
         "e deve ter base legal para tratá-los (por exemplo, a execução do contrato com o cliente). "
-        "O Planner Organizer atua como operador, tratando esses dados apenas sob suas instruções.",
+        "O Planner Organiza atua como operador, tratando esses dados apenas sob suas instruções.",
         "Após o cancelamento seus dados ficam guardados para que você possa voltar. Você pode pedir a exclusão "
         "definitiva a qualquer momento.",
     ], None),
@@ -50,14 +50,14 @@ SECOES = [
         "dados de outras contas, sobrecarregar ou burlar a plataforma, nem revender o acesso.",
     ], None),
     ("6. Propriedade intelectual", [
-        "O software, o design e a marca Planner Organizer pertencem aos seus desenvolvedores. A assinatura dá "
+        "O software, o design e a marca Planner Organiza pertencem aos seus desenvolvedores. A assinatura dá "
         "direito de uso enquanto estiver ativa e não transfere nenhum desses direitos.",
     ], None),
     ("7. Disponibilidade e responsabilidade", [
         "Trabalhamos para manter o sistema disponível e os dados protegidos, mas podem ocorrer interrupções para "
         "manutenção ou por falhas de terceiros (hospedagem, pagamento, login). Os cálculos e relatórios são "
         "ferramentas de apoio: valores, impostos e documentos enviados aos seus clientes devem ser conferidos por você.",
-        "O Planner Organizer não presta serviço contábil, fiscal ou jurídico e não substitui um contador. Os "
+        "O Planner Organiza não presta serviço contábil, fiscal ou jurídico e não substitui um contador. Os "
         "números de impostos (DAS, limite do MEI, Simples Nacional, declarações) são estimativas feitas com o que "
         "você lança no sistema. Em caso de dúvida, procure um contador.",
     ], None),

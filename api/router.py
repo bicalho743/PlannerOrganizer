@@ -10,7 +10,7 @@ import stripe
 from pydantic import BaseModel
 from utils.database import Database
 
-api = FastAPI(title="Planner Organizer API", version="3.0.0")
+api = FastAPI(title="Planner Organiza API", version="3.0.0")
 
 ALLOWED_ORIGINS = [
     o.strip() for o in os.environ.get(

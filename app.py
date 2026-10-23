@@ -44,7 +44,7 @@ if "show_debug_propostas_finalizadas" not in st.session_state:
 
 st.set_page_config(
     
-    page_title="Planner Organizer | Sistema para Personal Organizers",
+    page_title="Planner Organiza | Sistema para Personal Organizers",
     page_icon="favicon.png",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -491,7 +491,7 @@ if not st.session_state.authenticated:
     # HTML — logo
     st.markdown("""
       <div class="login-logo">
-        <h1>Planner Organizer</h1>
+        <h1>Planner Organiza</h1>
         <p>Sistema para Personal Organizers</p>
       </div>
     """, unsafe_allow_html=True)
@@ -787,7 +787,7 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
     _nome_menu = (_usuario.get('nome') if isinstance(_usuario, dict) else getattr(_usuario, 'nome', '')) or _perfil_menu.get('nome') or ''
     _empresa_menu = _perfil_menu.get('empresa') or ''
     st.sidebar.markdown(
-        '<div class="sb-marca"><div class="sb-logo">Planner Organizer</div>'
+        '<div class="sb-marca"><div class="sb-logo">Planner Organiza</div>'
         + (f'<div class="sb-conta">{_empresa_menu or _nome_menu}</div>' if (_empresa_menu or _nome_menu) else '')
         + '</div>', unsafe_allow_html=True)
     # teste grátis: quantos dias faltam, sempre à vista, com o caminho para assinar
@@ -867,7 +867,7 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
         st.sidebar.download_button(
             label="Manual do sistema",
             data=st.session_state.manual_pdf_bytes,
-            file_name="Manual_Planner_Organizer.pdf",
+            file_name="Manual_Planner_Organiza.pdf",
             mime="application/pdf",
             icon=":material/menu_book:",
             use_container_width=True,

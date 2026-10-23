@@ -13,7 +13,7 @@ from utils.indicadores import (movimentos, entrou_gastou, retirado, previsto, po
 LINK_PGMEI = "https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/Identificacao"
 LINK_DASN = "https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/dasnsimei.app/Identificacao"
 LINK_PGDASD = "https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/pgdasd2018.app/Identificacao"
-AVISO_CONTADOR = ("<b>O Planner Organizer não é contador e não substitui um.</b> Os valores desta aba são "
+AVISO_CONTADOR = ("<b>O Planner Organiza não é contador e não substitui um.</b> Os valores desta aba são "
                   "estimativas para você se organizar, calculadas com o que foi lançado no app. Em caso de dúvida, "
                   "procure um contador.")
 REGIME_ROTULO = {"MEI": "MEI", "Simples Nacional": "Simples Nacional (ME)", "Outro": "Outro regime ou autônoma"}

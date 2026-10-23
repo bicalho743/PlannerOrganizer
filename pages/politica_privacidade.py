@@ -1,5 +1,5 @@
 """
-Página de Política de Privacidade para o sistema Planner Organizer
+Página de Política de Privacidade para o sistema Planner Organiza
 """
 import streamlit as st
 import os
@@ -12,7 +12,7 @@ if project_root not in sys.path:
 from utils.texto_legal import CONTATO, para_html, mostrar_pagina
 
 TITULO = "Política de Privacidade"
-INTRO = ("Esta política explica quais dados pessoais o Planner Organizer trata, para quê, com quem são "
+INTRO = ("Esta política explica quais dados pessoais o Planner Organiza trata, para quê, com quem são "
          "compartilhados e como você exerce seus direitos, conforme a Lei Geral de Proteção de Dados "
          "(Lei nº 13.709/2018, LGPD).")
 
@@ -28,7 +28,7 @@ SECOES = [
     ("2. Dados que você cadastra sobre terceiros", [
         "Clientes, fornecedores, assistentes e parceiros que você cadastra podem incluir nome, telefone, e-mail, "
         "CPF, endereço, data de aniversário, chave PIX e observações. Para esses dados você é a controladora e o "
-        "Planner Organizer é operador: tratamos apenas para guardar, exibir e gerar os documentos que você pede, "
+        "Planner Organiza é operador: tratamos apenas para guardar, exibir e gerar os documentos que você pede, "
         "e nunca os usamos para outros fins nem entramos em contato com essas pessoas.",
     ], None),
     ("3. Para que usamos e com qual base legal", None, [
@@ -80,7 +80,7 @@ SECOES = [
         "Você pode bloqueá-los no navegador; o login pode deixar de funcionar sem os essenciais.",
     ], None),
     ("10. Menores de idade", [
-        "O Planner Organizer é destinado a profissionais maiores de 18 anos.",
+        "O Planner Organiza é destinado a profissionais maiores de 18 anos.",
     ], None),
     ("11. Encarregado e contato", [
         "Para assuntos de privacidade, fale com o encarregado pelo tratamento de dados em " + CONTATO + ".",

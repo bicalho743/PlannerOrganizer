@@ -23,12 +23,12 @@ def inject_head_content():
         <!-- Meta tags SEO -->
         <meta name="description" content="Organize clientes, propostas e finanças em um só lugar. Sistema completo para Personal Organizers. Teste grátis por 7 dias!">
         <meta name="keywords" content="personal organizer, sistema organizador, gestão clientes, propostas, organização profissional">
-        <meta name="author" content="Planner Organizer">
-        <meta property="og:title" content="Planner Organizer | Sistema para Personal Organizers">
+        <meta name="author" content="Planner Organiza">
+        <meta property="og:title" content="Planner Organiza | Sistema para Personal Organizers">
         <meta property="og:description" content="Organize clientes, propostas e finanças em um só lugar. Sistema completo para Personal Organizers. Teste grátis por 7 dias!">
         <meta property="og:type" content="website">
         <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:title" content="Planner Organizer | Sistema para Personal Organizers">
+        <meta name="twitter:title" content="Planner Organiza | Sistema para Personal Organizers">
         <meta name="twitter:description" content="Organize clientes, propostas e finanças em um só lugar. Sistema completo para Personal Organizers. Teste grátis por 7 dias!">
     </head>
     

@@ -119,7 +119,7 @@ def inject_analytics_tags():
     """
     st.markdown(verification_script, unsafe_allow_html=True)
 
-def inject_seo_meta_tags(page_title="Planner Organizer | Sistema para Personal Organizers", 
+def inject_seo_meta_tags(page_title="Planner Organiza | Sistema para Personal Organizers", 
                         description="Organize clientes, propostas e finanças em um só lugar. Sistema completo para Personal Organizers. Teste grátis por 7 dias!",
                         keywords="personal organizer, sistema organizador, gestão clientes, propostas, organização profissional"):
     """
@@ -147,7 +147,7 @@ def inject_seo_meta_tags(page_title="Planner Organizer | Sistema para Personal O
         // Meta básicos
         {{ name: 'description', content: '{description}' }},
         {{ name: 'keywords', content: '{keywords}' }},
-        {{ name: 'author', content: 'Planner Organizer' }},
+        {{ name: 'author', content: 'Planner Organiza' }},
         {{ name: 'robots', content: 'index, follow' }},
         {{ name: 'viewport', content: 'width=device-width, initial-scale=1.0' }},
         
@@ -156,7 +156,7 @@ def inject_seo_meta_tags(page_title="Planner Organizer | Sistema para Personal O
         {{ property: 'og:description', content: '{description}' }},
         {{ property: 'og:type', content: 'website' }},
         {{ property: 'og:url', content: window.location.href }},
-        {{ property: 'og:site_name', content: 'Planner Organizer' }},
+        {{ property: 'og:site_name', content: 'Planner Organiza' }},
         {{ property: 'og:locale', content: 'pt_BR' }},
         
         // Twitter Cards
@@ -194,7 +194,7 @@ def inject_seo_headings():
     """
     seo_headings = """
     <div style="display: none; position: absolute; left: -9999px;">
-        <h1>Sistema para Personal Organizers - Planner Organizer</h1>
+        <h1>Sistema para Personal Organizers - Planner Organiza</h1>
         <h2>Gerencie Clientes e Propostas</h2>
         <h3>Organização Profissional Completa</h3>
         <h3>Controle Financeiro</h3>

@@ -1,6 +1,6 @@
 # Guia de Deploy para o Render
 
-Este guia explica como fazer o deploy do Planner Organizer no [Render](https://render.com).
+Este guia explica como fazer o deploy do Planner Organiza no [Render](https://render.com).
 
 ## Pré-requisitos
 
@@ -60,7 +60,7 @@ Este guia explica como fazer o deploy do Planner Organizer no [Render](https://r
 ### 4. Verificar o Deploy
 
 1. Quando o deploy estiver concluído, clique no link fornecido pelo Render
-2. Você deverá ver a página de login do Planner Organizer
+2. Você deverá ver a página de login do Planner Organiza
 3. Faça login com as credenciais padrão ou crie uma nova conta
 
 ## Solução de Problemas

@@ -114,7 +114,7 @@ def com_marca(fn):
 # ── Perfil padrão (fallback) ─────────────────────────────────
 DEFAULT_PERFIL = {
     'nome':      'Personal Organizer',
-    'empresa':   'Planner Organizer',
+    'empresa':   'Planner Organiza',
     'instagram': '@plannerorganiza',
     'cargo':     'Personal Organizer',
 }
@@ -313,7 +313,7 @@ def _footer(c, margin, perfil=None, interno=False):
     c.rect(0, 0, W, 14*mm, fill=1, stroke=0)
     c.setFillColor(GRAY3)
     c.setFont("Helvetica", 8)
-    empresa = p.get('empresa') or p.get('nome') or 'Planner Organizer'
+    empresa = p.get('empresa') or p.get('nome') or 'Planner Organiza'
     if p.get('cnpj'):
         empresa += f"  ·  CNPJ {p['cnpj']}"
     c.drawString(margin, 5*mm, f"Documento de uso interno — {empresa}" if interno else empresa)

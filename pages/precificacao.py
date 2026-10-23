@@ -80,7 +80,7 @@ def _aba_hora(p):
     st.markdown('<div class="pc-nota">Referência: guias de preço de 2026 apontam de R$ 80 a R$ 350 por hora no Brasil, '
                 'conforme cidade e experiência. Use a sua conta, não a média: ela mostra o que o seu negócio precisa.</div>',
                 unsafe_allow_html=True)
-    st.caption("O Planner Organizer não é contador. Para saber quais impostos a sua empresa paga e qual alíquota "
+    st.caption("O Planner Organiza não é contador. Para saber quais impostos a sua empresa paga e qual alíquota "
                "usar, em caso de dúvida, procure um contador.")
     if st.button("Salvar meus números", type="primary", key="pc_salvar"):
         if st.session_state.db.salvar_precificacao({k: p[k] for k in pr.PADROES}):

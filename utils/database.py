@@ -426,7 +426,7 @@ class Database:
 
                 nome = user_data.get('nome') or user_data.get('name') or 'Usuário'
                 email = user_data.get('email') or 'sem-email'
-                empresa = user_data.get('empresa') or 'Planner Organizer'
+                empresa = user_data.get('empresa') or 'Planner Organiza'
                 telefone = user_data.get('telefone') or ''
 
                 novo_perfil = Perfil(
@@ -504,7 +504,7 @@ class Database:
                     email=email,
                     nome=nome,
                     telefone=telefone or "",
-                    empresa=empresa or "Planner Organizer",
+                    empresa=empresa or "Planner Organiza",
                     instagram=instagram,
                     website=website,
                     cor_principal=cor_principal,
@@ -2782,7 +2782,7 @@ class Database:
                             'nome': usuario.nome,
                             'email': usuario.email,
                             'tipo': usuario.tipo,
-                            'empresa': usuario.empresa if hasattr(usuario, 'empresa') else 'Planner Organizer',
+                            'empresa': usuario.empresa if hasattr(usuario, 'empresa') else 'Planner Organiza',
                             'role': 'user'  # Valor padrão
                         }
                         # Adicionar telefone se existir
@@ -2802,7 +2802,7 @@ class Database:
                             'nome': cliente.nome,
                             'email': cliente.email,
                             'telefone': cliente.telefone if cliente.telefone else '',
-                            'empresa': 'Planner Organizer'  # Valor padrão
+                            'empresa': 'Planner Organiza'  # Valor padrão
                         }
                         # Adicionar campos adicionais se existirem
                         for field in ['endereco', 'cidade', 'estado']:
