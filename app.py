@@ -269,6 +269,11 @@ try:
 except Exception as e:
     logger.warning(f"Erro ao configurar persistência de sessão: {str(e)}")
 
+# App Android na Google Play (o referrer mostra no Play Console de onde veio a instalação)
+_PLAY = "https://play.google.com/store/apps/details?id=com.plannerorganiza.app"
+PLAY_URL_LOGIN = _PLAY + "&referrer=utm_source%3Dapp_web%26utm_medium%3Dlogin"
+PLAY_URL_MENU = _PLAY + "&referrer=utm_source%3Dapp_web%26utm_medium%3Dmenu"
+
 # Google Analytics e Pixel da Meta em todas as telas, inclusive a de entrada (utils/rastreamento.py)
 from utils import rastreamento
 rastreamento.instalar()
@@ -548,6 +553,22 @@ if not st.session_state.authenticated:
         if st.button("Criar conta grátis", key="btn_criar_conta", use_container_width=True):
             st.session_state.login_page = "registrar"
             st.rerun()
+
+    # App Android (Google Play)
+    st.markdown(f"""
+      <a class="login-android" href="{PLAY_URL_LOGIN}" target="_blank" rel="noopener">
+        <img src="app/static/app-android-icon.png" alt="" width="26" height="26">
+        <span>Use também no celular: <b>app para Android</b></span>
+      </a>
+      <style>
+      .login-android {{ display:flex; align-items:center; justify-content:center; gap:10px; margin:14px auto 4px;
+        padding:6px 14px 6px 6px; border:1px solid #E3D9C2; border-radius:999px; background:#fff; width:fit-content;
+        color:#33507A !important; font-size:.84rem; text-decoration:none !important; }}
+      .login-android:hover {{ border-color:#C9A84C; }}
+      .login-android img {{ border-radius:6px; display:block; }}
+      .login-android b {{ color:#0D1B2A; }}
+      </style>
+    """, unsafe_allow_html=True)
 
     # Footer
     st.markdown("""
@@ -853,6 +874,7 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
             key="btn_manual_sidebar"
         )
 
+    st.sidebar.link_button("App para Android", PLAY_URL_MENU, icon=":material/smartphone:", use_container_width=True)
     if st.sidebar.button("Tutorial rápido", key="btn_tutorial_sidebar", icon=":material/play_circle:",
                          use_container_width=True):
         from utils import tour

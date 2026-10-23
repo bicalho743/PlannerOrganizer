@@ -319,6 +319,8 @@ def gerar_manual_sistema(verificar_auth=True):
     e.append(Spacer(1, 4))
     texto("<b>No celular</b>, uma barra embaixo leva ao Início, às Propostas e ao Financeiro; o botão "
           "<b>+</b> cria uma proposta, uma cliente, um compromisso ou um lançamento, e <b>Menu</b> abre o menu completo.")
+    texto("<b>App para Android</b>: o Planner Organizer também está na Google Play. O link fica na tela de entrada e "
+          "no menu, em <b>App para Android</b>.")
 
     # ── INÍCIO ─────────────────────────────────────────────────────────
     capitulo("Início", "Dashboard",

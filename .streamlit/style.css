@@ -230,7 +230,8 @@ section[data-testid="stSidebar"] .st-key-cta_trial .stButton > button:hover { ba
 
 /* itens do menu (botões e o download do manual) */
 section[data-testid="stSidebar"] .stButton > button,
-section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button {
+section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button,
+section[data-testid="stSidebar"] div[data-testid="stLinkButton"] > a {
     width: 100% !important; height: 38px !important; min-height: 38px !important;
     background: transparent !important; color: #344054 !important;
     border: 0 !important; border-radius: 8px !important; box-shadow: none !important;
@@ -239,20 +240,24 @@ section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button {
     justify-content: flex-start !important; transition: background 0.12s ease !important;
 }
 section[data-testid="stSidebar"] .stButton > button > div,
-section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button > div { justify-content: flex-start !important; gap: 10px !important; }
+section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button > div,
+section[data-testid="stSidebar"] div[data-testid="stLinkButton"] > a > div { justify-content: flex-start !important; gap: 10px !important; }
 section[data-testid="stSidebar"] .stButton > button *,
-section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button * {
+section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button *,
+section[data-testid="stSidebar"] div[data-testid="stLinkButton"] > a * {
     color: inherit !important; font-weight: inherit !important; text-align: left !important;
 }
 section[data-testid="stSidebar"] .stButton > button [data-testid="stIconMaterial"],
-section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button [data-testid="stIconMaterial"] { color: #667085 !important; font-size: 1.15rem !important; }
+section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button [data-testid="stIconMaterial"],
+section[data-testid="stSidebar"] div[data-testid="stLinkButton"] > a [data-testid="stIconMaterial"] { color: #667085 !important; font-size: 1.15rem !important; }
 /* itens dos módulos: ícone num selo na cor do módulo (cores em app.py, CORES_MODULO) */
 section[data-testid="stSidebar"] [class*="st-key-main_menu_"] .stButton > button [data-testid="stIconMaterial"] {
     width: 28px; height: 28px; border-radius: 7px; display: inline-flex !important; align-items: center; justify-content: center;
     font-size: 1.05rem !important; color: var(--cor-item, #667085) !important; background: var(--cor-item-bg, #F2F4F7);
 }
 section[data-testid="stSidebar"] .stButton > button:hover,
-section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button:hover {
+section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button:hover,
+section[data-testid="stSidebar"] div[data-testid="stLinkButton"] > a:hover {
     background: #F2F4F7 !important; color: #101828 !important; transform: none !important; box-shadow: none !important;
 }
 /* tela aberta */
