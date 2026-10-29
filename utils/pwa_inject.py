@@ -13,8 +13,9 @@ def inject_pwa():
     <meta name="apple-mobile-web-app-capable" content="yes"/>
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
     <meta name="apple-mobile-web-app-title" content="Planner Organiza"/>
-    <meta name="theme-color" content="#C9A84C"/>
-    <link rel="apple-touch-icon" href="/app/static/icon-192.png"/>
+    <meta name="theme-color" content="#0D1B2A"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="/app/static/apple-touch-icon.png"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="/app/static/favicon-32.png"/>
     <link rel="icon" type="image/png" sizes="192x192" href="/app/static/icon-192.png"/>
     """, unsafe_allow_html=True)
 

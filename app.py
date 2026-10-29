@@ -45,7 +45,7 @@ if "show_debug_propostas_finalizadas" not in st.session_state:
 st.set_page_config(
     
     page_title="Planner Organiza | Sistema para Personal Organizers",
-    page_icon="favicon.png",
+    page_icon="static/favicon.png",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
