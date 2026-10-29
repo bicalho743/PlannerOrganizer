@@ -134,3 +134,19 @@ def test_modo_consulta_le_mas_nao_grava(api):
     # perfil e tipo de empresa continuam liberados, como na web
     assert cli.put("/impostos/regime", json={"regime": "Outro"}).status_code == 200
     assert cli.get("/clientes").json() == []
+
+
+def test_inicio_como_na_web(api):
+    cli, conta, ativa, _ = api
+    assert cli.post("/clientes", json={"nome": "Bia Souza", "telefone": "31988887777",
+                                       "data_aniversario": date.today().strftime("%d/") + ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"][date.today().month - 1]}).status_code == 200
+    assert cli.post("/financeiro", json={"tipo": "receita", "descricao": "Diária", "valor": 300, "categoria": "serviço"}).status_code == 200
+    r = cli.get("/inicio")
+    assert r.status_code == 200, r.text
+    d = r.json()
+    assert set(d["kpis"]) >= {"lucro", "a_receber", "a_pagar", "conversao", "mes"}
+    assert d["kpis"]["a_receber"] >= 300
+    niver = [i for i in d["para_fazer"] if i["tipo"] == "aniversario"]
+    assert niver and niver[0]["titulo"] == "Bia Souza" and niver[0]["quando"] == "hoje"
+    assert niver[0]["whatsapp"].startswith("https://wa.me/55")
+    assert d["aniversariantes_mes"][0]["nome"] == "Bia Souza"

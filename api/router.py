@@ -2045,3 +2045,128 @@ async def post_das(body: DasBody, uid: str = Depends(verify_firebase_token)):
     if not tid:
         raise HTTPException(status_code=500, detail="Não consegui lançar agora. Tente de novo.")
     return {"id": tid}
+
+
+# ── INÍCIO (mesmos números e "Para fazer" do Início da web, pages/dashboard.py) ──
+
+@api.get("/inicio")
+async def get_inicio(uid: str = Depends(verify_firebase_token)):
+    from datetime import timedelta
+    from pages.dashboard import (ETAPAS_POS, DIAS_FOLLOWUP, MESES, SEMANA, _hoje, _data, _num, _dm, _quando,
+                                 _aniversario)
+    from utils.indicadores import movimentos, entrou_gastou, funil
+    from utils.proposta_status import is_ativa, normalize, label_for
+    from utils.whatsapp_helper import whatsapp_link
+    try:
+        db = get_db(uid)
+        hoje = _hoje()
+        clientes, propostas, fin = db.get_clientes(), db.get_propostas(), db.get_financeiro()
+        acoes_pos = db.get_pending_post_actions_for_dashboard()
+        acoes_pos = acoes_pos if isinstance(acoes_pos, pd.DataFrame) else pd.DataFrame()
+        perfil = db.get_perfil_usuario() or {}
+
+        tel = dict(zip(clientes["id"], clientes["telefone"])) if not clientes.empty else {}
+        if not propostas.empty:
+            propostas = propostas.copy()
+            propostas["valor"] = propostas["valor"].apply(_num)
+            propostas["st"] = propostas["status"].apply(normalize)
+            ativas = propostas[propostas["status"].apply(is_ativa)]
+        else:
+            ativas = pd.DataFrame()
+
+        def _eh(df, tipos, classif):
+            return df["tipo"].astype(str).str.lower().isin(tipos) | (df["classificacao"] == classif)
+        if not fin.empty:
+            f = fin.copy()
+            f["valor"] = f["valor"].apply(_num)
+            f["d"] = f["data"].apply(_data)
+            rec_pend = f[_eh(f, ["receita", "receita_a_receber"], "contas_a_receber") & (f["status"] == "Pendente")]
+            desp_pend = f[_eh(f, ["despesa", "despesa_a_pagar"], "contas_a_pagar") & (f["status"] == "Pendente")]
+        else:
+            rec_pend = desp_pend = pd.DataFrame(columns=["id", "valor", "d", "descricao"])
+        atras_rec = rec_pend[rec_pend["d"].apply(lambda d: bool(d) and d < hoje)] if not rec_pend.empty else rec_pend
+        prox7_pag = desp_pend[desp_pend["d"].apply(lambda d: bool(d) and d <= hoje + timedelta(days=7))] if not desp_pend.empty else desp_pend
+
+        entrou, gastou = entrou_gastou(movimentos(fin), hoje.year, hoje.month)
+        fn = funil(propostas, hoje)
+        kpis = {
+            "mes": MESES[hoje.month - 1], "lucro": entrou - gastou, "entrou": entrou, "gastou": gastou,
+            "a_receber": float(rec_pend["valor"].sum()), "a_receber_qtd": len(rec_pend), "a_receber_atraso": len(atras_rec),
+            "a_pagar": float(desp_pend["valor"].sum()), "a_pagar_qtd": len(desp_pend), "a_pagar_7dias": len(prox7_pag),
+            "conversao": fn["conversao"], "fechadas": fn["fechadas"], "respondidas": fn["fechadas"] + fn["recusadas"],
+            "dias_funil": fn["dias"],
+        }
+
+        itens = []
+        if not acoes_pos.empty:
+            try:
+                templates = db.get_post_org_templates() or {}
+            except Exception:
+                templates = {}
+            for _, a in acoes_pos.iterrows():
+                at = str(a.get("action_type") or "").lower()
+                nome_etapa, dmais, objetivo = ETAPAS_POS.get(at, (at.replace("_", " ").title(), "", ""))
+                venc = _data(a.get("due_date")) or hoje
+                cliente = a.get("cliente_nome") or "cliente"
+                txt = (templates.get(at, {}) or {}).get("texto", "")
+                itens.append({"tipo": "pos", "tag": f"Pós {dmais}".strip(), "titulo": f"{nome_etapa} · {cliente}",
+                              "detalhe": f"{objetivo} · proposta #{a.get('proposta_numero', '')}",
+                              "quando": ("venceu " if venc < hoje else "") + _quando(venc, hoje), "atrasado": venc < hoje,
+                              "vencimento": venc.isoformat(), "acao_id": int(a.get("action_id")),
+                              "whatsapp": whatsapp_link(a.get("cliente_telefone"),
+                                                        txt.replace("{nome}", str(cliente).split(" ")[0]) if txt else "")})
+        for df, tipo, tag, padrao in ((rec_pend, "receber", "Receber", "Recebimento"), (desp_pend, "pagar", "Pagar", "Conta")):
+            if df.empty:
+                continue
+            for _, r in df[df["d"].apply(lambda d: bool(d) and d <= hoje + timedelta(days=3))].sort_values("d").iterrows():
+                atrasado = r["d"] < hoje
+                itens.append({"tipo": tipo, "tag": tag, "titulo": f"{r.get('descricao') or padrao}", "valor": float(r["valor"]),
+                              "detalhe": f"({_dm(r['d'])})", "quando": ("venceu " if atrasado else "vence ") + _quando(r["d"], hoje),
+                              "atrasado": atrasado, "vencimento": r["d"].isoformat(), "transacao_id": int(r["id"])})
+        if not propostas.empty:
+            for _, p in propostas[propostas["st"] == "em_aberto"].iterrows():
+                enviada = _data(p.get("data_proposta")) or _data(p.get("data_inicio"))
+                if not enviada or (hoje - enviada).days < DIAS_FOLLOWUP:
+                    continue
+                cliente = p.get("cliente_nome") or "cliente"
+                msg = (f"Oi, {str(cliente).split(' ')[0]}! Tudo bem? Passando para saber se ficou alguma dúvida "
+                       f"sobre a proposta de organização que te enviei. Fico à disposição!")
+                itens.append({"tipo": "followup", "tag": "Follow-up", "titulo": f"Proposta #{p.get('numero')} · {cliente}",
+                              "valor": float(p["valor"]), "detalhe": "ainda sem resposta",
+                              "quando": "enviada " + _quando(enviada, hoje), "atrasado": False,
+                              "whatsapp": whatsapp_link(tel.get(p.get("cliente_id")), msg)})
+        niver_mes = []
+        if not clientes.empty and "data_aniversario" in clientes.columns:
+            for _, c in clientes.iterrows():
+                d = _aniversario(c, hoje)
+                if not d:
+                    continue
+                if d.month == hoje.month:
+                    niver_mes.append({"nome": c["nome"], "dia": d.day})
+                if (d - hoje).days <= 7:
+                    primeiro = str(c["nome"]).split(" ")[0]
+                    itens.append({"tipo": "aniversario", "tag": "Aniversário", "titulo": str(c["nome"]),
+                                  "detalhe": f"({_dm(d)})", "quando": _quando(d, hoje), "atrasado": False,
+                                  "whatsapp": whatsapp_link(c.get("telefone"),
+                                                            f"Feliz aniversário, {primeiro}! Desejo um novo ciclo leve e cheio de alegria. 💛")})
+
+        andamento = []
+        if not ativas.empty:
+            for _, p in ativas.sort_values("valor", ascending=False).head(8).iterrows():
+                andamento.append({"id": int(p["id"]), "numero": p.get("numero"), "cliente": p.get("cliente_nome") or "—",
+                                  "status": label_for(p["st"]), "valor": float(p["valor"])})
+
+        nome = str(perfil.get("nome") or "").split(" ")[0] if isinstance(perfil, dict) else ""
+        import json as _json
+        resposta = {
+            "nome": nome, "data": f"{SEMANA[hoje.weekday()].capitalize()}, {hoje.day} de {MESES[hoje.month - 1]}",
+            "sem_dados": clientes.empty and propostas.empty, "sem_logo": not (isinstance(perfil, dict) and perfil.get("logo")),
+            "kpis": kpis, "para_fazer": itens, "andamento": andamento,
+            "aniversariantes_mes": sorted(niver_mes, key=lambda x: x["dia"]),
+        }
+        # números do pandas/numpy viram tipos do Python
+        return JSONResponse(content=_json.loads(_json.dumps(resposta, default=lambda o: o.item() if hasattr(o, "item") else str(o))))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
