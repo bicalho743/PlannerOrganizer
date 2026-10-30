@@ -347,8 +347,9 @@ if not st.session_state.authenticated:
         color: #0D1B2A; margin: 0; letter-spacing: 0.01em;
     }
     .login-logo h1::before {
-        content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px;
-        background: #C9A84C; margin-right: 10px; vertical-align: 6px;
+        content: ""; display: block; width: 64px; height: 64px; margin: 0 auto 10px;
+        background: url('/app/static/icon-192.png') center / cover no-repeat; border-radius: 15px;
+        box-shadow: 0 6px 18px rgba(13, 27, 42, .18);
     }
     .login-logo p {
         font-size: 0.7rem; color: #B8942F; font-weight: 500;

@@ -207,8 +207,8 @@ section[data-testid="stSidebar"] p { color: #344054 !important; }
 /* marca e conta no topo */
 .sb-marca { padding: 0 8px 14px; margin-bottom: 6px; border-bottom: 1px solid #EEF0F3; }
 .sb-logo { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.3rem; white-space: nowrap; font-weight: 600; color: var(--navy); line-height: 1.2; }
-.sb-logo::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px;
-    background: var(--gold); margin-right: 8px; vertical-align: 1px; }
+.sb-logo::before { content: ""; display: inline-block; width: 28px; height: 28px; border-radius: 7px;
+    background: url('/app/static/icon-192.png') center / cover no-repeat; margin-right: 9px; vertical-align: -7px; }
 .sb-conta { font-size: 0.8rem; color: #667085; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* títulos de grupo: texto, não botão */
 .sb-grupo { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase;
