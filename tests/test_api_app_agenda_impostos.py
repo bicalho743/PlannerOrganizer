@@ -150,3 +150,17 @@ def test_inicio_como_na_web(api):
     assert niver and niver[0]["titulo"] == "Bia Souza" and niver[0]["quando"] == "hoje"
     assert niver[0]["whatsapp"].startswith("https://wa.me/55")
     assert d["aniversariantes_mes"][0]["nome"] == "Bia Souza"
+
+
+def test_precificacao_salva_no_perfil(api):
+    cli, conta, ativa, expirada = api
+    r = cli.get("/precificacao").json()
+    assert r["parametros"]["renda_desejada"] == 5000.0 and "Cozinha" in r["ambientes"]
+    novos = {**r["parametros"], "renda_desejada": 7000, "dias_mes": 14}
+    assert cli.put("/precificacao", json={"parametros": novos}).status_code == 200
+    r = cli.get("/precificacao").json()
+    assert r["parametros"]["renda_desejada"] == 7000.0 and r["parametros"]["dias_mes"] == 14
+    assert cli.put("/precificacao", json={"parametros": {**novos, "margem_pct": -1}}).status_code == 422
+    # como na web, a conta em modo consulta ainda ajusta os próprios números
+    conta["uid"] = expirada
+    assert cli.put("/precificacao", json={"parametros": novos}).status_code == 200

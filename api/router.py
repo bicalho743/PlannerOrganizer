@@ -62,7 +62,7 @@ def verify_firebase_token(request: Request) -> str:
 
 MODO_CONSULTA = "modo_consulta"
 MENSAGEM_CONSULTA = "Seu teste grátis terminou. Assine para voltar a cadastrar, editar e gerar PDFs."
-_LIVRES_NO_CONSULTA = ("/webhook/", "/perfil", "/impostos/regime", "/api/status")
+_LIVRES_NO_CONSULTA = ("/webhook/", "/perfil", "/impostos/regime", "/precificacao", "/api/status")
 
 
 def _uid_da_requisicao(request: Request):
@@ -2170,3 +2170,39 @@ async def get_inicio(uid: str = Depends(verify_firebase_token)):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── PRECIFICAÇÃO (números da organizer guardados no perfil, como na web) ───────
+# O cálculo roda no app, na hora em que ela digita; a regra é a de utils/precificacao.py.
+
+class PrecificacaoBody(BaseModel):
+    parametros: dict
+
+
+@api.get("/precificacao")
+async def get_precificacao(uid: str = Depends(verify_firebase_token)):
+    from utils import precificacao as pr
+    try:
+        salvos = get_db(uid).get_precificacao() or {}
+    except Exception:
+        salvos = {}
+    return {"parametros": {**pr.PADROES, **{k: v for k, v in salvos.items() if k in pr.PADROES}},
+            "padroes": pr.PADROES, "ambientes": pr.AMBIENTES_PADRAO, "complexidade": pr.COMPLEXIDADE}
+
+
+@api.put("/precificacao")
+async def put_precificacao(body: PrecificacaoBody, uid: str = Depends(verify_firebase_token)):
+    from utils import precificacao as pr
+    limpos = {}
+    for k, padrao in pr.PADROES.items():
+        v = body.parametros.get(k, padrao)
+        try:
+            v = float(v)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=422, detail=f"{k}: informe um número")
+        if v < 0:
+            raise HTTPException(status_code=422, detail=f"{k}: não pode ser negativo")
+        limpos[k] = int(v) if isinstance(padrao, int) else v
+    if not get_db(uid).salvar_precificacao(limpos):
+        raise HTTPException(status_code=404, detail="Perfil não encontrado")
+    return {"parametros": limpos}
