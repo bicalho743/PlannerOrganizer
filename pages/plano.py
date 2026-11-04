@@ -95,7 +95,7 @@ def show():
     url_mensal = checkout_url(STRIPE_CHECKOUT_MENSAL, email, uid)
     url_anual = checkout_url(STRIPE_CHECKOUT_ANUAL, email, uid)
     st.markdown(f"""
-    <div class="pl-fundadora"><b>Cupom de lançamento ORGANIZA:</b> 25% de desconto por 6 meses para as 50 primeiras assinantes. No mensal, cerca de R$ 29,90 por mês nos 6 primeiros meses; no anual, R$ 222,75 no primeiro ano. Digite o cupom na tela de pagamento.</div>
+    <div class="pl-fundadora"><b>Cupom de lançamento ORGANIZA:</b> 25% de desconto nos 6 primeiros meses. No mensal, cerca de R$ 29,90 por mês nos 6 primeiros meses; no anual, R$ 222,75 no primeiro ano. Digite o cupom na tela de pagamento.</div>
     <div class="pl-cards">
       <div class="pl-card">
         <div class="nome">Mensal</div>
