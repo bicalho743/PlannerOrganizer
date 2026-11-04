@@ -297,7 +297,7 @@ if not st.session_state.authenticated:
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 
-    /* Mesmo layout do cartão de login da landing (promo.plannerorganiza.com.br): fundo creme com
+    /* Mesmo layout do cartão de login da landing (plannerorganiza.com.br): fundo creme com
        brilho dourado, cartão branco, título em Cormorant, Entrar azul-marinho e criar conta em dourado. */
     section[data-testid="stSidebar"],
     [data-testid="collapsedControl"],
@@ -574,7 +574,7 @@ if not st.session_state.authenticated:
     # Footer
     st.markdown("""
       <div class="login-footer">
-        <a href="https://promo.plannerorganiza.com.br" target="_blank">Voltar ao site</a>
+        <a href="https://plannerorganiza.com.br" target="_blank">Voltar ao site</a>
         <span>·</span>
         <a href="?show_termos=true">Termos de uso</a>
         <span>·</span>

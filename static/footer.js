@@ -12,8 +12,8 @@
         footer.className = 'footer';
         footer.innerHTML = `
             &copy; 2025 Planner Organiza. Todos os direitos reservados. | 
-            <a href="https://plannerorganiza.com.br/?show_termos=true" target="_blank">Termos de Uso</a> | 
-            <a href="https://plannerorganiza.com.br/?show_politica=true" target="_blank">Política de Privacidade</a> | 
+            <a href="https://app.plannerorganiza.com.br/?show_termos=true" target="_blank">Termos de Uso</a> | 
+            <a href="https://app.plannerorganiza.com.br/?show_politica=true" target="_blank">Política de Privacidade</a> | 
             Contato: <a href="mailto:contato@plannerorganiza.com.br">contato@plannerorganiza.com.br</a>
         `;
         

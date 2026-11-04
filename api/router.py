@@ -15,7 +15,7 @@ api = FastAPI(title="Planner Organiza API", version="3.0.0")
 ALLOWED_ORIGINS = [
     o.strip() for o in os.environ.get(
         "CORS_ALLOWED_ORIGINS",
-        "https://plannerorganiza.com.br,https://www.plannerorganiza.com.br,"
+        "https://app.plannerorganiza.com.br,https://plannerorganiza.com.br,https://www.plannerorganiza.com.br,"
         "https://plannerorganiza-api.onrender.com,http://localhost:8081,http://localhost:19006"
     ).split(",") if o.strip()
 ]
@@ -1840,7 +1840,7 @@ async def stripe_portal(uid: str = Depends(verify_firebase_token)):
         # Criar sessão do portal
         session = _stripe.billing_portal.Session.create(
             customer=customer_id,
-            return_url="https://plannerorganiza.com.br",
+            return_url="https://app.plannerorganiza.com.br",
         )
         return JSONResponse(content={"url": session.url})
     except HTTPException:
