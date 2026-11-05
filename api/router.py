@@ -62,7 +62,7 @@ def verify_firebase_token(request: Request) -> str:
 
 MODO_CONSULTA = "modo_consulta"
 MENSAGEM_CONSULTA = "Seu teste grátis terminou. Assine para voltar a cadastrar, editar e gerar PDFs."
-_LIVRES_NO_CONSULTA = ("/webhook/", "/perfil", "/impostos/regime", "/precificacao", "/api/status")
+_LIVRES_NO_CONSULTA = ("/webhook/", "/perfil", "/impostos/regime", "/precificacao", "/api/status", "/conta/excluir")
 
 
 def _uid_da_requisicao(request: Request):
@@ -2206,3 +2206,103 @@ async def put_precificacao(body: PrecificacaoBody, uid: str = Depends(verify_fir
     if not get_db(uid).salvar_precificacao(limpos):
         raise HTTPException(status_code=404, detail="Perfil não encontrado")
     return {"parametros": limpos}
+
+
+
+# ── EXCLUSÃO DA CONTA ─────────────────────────────────────────────────────────
+# Exigida pela App Store (5.1.1(v)) e prometida na política de privacidade. A própria pessoa pede
+# pelo app: cancela a assinatura no Stripe (para não continuar cobrando) e apaga todos os dados dela.
+# O login no Firebase é removido pelo app logo em seguida (deleteUser), porque o servidor não tem
+# credencial de administrador do Firebase.
+
+class ExcluirContaBody(BaseModel):
+    confirmacao: str
+
+
+def _cancelar_assinaturas_stripe(email: str) -> int:
+    """Cancela as assinaturas ativas no Stripe ligadas ao e-mail. Devolve quantas cancelou."""
+    if not (STRIPE_SECRET_KEY and email):
+        return 0
+    stripe.api_key = STRIPE_SECRET_KEY
+    canceladas = 0
+    for cliente in stripe.Customer.list(email=email, limit=20).auto_paging_iter():
+        for assinatura in stripe.Subscription.list(customer=cliente.id, status="all", limit=50).auto_paging_iter():
+            if assinatura.status in ("active", "trialing", "past_due", "unpaid", "incomplete"):
+                stripe.Subscription.cancel(assinatura.id)
+                canceladas += 1
+    return canceladas
+
+
+def _apagar_dados_do_usuario(uid: str) -> dict:
+    """Apaga as linhas do usuário em todas as tabelas que têm usuario_id, respeitando as chaves
+    estrangeiras: tenta tabela por tabela e repete as que ainda têm dependentes."""
+    import psycopg2 as _pg2
+    conn = _pg2.connect(os.environ.get("DATABASE_URL"))
+    apagadas = {}
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT table_name FROM information_schema.columns "
+                    "WHERE column_name = 'usuario_id' AND table_schema = 'public'")
+        pendentes = [r[0] for r in cur.fetchall()]
+        # cotações de fornecedor não têm usuario_id: saem junto com os produtos e fornecedores do usuário
+        cur.execute("SELECT to_regclass('public.produtos_fornecedores')")
+        if cur.fetchone()[0]:
+            cur.execute("DELETE FROM produtos_fornecedores WHERE produto_id IN "
+                        "(SELECT id FROM produtos_organizadores WHERE usuario_id = %s) "
+                        "OR fornecedor_id IN (SELECT id FROM fornecedores WHERE usuario_id = %s)", (uid, uid))
+            apagadas["produtos_fornecedores"] = cur.rowcount
+        for _ in range(len(pendentes) + 1):
+            if not pendentes:
+                break
+            restantes = []
+            for tabela in pendentes:
+                cur.execute("SAVEPOINT apagar")
+                try:
+                    cur.execute(f'DELETE FROM "{tabela}" WHERE usuario_id = %s', (uid,))
+                    apagadas[tabela] = cur.rowcount
+                    cur.execute("RELEASE SAVEPOINT apagar")
+                except _pg2.errors.ForeignKeyViolation:
+                    cur.execute("ROLLBACK TO SAVEPOINT apagar")
+                    restantes.append(tabela)
+            if len(restantes) == len(pendentes):
+                raise RuntimeError(f"não foi possível apagar: {', '.join(restantes)}")
+            pendentes = restantes
+        conn.commit()
+        return apagadas
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+@api.post("/conta/excluir")
+async def excluir_conta(body: ExcluirContaBody, uid: str = Depends(verify_firebase_token)):
+    if body.confirmacao.strip().upper() != "EXCLUIR":
+        raise HTTPException(status_code=422, detail='Digite EXCLUIR para confirmar.')
+    email = ""
+    try:
+        perfil = get_db(uid).get_perfil_usuario()
+        if hasattr(perfil, "to_dict"):
+            perfil = perfil.to_dict()
+        if isinstance(perfil, dict):
+            email = (perfil.get("email") or "").strip()
+    except Exception as e:
+        print(f"[excluir_conta] perfil: {e}")
+    try:
+        canceladas = _cancelar_assinaturas_stripe(email)
+    except Exception as e:
+        # sem cancelar a cobrança, não apaga: a pessoa continuaria pagando por uma conta que não existe
+        print(f"[excluir_conta] stripe {uid}: {e}")
+        raise HTTPException(status_code=502, detail="Não foi possível cancelar a assinatura agora. "
+                                                    "Tente de novo em alguns minutos ou fale com o suporte.")
+    try:
+        apagadas = _apagar_dados_do_usuario(uid)
+    except Exception as e:
+        print(f"[excluir_conta] dados {uid}: {e}")
+        raise HTTPException(status_code=500, detail="Não foi possível apagar os dados agora. Fale com o suporte.")
+    for token, (dono, _) in list(_TOKENS.items()):
+        if dono == uid:
+            _TOKENS.pop(token, None)
+    print(f"[excluir_conta] {uid}: assinaturas canceladas={canceladas} linhas={sum(apagadas.values())}")
+    return {"ok": True, "assinaturas_canceladas": canceladas, "linhas_apagadas": sum(apagadas.values())}
