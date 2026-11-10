@@ -113,6 +113,15 @@ def get_perfil_dados(uid: str) -> dict:
         pass
     return {}
 
+def _aniversario_valido(valor):
+    """Aniversário só com dia e mês, guardado como "14/jun". Aceita "1406", "14/06", "14/jun", "14/06/1990"..."""
+    from utils.agenda import normalizar_aniversario
+    norm = normalizar_aniversario(valor)
+    if norm is None:
+        raise HTTPException(status_code=422, detail="Aniversário: informe dia e mês, por exemplo 14/06.")
+    return norm or None
+
+
 def get_db(uid: str) -> Database:
     return Database(usuario_id=uid)
 
@@ -261,22 +270,8 @@ async def get_dashboard(uid: str = Depends(verify_firebase_token)):
                             raw = str(row.get(col, '') or '').strip()
                             if not raw or raw in ('None', 'nan', ''):
                                 continue
-                            day, month = None, None
-                            # Formato DD/MM ou DD/MM/YYYY
-                            if '/' in raw:
-                                parts = raw.split('/')
-                                day = int(parts[0])
-                                month = int(parts[1]) if len(parts) > 1 else 0
-                            # Formato MM-DD (ex: 06-15)
-                            elif '-' in raw and len(raw) <= 5:
-                                parts = raw.split('-')
-                                month = int(parts[0])
-                                day = int(parts[1])
-                            # Formato YYYY-MM-DD ou data completa
-                            else:
-                                dt = pd.to_datetime(raw, errors='coerce')
-                                if pd.notna(dt):
-                                    day, month = dt.day, dt.month
+                            from utils.agenda import dia_mes_aniversario
+                            day, month = dia_mes_aniversario(raw) or (None, None)
                             if day and month and month > 0:
                                 nome = str(row.get('nome', ''))
                                 tel = str(row.get('telefone', '') or '')
@@ -321,7 +316,7 @@ async def create_cliente(body: ClienteCreate, uid: str = Depends(verify_firebase
         get_db(uid).add_cliente(
             nome=body.nome, email=body.email, telefone=body.telefone,
             estado=body.estado, cidade=body.cidade, bairro=body.bairro,
-            endereco=body.endereco, cpf=body.cpf, data_aniversario=body.data_aniversario,
+            endereco=body.endereco, cpf=body.cpf, data_aniversario=_aniversario_valido(body.data_aniversario),
             origem_cliente=body.origem_cliente, observacoes=body.observacoes
         )
         return JSONResponse(content={"success": True})
@@ -337,7 +332,7 @@ async def update_cliente(cliente_id: int, body: ClienteUpdate, uid: str = Depend
             cliente_id=cliente_id, nome=body.nome, email=body.email,
             telefone=body.telefone, estado=body.estado, cidade=body.cidade,
             bairro=body.bairro, endereco=body.endereco, cpf=body.cpf,
-            data_aniversario=body.data_aniversario, origem_cliente=body.origem_cliente,
+            data_aniversario=_aniversario_valido(body.data_aniversario), origem_cliente=body.origem_cliente,
             observacoes=body.observacoes
         )
         return JSONResponse(content={"success": True})

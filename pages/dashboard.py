@@ -196,14 +196,16 @@ def _funil_html(fn):
 
 
 def _aniversario(cli, hoje):
-    """data_aniversario é guardada como DD/mmm (ex.: 05/out); devolve a próxima ocorrência."""
-    txt = str(cli.get("data_aniversario") or "").strip().lower()
-    try:
-        dia, mes = txt.split("/")[:2]
-        m = MES_ABREV.index(mes[:3]) + 1
-        d = hoje.replace(month=m, day=int(dia))
-    except (ValueError, IndexError):
+    """Próxima ocorrência do aniversário (guardado como "05/out"; entende também "05/10", datas etc.)."""
+    from utils.agenda import dia_mes_aniversario
+    dm = dia_mes_aniversario(cli.get("data_aniversario"))
+    if not dm:
         return None
+    dia, m = dm
+    try:
+        d = hoje.replace(month=m, day=dia)
+    except ValueError:          # 29/02 em ano que não é bissexto
+        d = hoje.replace(month=m, day=28)
     return d if d >= hoje else d.replace(year=hoje.year + 1)
 
 

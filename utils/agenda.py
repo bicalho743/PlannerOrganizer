@@ -42,23 +42,43 @@ MSG_ANIVERSARIO = "Feliz aniversário, {nome}! Desejo um novo ciclo leve e cheio
 
 
 def dia_mes_aniversario(valor):
-    """(dia, mês) de data_aniversario, guardada como "05/out" (também aceita "05/10" e datas). None se inválida."""
+    """(dia, mês) de data_aniversario. Guardada como "05/out"; também entende "05/10", "0510",
+    "05-10", "05.10", "05/10/1990", "1990-10-05" e datas. None se inválida."""
     if valor is None or (isinstance(valor, float) and pd.isna(valor)):
         return None
     if hasattr(valor, "month") and hasattr(valor, "day"):
         return valor.day, valor.month
     txt = str(valor).strip().lower()
+    if txt.isdigit() and len(txt) == 4:          # "1406" = 14/06
+        txt = txt[:2] + "/" + txt[2:]
     try:
-        partes = txt.replace("-", "/").split("/")
+        partes = txt.replace("-", "/").replace(".", "/").replace(" ", "/").split("/")
+        partes = [x for x in partes if x]
         if len(partes) >= 3 and len(partes[0]) == 4:  # 1990-10-05
             return int(partes[2][:2]), int(partes[1])
         dia, mes = int(partes[0]), partes[1].strip()
         mes_n = int(mes) if mes.isdigit() else MES_ABREV.index(mes[:3]) + 1
-        if 1 <= dia <= 31 and 1 <= mes_n <= 12:
+        if 1 <= mes_n <= 12 and 1 <= dia <= (31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)[mes_n - 1]:
             return dia, mes_n
     except (ValueError, IndexError):
         pass
     return None
+
+
+def normalizar_aniversario(valor):
+    """Aniversário no formato guardado ("14/jun"). "" se vazio; None se não der para entender."""
+    if valor is None or not str(valor).strip() or str(valor).strip().lower() in ("none", "nan"):
+        return ""
+    dm = dia_mes_aniversario(valor)
+    if not dm:
+        return None
+    return f"{dm[0]:02d}/{MES_ABREV[dm[1] - 1]}"
+
+
+def aniversario_para_digitar(valor):
+    """Para mostrar no campo de edição: "14/jun" -> "14/06". Valor que não dá para entender volta como está."""
+    dm = dia_mes_aniversario(valor)
+    return f"{dm[0]:02d}/{dm[1]:02d}" if dm else ("" if valor is None else str(valor))
 
 
 def semana_de(d):

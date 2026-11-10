@@ -1,4 +1,5 @@
-from utils.formatadores import formatar_df_clientes, UFS_BRASIL, validar_cpf, formatar_cpf, data_para_ddmmm
+from utils.formatadores import formatar_df_clientes, UFS_BRASIL, validar_cpf, formatar_cpf
+from utils.agenda import normalizar_aniversario, aniversario_para_digitar
 from utils.origem_cliente import ORIGENS_OFICIAIS, normalizar_origem
 import streamlit as st
 from datetime import datetime
@@ -46,7 +47,8 @@ def show(modo="todos"):
                     with col2:
                         bairro = st.text_input("Bairro")
                         endereco = st.text_input("Endereço")
-                        data_aniversario_dt = st.date_input("Data de Aniversário", value=None, format="DD/MM/YYYY")
+                        data_aniversario_txt = st.text_input("Aniversário (dia/mês)", placeholder="Ex.: 14/06",
+                                                             help="Só o dia e o mês. Pode digitar 14/06, 1406 ou 14/jun.")
                         origem_cliente = st.selectbox("Origem do Cliente", ORIGENS_OFICIAIS,
                                                       index=None, placeholder="Selecione a origem")
 
@@ -61,7 +63,11 @@ def show(modo="todos"):
                     st.error("CPF inválido. Verifique os dígitos.")
                     st.stop()
                 cpf = formatar_cpf(cpf) if cpf else cpf
-                data_aniversario = data_para_ddmmm(data_aniversario_dt)
+                data_aniversario = normalizar_aniversario(data_aniversario_txt)
+                if data_aniversario is None:
+                    st.error("Aniversário: informe dia e mês, por exemplo 14/06.")
+                    st.stop()
+                data_aniversario = data_aniversario or None
                 try:
                     st.session_state.db.add_cliente(
                         nome=nome,
@@ -209,10 +215,11 @@ def show(modo="todos"):
                                     novo_bairro = st.text_input("Bairro", value=cliente_data.get('bairro', ''))
                                     novo_endereco = st.text_input("Endereço", value=cliente_data.get('endereco', ''))
                                     
-                                    # Data de aniversário - mantém formato DD/MMM
-                                    nova_data_aniversario = st.text_input("Data de Aniversário (DD/MMM)", 
-                                                                         value=cliente_data.get('data_aniversario', ''),
-                                                                         help="Ex: 13/abr, 16/jan")
+                                    # Aniversário: só dia e mês (guardado como "14/jun")
+                                    nova_data_aniversario = st.text_input("Aniversário (dia/mês)",
+                                                                         value=aniversario_para_digitar(cliente_data.get('data_aniversario')),
+                                                                         placeholder="Ex.: 14/06",
+                                                                         help="Só o dia e o mês. Pode digitar 14/06, 1406 ou 14/jun.")
                                     _origem_atual = normalizar_origem(cliente_data.get('origem_cliente'))
                                     _origem_idx = ORIGENS_OFICIAIS.index(_origem_atual) if _origem_atual in ORIGENS_OFICIAIS else None
                                     nova_origem = st.selectbox("Origem", ORIGENS_OFICIAIS, index=_origem_idx,
@@ -228,7 +235,10 @@ def show(modo="todos"):
                                 with col_cancel:
                                     cancelar_edicao = st.form_submit_button("Cancelar")
                                 
-                                if salvar_cliente:
+                                aniversario_ok = normalizar_aniversario(nova_data_aniversario) if salvar_cliente else ""
+                                if salvar_cliente and aniversario_ok is None:
+                                    st.error("Aniversário: informe dia e mês, por exemplo 14/06.")
+                                elif salvar_cliente:
                                     try:
                                         # Preparar dados para atualização
                                         dados_atualizacao = {
@@ -239,7 +249,7 @@ def show(modo="todos"):
                                             'cidade': novo_cidade,
                                             'bairro': novo_bairro,
                                             'endereco': novo_endereco,
-                                            'data_aniversario': nova_data_aniversario,
+                                            'data_aniversario': aniversario_ok or None,
                                             'origem_cliente': nova_origem,
                                             'observacoes': novas_observacoes
                                         }

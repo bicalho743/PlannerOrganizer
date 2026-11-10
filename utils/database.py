@@ -4052,7 +4052,10 @@ class Database:
                 cliente.observacoes = observacoes
 
             return True
-        return self._safe_query(query)
+        ok = self._safe_query(query)
+        if ok:
+            self.invalidar_cache()  # sem isso a lista seguia mostrando os dados antigos depois de editar
+        return ok
 
     def delete_cliente(self, cliente_id):
         """Exclui um cliente do banco de dados"""
@@ -4073,7 +4076,10 @@ class Database:
                 self.session.delete(cliente)
                 return True, "Cliente excluído com sucesso."
             return False, "Cliente não encontrado."
-        return self._safe_query(query)
+        resultado = self._safe_query(query)
+        if isinstance(resultado, tuple) and resultado[0]:
+            self.invalidar_cache()
+        return resultado
 
     def delete_multiple_clientes(self, cliente_ids):
         """Exclui múltiplos clientes do banco de dados"""
