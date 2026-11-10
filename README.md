@@ -1,222 +1,205 @@
 # Planner Organiza
 
-Sistema de gerenciamento de negócios com foco em propostas, clientes e finanças.
+Sistema de gestão para **personal organizers**: precificação, propostas com a marca da organizer, agenda,
+retornos às clientes (pós-organização), financeiro, impostos do MEI/Simples, vendas e relatórios.
 
-**Versão atual: 3.0.0 (07-05-2025)**
-**Última atualização: Otimização do sistema para produção e melhoria no desempenho**
+Este repositório tem o **sistema web** (Streamlit) e a **API do app de celular** (FastAPI). Os dois usam o mesmo
+banco e as mesmas regras (`utils/`): uma correção vale para a web e para o app ao mesmo tempo.
 
-## Funcionalidades
-
-- Gerenciamento de Clientes
-- Criação e Acompanhamento de Propostas
-- Controle Financeiro (Pendências e Histórico)
-- Relatórios e Dashboards Interativos
-- Importação e Exportação de Dados
-- Geração de PDFs personalizados
-- Controle de Vendas com Cálculo de Lucro
-
-## Requisitos
-
-- Python 3.11+
-- PostgreSQL
-- Dependências listadas no arquivo `requirements.txt`
-
-## Variáveis de Ambiente
-
-Para o sistema funcionar corretamente, você precisará configurar as seguintes variáveis de ambiente:
-
-- `DATABASE_URL`: URL de conexão com o banco de dados PostgreSQL
-- `JWT_SECRET`: Chave secreta para geração de tokens JWT
-- `FIREBASE_API_KEY`: Chave da API do Firebase (autenticação)
-- `SENDGRID_API_KEY`: (Opcional) Chave da API do SendGrid para envio de e-mails
-
-## Como Executar Localmente
-
-1. Clone o repositório
-2. Instale as dependências: `pip install -r requirements.txt`
-3. Configure as variáveis de ambiente necessárias
-4. Execute: `streamlit run app.py`
-
-## Deployment
-
-Este projeto está configurado para deploy no Render através do arquivo `render.yaml`.
-
-Para realizar o deploy:
-
-1. Conecte sua conta GitHub ao Render
-2. No dashboard do Render, clique em "New" > "Blueprint"
-3. Selecione o repositório com o código do projeto
-4. Aguarde a criação dos serviços conforme definido no arquivo render.yaml
-5. Configure as variáveis de ambiente necessárias (DATABASE_URL, JWT_SECRET, etc.)
-6. O deploy automático será acionado a cada novo commit no branch principal
-
-### Solução para problema de deploy no Render
-
-Se o Render mostrar erro "No commits found" ao tentar fazer deploy:
-
-1. Verifique se o token de acesso do GitHub está ativo
-2. Reconecte o repositório ao Render nos Settings do serviço 
-3. Tente fazer deploy manual com o commit mais recente
-4. Se necessário, faça uma pequena alteração no código e um novo push para gerar um commit detectável
-
-
-### MELHORIAS DA APLICAÇÃO
-
-UX-5 — Os alertas de Pós-Organização não têm affordances de ação
-Severidade: Média
-Esforço: Médio
-Problema
-A seção "Ações Pendentes de Acompanhamento" do dashboard lista tarefas de follow-up (agradecimento, acompanhamento, etc., com cliente e data), mas cada card se apresenta como informação estática — não há nenhuma ação óbvia de "marcar como concluído", "enviar mensagem" ou "adiar" no card.
-Por que importa
-Este é o melhor recurso de retenção do produto, mas ele para no lembrar em vez de viabilizar a ação. O usuário ainda precisa sair do sistema para agir.
-Impacto no negócio
-Um diferencial entrega apenas metade do seu valor; reduz a aderência (stickiness) e a sensação de que "esta ferramenta toca o meu negócio", percepção que impulsiona a retenção.
-Solução recomendada
-Adicionar uma ação de um toque por card, por exemplo:
-•	Enviar WhatsApp com mensagem sugerida pré-preenchida;
-•	Concluir;
-•	Adiar.
-Os números de telefone já estão cadastrados no sistema — utilizar deep links via wa.me.
-Melhor prática
-Ferramentas de CRM modernas permitem concluir, reagendar ou executar tarefas diretamente da fila, sem obrigar o usuário a trocar de contexto.
-________________________________________
-________________________________________
-________________________________________
-UI-3 — Ausência de layout responsivo para dispositivos móveis
-Severidade: Alta
-Esforço: Alto
-Problema
-Ao reduzir a viewport para 390px de largura (largura típica de smartphones), o sistema manteve o menu lateral fixo e as proporções de desktop, sem adaptação para mobile.
-Por que importa
-Personal organizers trabalham frequentemente no local do cliente. O contexto mobile é primário, não secundário.
-Um layout exclusivamente desktop em um celular implica:
-•	Zoom constante;
-•	Rolagem horizontal;
-•	Perda de produtividade durante o atendimento.
-Impacto no negócio
-Uma parcela significativa do uso real do produto fica degradada, tornando-se um dos principais fatores de abandono ou churn.
-Solução recomendada
-Implementar breakpoints responsivos para:
-•	Colapsar o menu lateral em:
-o	Menu hambúrguer; ou
-o	Navegação inferior (bottom navigation).
-•	Empilhar colunas do Kanban verticalmente;
-•	Transformar tabelas em cards no mobile;
-•	Tratar dispositivos móveis como plataforma de primeira classe.
-Melhor prática
-Ferramentas modernas de CRM e produtividade convertem pipelines e kanbans em navegação horizontal por swipe ou coluna única em dispositivos móveis.
+> Atualizado em novembro de 2026. As pendências estão no fim deste arquivo.
 
 ---
 
-## Análise Comparativa do Ecossistema (Web & Mobile)
+## 1. O ecossistema
 
-### 1. Visão Geral da Arquitetura
+| Parte | Tecnologia | Onde roda | Repositório |
+|---|---|---|---|
+| Sistema web | Python, Streamlit | Render: `PlannerOrganizer`, em **app.plannerorganiza.com.br** | este |
+| API do app | Python, FastAPI (`api/router.py`) | Render: `plannerorganiza-api.onrender.com` | este |
+| Banco de dados | PostgreSQL 16 | Render: `PlannerOrganizer_db` (plano Basic 256 MB) | — |
+| App Android e iPhone | Expo SDK 54, React Native 0.81, TypeScript | Google Play e App Store (build pelo EAS) | `bicalho743/planner-app` |
+| Página de vendas | React + Vite + Express | Render: `Pagina_de_vendas_planner`, em **plannerorganiza.com.br** e www | `bicalho743/LandingPage_Planner` |
+| Site da Tâmara | HTML estático | Locaweb (FTP por GitHub Action) | `bicalho743/tamara-site` |
 
-O sistema é desenhado de forma híbrida: a aplicação web também atua como servidor central de APIs (Backend) para o aplicativo móvel. Ambos se conectam a uma única fonte da verdade (banco de dados PostgreSQL e autenticação via Firebase).
+```
+                  Usuárias
+   ┌────────────────┬───────────────────┬──────────────────┐
+ App celular      Sistema web          Página de vendas    Site da Tâmara
+ (Expo)           (Streamlit)          (React)             (estático)
+   │ token          │                    │ "Começar grátis" ──► sistema web
+   ▼ Firebase       │
+ API (FastAPI)      │
+   └──────┬─────────┘
+          ▼
+   PostgreSQL (um banco, as duas pontas)
 
-```mermaid
-graph TD
-    %% Nós de Clientes
-    subgraph Frontend_Clients ["Clientes (Interfaces)"]
-        Web["Interface Web (Streamlit)<br/>C:\\APLICATIVOS\\PlannerOrganizer"]
-        App["Aplicativo Android (React Native / Expo)<br/>C:\\APLICATIVOS\\planner-app"]
-    end
-
-    %% Nós de Backend & Dados
-    subgraph Backend_Services ["Servidores & Serviços de Dados"]
-        API["FastAPI Backend (api/router.py)<br/>Hospedado no Render"]
-        DB[(Banco de Dados PostgreSQL)]
-        Firebase["Firebase Auth (Multi-Tenant)"]
-    end
-
-    %% Fluxos de Conexão
-    Web -->|Leitura/Escrita Direta| DB
-    Web -->|Autenticação| Firebase
-    App -->|Chamadas REST com Token Bearer| API
-    App -->|Autenticação Direct| Firebase
-    API -->|Consulta SQL (SQLAlchemy)| DB
-    API -->|Validação de Token| Firebase
+ Firebase Auth (login) · Stripe (assinatura) · Brevo (e-mail) · Expo Push (avisos)
+ GitHub Actions: lembretes diários e cópia semanal do banco
 ```
 
+Domínios (DNS na Locaweb): `plannerorganiza.com.br` e `www` → página de vendas; `app.` → sistema web;
+`promo.` → redireciona (301) para o domínio principal, mantendo os parâmetros dos anúncios.
+
+## 2. Como as partes funcionam
+
+### Login
+- **Firebase Auth**: e-mail e senha, Google e Apple (iPhone). A mesma conta vale no celular e na web.
+- O app manda o token do Firebase em toda chamada. A API confere com o Firebase (`accounts:lookup`) e guarda a
+  resposta por 5 minutos (`verify_firebase_token`).
+
+### Dados de cada usuária
+- Toda tabela tem `usuario_id` (o UID do Firebase).
+- `utils/database.py` acrescenta **"só desta usuária"** em toda consulta do SQLAlchemy (evento `do_orm_execute`
+  com `with_loader_criteria`): mesmo que uma tela esqueça o filtro, ninguém vê dados de outra conta.
+- Colunas e tabelas novas são criadas sozinhas quando o sistema sobe (`ALTER TABLE ... IF NOT EXISTS` em
+  `utils/database.py`).
+
+### Assinatura e teste grátis
+- Assinatura **pelo site**, no Stripe (links de pagamento mensal e anual em `pages/perfil.py`, com o UID em
+  `client_reference_id`). Cupom de lançamento ORGANIZA.
+- O Stripe avisa a API em `/webhook/stripe`:
+  - `checkout.session.completed`: ativa o plano pela conta do UID e guarda o **código do cliente** do Stripe
+    (`perfis.stripe_customer_id`);
+  - `invoice.paid`, `customer.subscription.updated`, `customer.subscription.deleted`: acham a conta **pelo código do
+    cliente** (o e-mail é só o último recurso). Pagar com outro e-mail não quebra mais renovação nem cancelamento.
+- **Teste grátis de 7 dias** (`utils/trial.py`). Depois, sem assinatura, a conta fica em **modo consulta**: vê tudo,
+  mas não grava nem gera PDF (a API responde **402**; a web usa `utils/somente_leitura.py`).
+- `TRIAL_ISENTOS` (variável no Render): e-mails sempre liberados (dono e conta de revisão da Apple).
+- **Excluir conta** (`POST /conta/excluir`): cancela as assinaturas no Stripe e apaga os dados de todas as tabelas
+  com `usuario_id`; o app apaga o login no Firebase. Exigência da App Store e da Google Play.
+
+### PDFs
+- Gerados **na API** com ReportLab (`utils/pdf_generator_v2.py`), com o logo e as cores do perfil:
+  proposta comercial, fechamento para a cliente, relatório interno, produtos e fornecedores, venda.
+
+### Avisos no celular
+- O app registra o token do celular (`POST /push/token`) e remove ao sair da conta (`/push/remover`).
+- Todo dia às **08:07 (Brasília)** o GitHub Actions (`.github/workflows/lembretes-diarios.yml`) chama
+  `POST /tarefas/lembretes-diarios` (protegida por `TAREFAS_CHAVE`). A API monta o "Para fazer" de cada conta com
+  a mesma função da tela Início (`_montar_inicio`) e envia um resumo pelo **Expo Push**: aniversários, retornos de
+  cliente, valores a receber e contas a pagar do dia. Sem nada para hoje, não envia. Contas em modo consulta
+  ficam de fora; celulares desinstalados saem da lista sozinhos.
+
+### Aniversário das clientes
+- Só **dia e mês**, guardado como `14/jun`. `utils/agenda.py` (`normalizar_aniversario`, `dia_mes_aniversario`)
+  entende `1406`, `14/06`, `14/jun`, `14/06/1990` e recusa datas impossíveis. Web, API e tela Início usam a mesma leitura.
+
+### Cópia de segurança do banco
+- O Render guarda os últimos dias do banco (recuperação "ponto no tempo" nos planos pagos), mas **não guarda nada
+  se o banco for apagado**.
+- Cópia **semanal** fora do Render: `.github/workflows/backup-banco.yml` (domingo, 03:17), `pg_dump`
+  criptografado (AES-256), guardado 90 dias nos artefatos do GitHub. Como restaurar está no próprio arquivo.
+
+## 3. Funcionalidades
+
+| Área | O que faz |
+|---|---|
+| Início | lucro do mês, a receber e a pagar, conversão de propostas; "Para fazer" com WhatsApp pronto, Feito e Adiar; propostas em andamento; aniversariantes do mês |
+| Propostas | criar, itens (produtos, fornecedores, assistentes, cômodos), acréscimos, status (em aberto → aprovada → em execução → finalizada/recusada), sinal na aprovação, finalizar o projeto, PDFs |
+| Agenda | semana ou mês: compromissos, serviços, retornos, aniversários e vencimentos; "Recebi" lança no financeiro |
+| Pós-organização | retornos criados ao finalizar a proposta (agradecimento, acompanhamento, ajuste fino, feedback), com WhatsApp, concluir e adiar |
+| Financeiro | receitas e despesas, a receber e a pagar, filtros e status |
+| Impostos | MEI (DAS mês a mês, limite anual, DASN-SIMEI), Simples (alíquota da contadora), outros regimes |
+| Precificação | hora mínima e sugerida a partir da renda desejada e dos custos; preço de um projeto por ambiente, complexidade e assistentes |
+| Cadastros | clientes (com origem e aniversário), fornecedores, parceiros, assistentes e produtos |
+| Vendas | venda de produtos do catálogo, forma de pagamento, PDF |
+| Relatórios | propostas por status, comparativo mensal, categorias de receita, origem das clientes, ticket médio |
+| Perfil e marca | dados da empresa, logo e cores (web), textos padrão dos PDFs, excluir conta |
+| Só na web | assinatura e portal do Stripe, envio do logo, importação de clientes por planilha, manual em PDF |
+
+## 4. Rotas da API (`api/router.py`)
+
+| Grupo | Rotas |
+|---|---|
+| Conta | `GET/PUT /perfil`, `POST /conta/excluir`, `GET /stripe/portal`, `GET /api/status` |
+| Início | `GET /inicio`, `GET /dashboard` |
+| Clientes e cadastros | `GET/POST /clientes`, `PUT/DELETE /clientes/{id}`, `GET/POST /fornecedores`, `/parceiros`, `/assistentes`, `GET/POST /produtos`, `PUT /produtos/{id}` |
+| Propostas | `GET/POST /propostas`, `PUT /propostas/{id}`, itens em `/propostas/{id}/produtos`, acréscimos em `/propostas/{id}/acrescimos` |
+| Agenda | `GET /agenda`, `POST /compromissos`, `PUT/DELETE /compromissos/{id}`, `POST /compromissos/{id}/recebido` |
+| Pós-organização | `GET /pos-organizacao`, `GET /pos-organizacao/{id}/acoes`, `PUT /pos-organizacao/acoes/{id}` |
+| Financeiro e impostos | `GET/POST /financeiro`, `PUT/DELETE /financeiro/{id}`, `GET /impostos`, `POST /impostos/das`, `PUT /impostos/regime` |
+| Precificação | `GET/PUT /precificacao` |
+| Vendas | `GET/POST /vendas`, `PUT/DELETE /vendas/{id}`, `GET/PUT /vendas/{id}/itens` |
+| PDFs | `/pdf/proposta/{id}/comercial`, `/cliente`, `/interno`, `/produtos`, `/fornecedores`, `/pdf/venda/{id}` |
+| Relatórios | `GET /relatorios` |
+| Avisos | `POST /push/token`, `POST /push/remover`, `POST /tarefas/lembretes-diarios` |
+| Stripe | `POST /webhook/stripe` |
+
+Rotas de gravação e PDFs respondem **402** no modo consulta, exceto perfil, regime de impostos, precificação,
+excluir conta, avisos e webhook.
+
+## 5. Estrutura do repositório
+
+```
+app.py                 entrada do sistema web (login, menu, páginas)
+pages/                 telas da web (dashboard = Início, propostas, agenda, financeiro, plano, perfil...)
+api/router.py          API do app (FastAPI)
+utils/database.py      acesso ao banco, filtro por usuária, criação de colunas novas
+utils/models.py        tabelas (SQLAlchemy)
+utils/agenda.py        agenda e aniversários       utils/trial.py        teste grátis e modo consulta
+utils/precificacao.py  cálculo de preço            utils/indicadores.py  números da tela Início
+utils/pdf_generator_v2.py  PDFs                    utils/proposta_status.py  status das propostas
+tests/                 testes (pytest) contra um PostgreSQL de teste
+.github/workflows/     lembretes diários e cópia semanal do banco
+```
+
+## 6. Variáveis de ambiente (Render)
+
+| Variável | Uso |
+|---|---|
+| `DATABASE_URL` | banco PostgreSQL |
+| `FIREBASE_API_KEY` (e demais `FIREBASE_*`) | login |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | login com Google na web |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | assinatura |
+| `TRIAL_ISENTOS` | e-mails sempre liberados, separados por vírgula |
+| `TAREFAS_CHAVE` | protege `/tarefas/lembretes-diarios` (o mesmo valor vai como segredo no GitHub) |
+| `CORS_ALLOWED_ORIGINS` | origens aceitas pela API |
+
+Segredos do GitHub (Settings → Secrets and variables → Actions): `TAREFAS_CHAVE`, `BACKUP_DATABASE_URL`, `BACKUP_SENHA`.
+
+## 7. Rodar e testar
+
+```bash
+pip install -r requirements.txt
+export DATABASE_URL=postgresql://usuario@localhost:5432/planner   # banco de teste, nunca o de produção
+streamlit run app.py                                   # web
+uvicorn api.router:api --port 8000                     # API
+python -m pytest -q tests                              # testes
+```
+
+## 8. Publicação
+
+- Trabalho no branch de desenvolvimento e envio ao `main` com os testes passando.
+- **API**: publica sozinha a cada envio ao `main`.
+- **Web**: hoje publica **manualmente** (Render → PlannerOrganizer → Manual Deploy). Ver pendências.
+- **App**: `npx eas-cli build --platform android|ios --profile production` no repositório `planner-app`.
+
 ---
 
-### 2. Análise dos Projetos
+## Pendências
 
-#### 2.1. Backend & Web App: `PlannerOrganizer`
-* **Local:** `c:\APLICATIVOS\PlannerOrganizer`
-* **Tecnologias:** Python 3.11, Streamlit, FastAPI, SQLAlchemy, PostgreSQL.
-* **Função Dupla:**
-  1. **Interface Administrativa (Streamlit):** Interface administrativa web voltada para desktops e navegadores.
-  2. **Servidor API (FastAPI em `api/router.py`):** Expõe as rotas REST necessárias para o aplicativo móvel consumir e manipular dados.
-* **Segurança e Isolamento Multi-Tenant:**
-  * O FastAPI intercepta as requisições do aplicativo móvel usando a função `verify_firebase_token`. Ele recebe o cabeçalho `Authorization: Bearer <ID_TOKEN>`, valida com a API do Google Firebase e extrai o `localId` (UID) do usuário.
-  * Esse UID é repassado ao inicializar a classe `Database(usuario_id=uid)` em `utils/database.py`, garantindo que todas as consultas SQL executadas filtrem os registros correspondentes apenas ao usuário logado.
+**Configurações que faltam (o código já está pronto)**
+- [ ] **Publicação automática da web**: Render → PlannerOrganizer → Settings → *Auto-Deploy* = *On Commit*, para a web e a API publicarem juntas.
+- [ ] **Aviso da manhã**: criar `TAREFAS_CHAVE` (texto longo e aleatório) no Render (plannerorganiza-api) e o mesmo valor como segredo no GitHub; no EAS, enviar a chave FCM V1 do Firebase (Android) e criar a chave de push da Apple no próximo build do iPhone.
+- [ ] **Cópia do banco**: segredos `BACKUP_DATABASE_URL` (URL externa do banco no Render) e `BACKUP_SENHA` no GitHub; rodar uma vez em Actions → Backup do banco → *Run workflow* e guardar a senha num lugar seguro.
 
-#### 2.2. Aplicativo Móvel: `planner-app`
-* **Local:** `c:\APLICATIVOS\planner-app`
-* **Tecnologias:** React Native, Expo 54 (Expo SDK 54, React 19, React Native 0.81), Expo Router, Axios para requisições.
-* **API Utilizada:** `https://plannerorganiza-api.onrender.com` (API hospedada no Render do Web App).
-* **Autenticação:** Login direto no Firebase no dispositivo móvel (`src/services/firebase.ts`). O token ID JWT do Firebase é obtido localmente no aplicativo e anexado a cada chamada de API REST via interceptador do Axios em `src/services/api.ts`.
+**Lojas e app**
+- [ ] App Store: revisão em andamento; usar o build com as correções; lançar manualmente após aprovar; trocar na página de vendas o botão "Safari" pelo selo da App Store.
+- [ ] Android: próximo build com excluir conta, aniversário dia/mês, e-mail sem correção automática, avisos pelo servidor.
+- [ ] Logo e cores só podem ser enviados pela web.
+- [ ] Tela de login do app ainda no visual antigo (azul-marinho).
 
----
+**Domínios e marketing**
+- [ ] Trocar o link dos anúncios do Meta de `promo.` para o domínio principal e, depois de 1 a 2 semanas, remover `promo` no Render e na Locaweb.
+- [ ] Depoimentos reais com autorização (a página mostra "Nossos compromissos" no lugar).
+- [ ] Perfil @plannerorganiza no Instagram, conversas da Tâmara e teste de anúncios (ver plano de marketing).
 
-### 3. Mapeamento de Funcionalidades e Telas
+**Produto (próximos passos sugeridos)**
+- [ ] Modelos prontos (mensagens de WhatsApp, checklist de visita, contrato).
+- [ ] Escola do Planner: aulas curtas da Tâmara dentro do app.
+- [ ] Comunidade: validar primeiro fora do app (WhatsApp) antes de construir.
+- [ ] Expansão para Portugal (preços em euro no Stripe).
 
-As funcionalidades do Web App (Streamlit) encontram reflexo direto nas telas nativas do aplicativo mobile (Expo) através de chamadas na API FastAPI:
-
-| Funcionalidade | Página Web (Streamlit) | Tela Mobile (React Native / Expo) | Endpoint da API (`api/router.py`) |
-| :--- | :--- | :--- | :--- |
-| **Dashboard** | `pages/dashboard.py` | `src/screens/DashboardScreen.tsx` | `GET /dashboard` |
-| **Clientes** | `pages/cadastros.py` (Aba Clientes) | `src/screens/ClientesScreen.tsx` | `GET`, `POST`, `PUT`, `DELETE /clientes` |
-| **Cadastros Gerais** | `pages/cadastros.py` (Fornecedores/Parceiros/Produtos) | `src/screens/CadastrosScreen.tsx` | `GET /fornecedores`, `/assistentes`, `/parceiros`, `/produtos` |
-| **Propostas** | `pages/propostas_unificado.py` | `src/screens/PropostasScreen.tsx` | `GET`, `POST`, `PUT /propostas` |
-| **Execução de Proposta** | `pages/propostas_unificado.py` (Seção Itens) | `src/screens/PropostaExecucaoScreen.tsx` | `GET/POST /propostas/{id}/produtos`, `/acrescimos` |
-| **Vendas** | `pages/vendas.py` | `src/screens/VendasScreen.tsx` | `GET`, `POST /vendas` |
-| **Financeiro** | `pages/financeiro.py` | `src/screens/FinanceiroScreen.tsx` | `GET`, `POST`, `PUT`, `DELETE /financeiro` |
-| **Pós-Organização** | `pages/pos_organizacao.py` | `src/screens/PosOrganizacaoScreen.tsx` | `GET /pos-organizacao`, `GET/PUT /pos-organizacao/acoes` |
-| **Relatórios** | `pages/relatorios.py` | `src/screens/RelatoriosScreen.tsx` | `GET /relatorios` |
-| **PDFs** | `pages/relatorios.py` (Botões de Download) | `src/screens/PDFScreen.tsx` | Geração remota de PDF pelo backend com visualização em webview local. |
-| Perfil & Planos | pages/perfil.py e pages/planos.py | src/screens/PerfilScreen.tsx | GET /perfil |
-
----
-
-## Guia de Sincronização e Atualização de Ambientes
-
-Para garantir que o ecossistema (Web, API, Replit, Render e Aplicativo Móvel) esteja sempre em perfeita sincronia, o **GitHub deve ser tratado como a única fonte da verdade**.
-
-### 1. Fluxo de Atualização do Web App e API (PlannerOrganizer)
-
-* **Desenvolvimento (Local/Replit) ➔ GitHub:**
-  Sempre comite e envie as alterações para a branch `main`:
-  ```bash
-  git add .
-  git commit -m "Sua mensagem descritiva"
-  git push origin main
-  ```
-* **GitHub ➔ Replit:**
-  Para puxar as novidades do GitHub e atualizar o código rodando no Replit, execute no **Shell do Replit**:
-  ```bash
-  git fetch origin
-  git reset --hard origin/main
-  pkill -f streamlit
-  ```
-  *(O `pkill` força o encerramento do processo em memória do Streamlit para que ele carregue o novo código).*
-* **GitHub ➔ Render (Produção):**
-  O Render atualiza de forma automatizada via **Auto-Deploy** ao receber alterações no GitHub. Se houver falha de cache ou o deploy travar, acesse o Dashboard do Render e clique em **"Manual Deploy" ➔ "Clear Cache and Deploy"**.
-
-### 2. Fluxo de Atualização do Aplicativo Móvel (planner-app)
-
-* **Desenvolvimento Local ➔ GitHub:**
-  No diretório `C:\APLICATIVOS\planner-app`, salve o progresso comitando e empurrando para o GitHub:
-  ```bash
-  git add .
-  git commit -m "Sua mensagem descritiva"
-  git push origin main
-  ```
-* **Atualização do App para Usuários:**
-  1. **Mudanças na API/Regras de Negócio:** Atualize o backend no repositório `PlannerOrganizer` e suba ao Render. O app móvel lerá as novidades da API em produção automaticamente.
-  2. **Mudanças Visuais/Telas/Pacotes no App:** Você precisará gerar um novo build de distribuição com o Expo EAS para enviar à Google Play Store:
-     ```bash
-     cd C:\APLICATIVOS\planner-app
-     eas build --platform android
-     ```
+**Técnico**
+- [ ] Teste visual antigo `fluxo_inicio` (fora do repositório) espera o mês de outubro.
+- [ ] Abrir CNPJ (previsto para abril/2027) e revisar impostos com contador.
