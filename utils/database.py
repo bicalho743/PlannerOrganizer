@@ -309,6 +309,9 @@ class Database:
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS regime_tributario TEXT"))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS tutorial_visto TEXT"))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS origem_cadastro TEXT"))
+                # código do cliente no Stripe: liga renovações e cancelamentos à conta certa mesmo
+                # quando a pessoa pagou com um e-mail diferente do login
+                conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT"))
                 conn.execute(_sa_text("ALTER TABLE itens_venda ADD COLUMN IF NOT EXISTS custo_unitario DOUBLE PRECISION"))
                 conn.execute(_sa_text("ALTER TABLE itens_venda ADD COLUMN IF NOT EXISTS baixou_estoque BOOLEAN"))
                 # Agenda (o create_all não cria tabelas novas: o refresh_schema_metadata troca os modelos pelo reflect)

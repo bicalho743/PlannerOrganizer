@@ -1699,10 +1699,48 @@ async def stripe_webhook(request: Request):
     import psycopg2 as _pg2, os as _os
     _db_url = _os.environ.get("DATABASE_URL")
 
+    def _conta_do_stripe(cur, customer_id, email):
+        """usuario_id da conta ligada a este cliente do Stripe: primeiro pelo código do cliente
+        (guardado no primeiro pagamento), depois pelo e-mail. Achando pelo e-mail, guarda o código."""
+        if customer_id:
+            cur.execute("SELECT usuario_id FROM perfis WHERE stripe_customer_id = %s LIMIT 1", (customer_id,))
+            r = cur.fetchone()
+            if r:
+                return r[0]
+        if not email and customer_id and STRIPE_SECRET_KEY:
+            try:
+                stripe.api_key = STRIPE_SECRET_KEY
+                email = stripe.Customer.retrieve(customer_id).get("email", "") or ""
+            except Exception as e:
+                print(f"[webhook] erro ao buscar cliente {customer_id}: {e}")
+        if email:
+            cur.execute("SELECT usuario_id FROM perfis WHERE LOWER(TRIM(email)) = LOWER(TRIM(%s)) LIMIT 1", (email,))
+            r = cur.fetchone()
+            if r:
+                if customer_id:
+                    cur.execute("UPDATE perfis SET stripe_customer_id = %s WHERE usuario_id = %s", (customer_id, r[0]))
+                return r[0]
+        return None
+
+    def _mudar_plano(customer_id, email, plano, origem):
+        try:
+            _conn = _pg2.connect(_db_url)
+            _cur = _conn.cursor()
+            uid = _conta_do_stripe(_cur, customer_id, email)
+            if uid:
+                _cur.execute("UPDATE perfis SET plano = %s WHERE usuario_id = %s", (plano, uid))
+            _conn.commit()
+            print(f"[webhook] {origem}: plano={plano} cliente={customer_id} conta={uid or 'NÃO ENCONTRADA'}")
+            _cur.close()
+            _conn.close()
+        except Exception as e:
+            print(f"[webhook] erro ao atualizar plano ({origem}): {e}")
+
     if event["type"] == "checkout.session.completed":
         session = event["data"]["object"]
         # StripeObject usa atributo, não dict .get()
         uid = getattr(session, "client_reference_id", None) or ""
+        customer_id = getattr(session, "customer", None) or ""
         try:
             email = getattr(session, "customer_email", None) or ""
             if not email:
@@ -1710,40 +1748,31 @@ async def stripe_webhook(request: Request):
                 email = getattr(cd, "email", "") or ""
         except Exception:
             email = ""
-        print(f"[webhook] pagamento confirmado: uid={uid or '(nenhum)'} email={email}")
-        if uid or email:
-            try:
-                _conn = _pg2.connect(_db_url)
-                _cur = _conn.cursor()
-                rows = 0
-                # 1ª tentativa: client_reference_id (o UID Firebase da conta que
-                # iniciou o checkout — imutável, não editável pelo pagador).
-                # Muito mais confiável que o e-mail, que é texto livre no Stripe
-                # e pode ser digitado diferente do e-mail de login da conta.
-                if uid:
-                    _cur.execute(
-                        "UPDATE perfis SET plano = 'pro', ativo = TRUE WHERE usuario_id = %s",
-                        (uid,)
-                    )
-                    rows = _cur.rowcount
-                # 2ª tentativa (fallback): e-mail, para links antigos sem
-                # client_reference_id ou pagamentos feitos fora do fluxo do app/site.
-                if rows == 0 and email:
-                    _cur.execute(
-                        "UPDATE perfis SET plano = 'pro', ativo = TRUE "
-                        "WHERE LOWER(TRIM(email)) = LOWER(TRIM(%s))",
-                        (email,)
-                    )
-                    rows = _cur.rowcount
-                _conn.commit()
-                if rows == 0:
-                    print(f"[webhook] ATENCAO: pagamento uid={uid or '(nenhum)'} email={email} sem perfil correspondente — plano NAO ativado")
-                else:
-                    print(f"[webhook] plano ativado (uid={uid or '(nenhum)'} email={email}) rows={rows}")
-                _cur.close()
-                _conn.close()
-            except Exception as e:
-                print(f"[webhook] erro ao ativar plano: {e}")
+        print(f"[webhook] pagamento confirmado: uid={uid or '(nenhum)'} cliente={customer_id or '(nenhum)'} email={email}")
+        try:
+            _conn = _pg2.connect(_db_url)
+            _cur = _conn.cursor()
+            conta = None
+            # 1ª tentativa: client_reference_id (o UID Firebase da conta que iniciou o checkout:
+            # imutável, não editável por quem paga). Depois: código do cliente e e-mail.
+            if uid:
+                _cur.execute("SELECT usuario_id FROM perfis WHERE usuario_id = %s", (uid,))
+                r = _cur.fetchone()
+                conta = r[0] if r else None
+            if not conta:
+                conta = _conta_do_stripe(_cur, customer_id, email)
+            if conta:
+                _cur.execute("UPDATE perfis SET plano = 'pro', ativo = TRUE, "
+                             "stripe_customer_id = COALESCE(NULLIF(%s, ''), stripe_customer_id) WHERE usuario_id = %s",
+                             (customer_id, conta))
+                print(f"[webhook] plano ativado: conta={conta} cliente={customer_id}")
+            else:
+                print(f"[webhook] ATENCAO: pagamento uid={uid or '(nenhum)'} email={email} sem perfil correspondente — plano NAO ativado")
+            _conn.commit()
+            _cur.close()
+            _conn.close()
+        except Exception as e:
+            print(f"[webhook] erro ao ativar plano: {e}")
 
     elif event["type"] in ("customer.subscription.updated", "invoice.paid"):
         # Renovação paga reativa; assinatura que deixou de valer (cancelada no fim do
@@ -1755,50 +1784,13 @@ async def stripe_webhook(request: Request):
             status = getattr(obj, "status", "") or ""
             novo_plano = {"active": "pro", "trialing": "pro", "canceled": "cancelado",
                           "unpaid": "cancelado", "incomplete_expired": "cancelado"}.get(status)
-        email = getattr(obj, "customer_email", None) or ""
-        customer_id = getattr(obj, "customer", None)
-        if novo_plano and not email and STRIPE_SECRET_KEY and customer_id:
-            try:
-                stripe.api_key = STRIPE_SECRET_KEY
-                email = stripe.Customer.retrieve(customer_id).get("email", "") or ""
-            except Exception as e:
-                print(f"[webhook] erro ao buscar cliente {customer_id}: {e}")
-        if novo_plano and email:
-            try:
-                _conn = _pg2.connect(_db_url)
-                _cur = _conn.cursor()
-                _cur.execute("UPDATE perfis SET plano = %s WHERE LOWER(TRIM(email)) = LOWER(TRIM(%s))",
-                             (novo_plano, email))
-                _conn.commit()
-                print(f"[webhook] {event['type']}: plano={novo_plano} email={email} rows={_cur.rowcount}")
-                _cur.close()
-                _conn.close()
-            except Exception as e:
-                print(f"[webhook] erro ao atualizar plano: {e}")
+        if novo_plano:
+            _mudar_plano(getattr(obj, "customer", None), getattr(obj, "customer_email", None) or "",
+                         novo_plano, event["type"])
 
     elif event["type"] == "customer.subscription.deleted":
         sub = event["data"]["object"]
-        customer_id = getattr(sub, "customer", None)
-        print(f"[webhook] assinatura cancelada: {customer_id}")
-        if STRIPE_SECRET_KEY and customer_id:
-            try:
-                stripe.api_key = STRIPE_SECRET_KEY
-                customer = stripe.Customer.retrieve(customer_id)
-                email = customer.get("email", "")
-                if email:
-                    _conn = _pg2.connect(_db_url)
-                    _cur = _conn.cursor()
-                    _cur.execute(
-                        "UPDATE perfis SET plano = 'cancelado' "
-                        "WHERE LOWER(TRIM(email)) = LOWER(TRIM(%s))",
-                        (email,)
-                    )
-                    _conn.commit()
-                    print(f"[webhook] plano cancelado para {email}")
-                    _cur.close()
-                    _conn.close()
-            except Exception as e:
-                print(f"[webhook] erro ao cancelar plano: {e}")
+        _mudar_plano(getattr(sub, "customer", None), "", "cancelado", event["type"])
 
     elif event["type"] == "invoice.payment_failed":
         invoice = event["data"]["object"]
@@ -1820,18 +1812,18 @@ async def stripe_portal(uid: str = Depends(verify_firebase_token)):
         # Buscar email do usuário
         _conn = _pg2.connect(_os.environ.get("DATABASE_URL"))
         _cur = _conn.cursor()
-        _cur.execute("SELECT email FROM perfis WHERE usuario_id = %s", (uid,))
+        _cur.execute("SELECT email, stripe_customer_id FROM perfis WHERE usuario_id = %s", (uid,))
         row = _cur.fetchone()
         _cur.close()
         _conn.close()
         if not row:
             raise HTTPException(status_code=404, detail="Perfil não encontrado")
-        email = row[0]
-        # Buscar customer_id no Stripe pelo email
-        customers = _stripe.Customer.list(email=email, limit=1)
-        if not customers.data:
-            raise HTTPException(status_code=404, detail="Cliente não encontrado no Stripe")
-        customer_id = customers.data[0].id
+        email, customer_id = row[0], row[1]
+        if not customer_id:  # assinaturas anteriores ao código guardado: procura pelo e-mail
+            customers = _stripe.Customer.list(email=email, limit=1)
+            if not customers.data:
+                raise HTTPException(status_code=404, detail="Cliente não encontrado no Stripe")
+            customer_id = customers.data[0].id
         # Criar sessão do portal
         session = _stripe.billing_portal.Session.create(
             customer=customer_id,
@@ -2214,14 +2206,17 @@ class ExcluirContaBody(BaseModel):
     confirmacao: str
 
 
-def _cancelar_assinaturas_stripe(email: str) -> int:
-    """Cancela as assinaturas ativas no Stripe ligadas ao e-mail. Devolve quantas cancelou."""
-    if not (STRIPE_SECRET_KEY and email):
+def _cancelar_assinaturas_stripe(email: str, customer_id: str = "") -> int:
+    """Cancela as assinaturas ativas no Stripe ligadas à conta (código do cliente e e-mail)."""
+    if not (STRIPE_SECRET_KEY and (email or customer_id)):
         return 0
     stripe.api_key = STRIPE_SECRET_KEY
     canceladas = 0
-    for cliente in stripe.Customer.list(email=email, limit=20).auto_paging_iter():
-        for assinatura in stripe.Subscription.list(customer=cliente.id, status="all", limit=50).auto_paging_iter():
+    clientes = {customer_id} if customer_id else set()
+    if email:
+        clientes |= {c.id for c in stripe.Customer.list(email=email, limit=20).auto_paging_iter()}
+    for cliente_id in clientes:
+        for assinatura in stripe.Subscription.list(customer=cliente_id, status="all", limit=50).auto_paging_iter():
             if assinatura.status in ("active", "trialing", "past_due", "unpaid", "incomplete"):
                 stripe.Subscription.cancel(assinatura.id)
                 canceladas += 1
@@ -2275,7 +2270,17 @@ def _apagar_dados_do_usuario(uid: str) -> dict:
 async def excluir_conta(body: ExcluirContaBody, uid: str = Depends(verify_firebase_token)):
     if body.confirmacao.strip().upper() != "EXCLUIR":
         raise HTTPException(status_code=422, detail='Digite EXCLUIR para confirmar.')
-    email = ""
+    email, customer_id = "", ""
+    try:
+        import psycopg2 as _pg2
+        _c = _pg2.connect(os.environ.get("DATABASE_URL"))
+        _k = _c.cursor()
+        _k.execute("SELECT COALESCE(stripe_customer_id, '') FROM perfis WHERE usuario_id = %s", (uid,))
+        _r = _k.fetchone()
+        customer_id = _r[0] if _r else ""
+        _c.close()
+    except Exception as e:
+        print(f"[excluir_conta] código Stripe: {e}")
     try:
         perfil = get_db(uid).get_perfil_usuario()
         if hasattr(perfil, "to_dict"):
@@ -2285,7 +2290,7 @@ async def excluir_conta(body: ExcluirContaBody, uid: str = Depends(verify_fireba
     except Exception as e:
         print(f"[excluir_conta] perfil: {e}")
     try:
-        canceladas = _cancelar_assinaturas_stripe(email)
+        canceladas = _cancelar_assinaturas_stripe(email, customer_id)
     except Exception as e:
         # sem cancelar a cobrança, não apaga: a pessoa continuaria pagando por uma conta que não existe
         print(f"[excluir_conta] stripe {uid}: {e}")
