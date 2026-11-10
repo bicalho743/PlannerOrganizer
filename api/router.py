@@ -62,7 +62,8 @@ def verify_firebase_token(request: Request) -> str:
 
 MODO_CONSULTA = "modo_consulta"
 MENSAGEM_CONSULTA = "Seu teste grátis terminou. Assine para voltar a cadastrar, editar e gerar PDFs."
-_LIVRES_NO_CONSULTA = ("/webhook/", "/perfil", "/impostos/regime", "/precificacao", "/api/status", "/conta/excluir")
+_LIVRES_NO_CONSULTA = ("/webhook/", "/perfil", "/impostos/regime", "/precificacao", "/api/status", "/conta/excluir",
+                       "/push/", "/tarefas/")
 
 
 def _uid_da_requisicao(request: Request):
@@ -2038,125 +2039,131 @@ async def post_das(body: DasBody, uid: str = Depends(verify_firebase_token)):
 
 @api.get("/inicio")
 async def get_inicio(uid: str = Depends(verify_firebase_token)):
-    from datetime import timedelta
-    from pages.dashboard import (ETAPAS_POS, DIAS_FOLLOWUP, MESES, SEMANA, _hoje, _data, _num, _dm, _quando,
-                                 _aniversario)
-    from utils.indicadores import movimentos, entrou_gastou, funil
-    from utils.proposta_status import is_ativa, normalize, label_for
-    from utils.whatsapp_helper import whatsapp_link
     try:
-        db = get_db(uid)
-        hoje = _hoje()
-        clientes, propostas, fin = db.get_clientes(), db.get_propostas(), db.get_financeiro()
-        acoes_pos = db.get_pending_post_actions_for_dashboard()
-        acoes_pos = acoes_pos if isinstance(acoes_pos, pd.DataFrame) else pd.DataFrame()
-        perfil = db.get_perfil_usuario() or {}
-
-        tel = dict(zip(clientes["id"], clientes["telefone"])) if not clientes.empty else {}
-        if not propostas.empty:
-            propostas = propostas.copy()
-            propostas["valor"] = propostas["valor"].apply(_num)
-            propostas["st"] = propostas["status"].apply(normalize)
-            ativas = propostas[propostas["status"].apply(is_ativa)]
-        else:
-            ativas = pd.DataFrame()
-
-        def _eh(df, tipos, classif):
-            return df["tipo"].astype(str).str.lower().isin(tipos) | (df["classificacao"] == classif)
-        if not fin.empty:
-            f = fin.copy()
-            f["valor"] = f["valor"].apply(_num)
-            f["d"] = f["data"].apply(_data)
-            rec_pend = f[_eh(f, ["receita", "receita_a_receber"], "contas_a_receber") & (f["status"] == "Pendente")]
-            desp_pend = f[_eh(f, ["despesa", "despesa_a_pagar"], "contas_a_pagar") & (f["status"] == "Pendente")]
-        else:
-            rec_pend = desp_pend = pd.DataFrame(columns=["id", "valor", "d", "descricao"])
-        atras_rec = rec_pend[rec_pend["d"].apply(lambda d: bool(d) and d < hoje)] if not rec_pend.empty else rec_pend
-        prox7_pag = desp_pend[desp_pend["d"].apply(lambda d: bool(d) and d <= hoje + timedelta(days=7))] if not desp_pend.empty else desp_pend
-
-        entrou, gastou = entrou_gastou(movimentos(fin), hoje.year, hoje.month)
-        fn = funil(propostas, hoje)
-        kpis = {
-            "mes": MESES[hoje.month - 1], "lucro": entrou - gastou, "entrou": entrou, "gastou": gastou,
-            "a_receber": float(rec_pend["valor"].sum()), "a_receber_qtd": len(rec_pend), "a_receber_atraso": len(atras_rec),
-            "a_pagar": float(desp_pend["valor"].sum()), "a_pagar_qtd": len(desp_pend), "a_pagar_7dias": len(prox7_pag),
-            "conversao": fn["conversao"], "fechadas": fn["fechadas"], "respondidas": fn["fechadas"] + fn["recusadas"],
-            "dias_funil": fn["dias"],
-        }
-
-        itens = []
-        if not acoes_pos.empty:
-            try:
-                templates = db.get_post_org_templates() or {}
-            except Exception:
-                templates = {}
-            for _, a in acoes_pos.iterrows():
-                at = str(a.get("action_type") or "").lower()
-                nome_etapa, dmais, objetivo = ETAPAS_POS.get(at, (at.replace("_", " ").title(), "", ""))
-                venc = _data(a.get("due_date")) or hoje
-                cliente = a.get("cliente_nome") or "cliente"
-                txt = (templates.get(at, {}) or {}).get("texto", "")
-                itens.append({"tipo": "pos", "tag": f"Pós {dmais}".strip(), "titulo": f"{nome_etapa} · {cliente}",
-                              "detalhe": f"{objetivo} · proposta #{a.get('proposta_numero', '')}",
-                              "quando": ("venceu " if venc < hoje else "") + _quando(venc, hoje), "atrasado": venc < hoje,
-                              "vencimento": venc.isoformat(), "acao_id": int(a.get("action_id")),
-                              "whatsapp": whatsapp_link(a.get("cliente_telefone"),
-                                                        txt.replace("{nome}", str(cliente).split(" ")[0]) if txt else "")})
-        for df, tipo, tag, padrao in ((rec_pend, "receber", "Receber", "Recebimento"), (desp_pend, "pagar", "Pagar", "Conta")):
-            if df.empty:
-                continue
-            for _, r in df[df["d"].apply(lambda d: bool(d) and d <= hoje + timedelta(days=3))].sort_values("d").iterrows():
-                atrasado = r["d"] < hoje
-                itens.append({"tipo": tipo, "tag": tag, "titulo": f"{r.get('descricao') or padrao}", "valor": float(r["valor"]),
-                              "detalhe": f"({_dm(r['d'])})", "quando": ("venceu " if atrasado else "vence ") + _quando(r["d"], hoje),
-                              "atrasado": atrasado, "vencimento": r["d"].isoformat(), "transacao_id": int(r["id"])})
-        if not propostas.empty:
-            for _, p in propostas[propostas["st"] == "em_aberto"].iterrows():
-                enviada = _data(p.get("data_proposta")) or _data(p.get("data_inicio"))
-                if not enviada or (hoje - enviada).days < DIAS_FOLLOWUP:
-                    continue
-                cliente = p.get("cliente_nome") or "cliente"
-                msg = (f"Oi, {str(cliente).split(' ')[0]}! Tudo bem? Passando para saber se ficou alguma dúvida "
-                       f"sobre a proposta de organização que te enviei. Fico à disposição!")
-                itens.append({"tipo": "followup", "tag": "Follow-up", "titulo": f"Proposta #{p.get('numero')} · {cliente}",
-                              "valor": float(p["valor"]), "detalhe": "ainda sem resposta",
-                              "quando": "enviada " + _quando(enviada, hoje), "atrasado": False,
-                              "whatsapp": whatsapp_link(tel.get(p.get("cliente_id")), msg)})
-        niver_mes = []
-        if not clientes.empty and "data_aniversario" in clientes.columns:
-            for _, c in clientes.iterrows():
-                d = _aniversario(c, hoje)
-                if not d:
-                    continue
-                if d.month == hoje.month:
-                    niver_mes.append({"nome": c["nome"], "dia": d.day})
-                if (d - hoje).days <= 7:
-                    primeiro = str(c["nome"]).split(" ")[0]
-                    itens.append({"tipo": "aniversario", "tag": "Aniversário", "titulo": str(c["nome"]),
-                                  "detalhe": f"({_dm(d)})", "quando": _quando(d, hoje), "atrasado": False,
-                                  "whatsapp": whatsapp_link(c.get("telefone"),
-                                                            f"Feliz aniversário, {primeiro}! Desejo um novo ciclo leve e cheio de alegria. 💛")})
-
-        andamento = []
-        if not ativas.empty:
-            for _, p in ativas.sort_values("valor", ascending=False).head(8).iterrows():
-                andamento.append({"id": int(p["id"]), "numero": p.get("numero"), "cliente": p.get("cliente_nome") or "—",
-                                  "status": label_for(p["st"]), "valor": float(p["valor"])})
-
-        nome = str(perfil.get("nome") or "").split(" ")[0] if isinstance(perfil, dict) else ""
         import json as _json
-        resposta = {
-            "nome": nome, "data": f"{SEMANA[hoje.weekday()].capitalize()}, {hoje.day} de {MESES[hoje.month - 1]}",
-            "sem_dados": clientes.empty and propostas.empty, "sem_logo": not (isinstance(perfil, dict) and perfil.get("logo")),
-            "kpis": kpis, "para_fazer": itens, "andamento": andamento,
-            "aniversariantes_mes": sorted(niver_mes, key=lambda x: x["dia"]),
-        }
+        resposta = _montar_inicio(uid)
         # números do pandas/numpy viram tipos do Python
         return JSONResponse(content=_json.loads(_json.dumps(resposta, default=lambda o: o.item() if hasattr(o, "item") else str(o))))
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def _montar_inicio(uid: str) -> dict:
+    """Tela Início (igual à da web): indicadores, Para fazer, andamento e aniversariantes.
+    Usada pela rota /inicio e pelo resumo diário enviado ao celular (/tarefas/lembretes-diarios)."""
+    from datetime import timedelta
+    from pages.dashboard import (ETAPAS_POS, DIAS_FOLLOWUP, MESES, SEMANA, _hoje, _data, _num, _dm, _quando,
+                                 _aniversario)
+    from utils.indicadores import movimentos, entrou_gastou, funil
+    from utils.proposta_status import is_ativa, normalize, label_for
+    from utils.whatsapp_helper import whatsapp_link
+    db = get_db(uid)
+    hoje = _hoje()
+    clientes, propostas, fin = db.get_clientes(), db.get_propostas(), db.get_financeiro()
+    acoes_pos = db.get_pending_post_actions_for_dashboard()
+    acoes_pos = acoes_pos if isinstance(acoes_pos, pd.DataFrame) else pd.DataFrame()
+    perfil = db.get_perfil_usuario() or {}
+
+    tel = dict(zip(clientes["id"], clientes["telefone"])) if not clientes.empty else {}
+    if not propostas.empty:
+        propostas = propostas.copy()
+        propostas["valor"] = propostas["valor"].apply(_num)
+        propostas["st"] = propostas["status"].apply(normalize)
+        ativas = propostas[propostas["status"].apply(is_ativa)]
+    else:
+        ativas = pd.DataFrame()
+
+    def _eh(df, tipos, classif):
+        return df["tipo"].astype(str).str.lower().isin(tipos) | (df["classificacao"] == classif)
+    if not fin.empty:
+        f = fin.copy()
+        f["valor"] = f["valor"].apply(_num)
+        f["d"] = f["data"].apply(_data)
+        rec_pend = f[_eh(f, ["receita", "receita_a_receber"], "contas_a_receber") & (f["status"] == "Pendente")]
+        desp_pend = f[_eh(f, ["despesa", "despesa_a_pagar"], "contas_a_pagar") & (f["status"] == "Pendente")]
+    else:
+        rec_pend = desp_pend = pd.DataFrame(columns=["id", "valor", "d", "descricao"])
+    atras_rec = rec_pend[rec_pend["d"].apply(lambda d: bool(d) and d < hoje)] if not rec_pend.empty else rec_pend
+    prox7_pag = desp_pend[desp_pend["d"].apply(lambda d: bool(d) and d <= hoje + timedelta(days=7))] if not desp_pend.empty else desp_pend
+
+    entrou, gastou = entrou_gastou(movimentos(fin), hoje.year, hoje.month)
+    fn = funil(propostas, hoje)
+    kpis = {
+        "mes": MESES[hoje.month - 1], "lucro": entrou - gastou, "entrou": entrou, "gastou": gastou,
+        "a_receber": float(rec_pend["valor"].sum()), "a_receber_qtd": len(rec_pend), "a_receber_atraso": len(atras_rec),
+        "a_pagar": float(desp_pend["valor"].sum()), "a_pagar_qtd": len(desp_pend), "a_pagar_7dias": len(prox7_pag),
+        "conversao": fn["conversao"], "fechadas": fn["fechadas"], "respondidas": fn["fechadas"] + fn["recusadas"],
+        "dias_funil": fn["dias"],
+    }
+
+    itens = []
+    if not acoes_pos.empty:
+        try:
+            templates = db.get_post_org_templates() or {}
+        except Exception:
+            templates = {}
+        for _, a in acoes_pos.iterrows():
+            at = str(a.get("action_type") or "").lower()
+            nome_etapa, dmais, objetivo = ETAPAS_POS.get(at, (at.replace("_", " ").title(), "", ""))
+            venc = _data(a.get("due_date")) or hoje
+            cliente = a.get("cliente_nome") or "cliente"
+            txt = (templates.get(at, {}) or {}).get("texto", "")
+            itens.append({"tipo": "pos", "tag": f"Pós {dmais}".strip(), "titulo": f"{nome_etapa} · {cliente}",
+                          "detalhe": f"{objetivo} · proposta #{a.get('proposta_numero', '')}",
+                          "quando": ("venceu " if venc < hoje else "") + _quando(venc, hoje), "atrasado": venc < hoje,
+                          "vencimento": venc.isoformat(), "acao_id": int(a.get("action_id")),
+                          "whatsapp": whatsapp_link(a.get("cliente_telefone"),
+                                                    txt.replace("{nome}", str(cliente).split(" ")[0]) if txt else "")})
+    for df, tipo, tag, padrao in ((rec_pend, "receber", "Receber", "Recebimento"), (desp_pend, "pagar", "Pagar", "Conta")):
+        if df.empty:
+            continue
+        for _, r in df[df["d"].apply(lambda d: bool(d) and d <= hoje + timedelta(days=3))].sort_values("d").iterrows():
+            atrasado = r["d"] < hoje
+            itens.append({"tipo": tipo, "tag": tag, "titulo": f"{r.get('descricao') or padrao}", "valor": float(r["valor"]),
+                          "detalhe": f"({_dm(r['d'])})", "quando": ("venceu " if atrasado else "vence ") + _quando(r["d"], hoje),
+                          "atrasado": atrasado, "vencimento": r["d"].isoformat(), "transacao_id": int(r["id"])})
+    if not propostas.empty:
+        for _, p in propostas[propostas["st"] == "em_aberto"].iterrows():
+            enviada = _data(p.get("data_proposta")) or _data(p.get("data_inicio"))
+            if not enviada or (hoje - enviada).days < DIAS_FOLLOWUP:
+                continue
+            cliente = p.get("cliente_nome") or "cliente"
+            msg = (f"Oi, {str(cliente).split(' ')[0]}! Tudo bem? Passando para saber se ficou alguma dúvida "
+                   f"sobre a proposta de organização que te enviei. Fico à disposição!")
+            itens.append({"tipo": "followup", "tag": "Follow-up", "titulo": f"Proposta #{p.get('numero')} · {cliente}",
+                          "valor": float(p["valor"]), "detalhe": "ainda sem resposta",
+                          "quando": "enviada " + _quando(enviada, hoje), "atrasado": False,
+                          "whatsapp": whatsapp_link(tel.get(p.get("cliente_id")), msg)})
+    niver_mes = []
+    if not clientes.empty and "data_aniversario" in clientes.columns:
+        for _, c in clientes.iterrows():
+            d = _aniversario(c, hoje)
+            if not d:
+                continue
+            if d.month == hoje.month:
+                niver_mes.append({"nome": c["nome"], "dia": d.day})
+            if (d - hoje).days <= 7:
+                primeiro = str(c["nome"]).split(" ")[0]
+                itens.append({"tipo": "aniversario", "tag": "Aniversário", "titulo": str(c["nome"]),
+                              "detalhe": f"({_dm(d)})", "quando": _quando(d, hoje), "atrasado": False,
+                              "whatsapp": whatsapp_link(c.get("telefone"),
+                                                        f"Feliz aniversário, {primeiro}! Desejo um novo ciclo leve e cheio de alegria. 💛")})
+
+    andamento = []
+    if not ativas.empty:
+        for _, p in ativas.sort_values("valor", ascending=False).head(8).iterrows():
+            andamento.append({"id": int(p["id"]), "numero": p.get("numero"), "cliente": p.get("cliente_nome") or "—",
+                              "status": label_for(p["st"]), "valor": float(p["valor"])})
+
+    nome = str(perfil.get("nome") or "").split(" ")[0] if isinstance(perfil, dict) else ""
+    return {
+        "nome": nome, "data": f"{SEMANA[hoje.weekday()].capitalize()}, {hoje.day} de {MESES[hoje.month - 1]}",
+        "sem_dados": clientes.empty and propostas.empty, "sem_logo": not (isinstance(perfil, dict) and perfil.get("logo")),
+        "kpis": kpis, "para_fazer": itens, "andamento": andamento,
+        "aniversariantes_mes": sorted(niver_mes, key=lambda x: x["dia"]),
+    }
 
 
 # ── PRECIFICAÇÃO (números da organizer guardados no perfil, como na web) ───────
@@ -2306,3 +2313,140 @@ async def excluir_conta(body: ExcluirContaBody, uid: str = Depends(verify_fireba
             _TOKENS.pop(token, None)
     print(f"[excluir_conta] {uid}: assinaturas canceladas={canceladas} linhas={sum(apagadas.values())}")
     return {"ok": True, "assinaturas_canceladas": canceladas, "linhas_apagadas": sum(apagadas.values())}
+
+
+
+# ── AVISOS NO CELULAR (Expo Push) ─────────────────────────────────────────────
+# O app registra o token do celular depois do login. Todo dia de manhã uma tarefa agendada
+# (GitHub Actions, .github/workflows/lembretes-diarios.yml) chama /tarefas/lembretes-diarios, que
+# monta o "Para fazer" de cada usuária (o mesmo da tela Início) e manda um resumo, mesmo com o
+# app fechado. Sem nada para hoje, não manda nada.
+
+EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send"
+
+
+class PushTokenBody(BaseModel):
+    token: str
+    plataforma: Optional[str] = None
+
+
+def _pg():
+    import psycopg2 as _pg2
+    return _pg2.connect(os.environ.get("DATABASE_URL"))
+
+
+@api.post("/push/token")
+async def registrar_push(body: PushTokenBody, uid: str = Depends(verify_firebase_token)):
+    token = (body.token or "").strip()
+    if not (token.startswith("ExponentPushToken[") or token.startswith("ExpoPushToken[")):
+        raise HTTPException(status_code=422, detail="Token de notificação inválido.")
+    conn = _pg()
+    try:
+        cur = conn.cursor()
+        # o mesmo celular pode trocar de conta: o token passa para a conta atual
+        cur.execute("INSERT INTO push_tokens (token, usuario_id, plataforma, atualizado_em) VALUES (%s, %s, %s, NOW()) "
+                    "ON CONFLICT (token) DO UPDATE SET usuario_id = EXCLUDED.usuario_id, "
+                    "plataforma = EXCLUDED.plataforma, atualizado_em = NOW()",
+                    (token, uid, (body.plataforma or "")[:10]))
+        conn.commit()
+    finally:
+        conn.close()
+    return {"ok": True}
+
+
+@api.post("/push/remover")
+async def remover_push(body: PushTokenBody, uid: str = Depends(verify_firebase_token)):
+    """Ao sair da conta: este celular para de receber os avisos dela."""
+    conn = _pg()
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM push_tokens WHERE token = %s AND usuario_id = %s", ((body.token or "").strip(), uid))
+        conn.commit()
+    finally:
+        conn.close()
+    return {"ok": True}
+
+
+def _resumo_do_dia(inicio: dict):
+    """(título, texto) do aviso da manhã a partir do Para fazer; None se não há nada para hoje."""
+    itens = inicio.get("para_fazer") or []
+    hoje_ou_atrasado = lambda i: i.get("atrasado") or "hoje" in str(i.get("quando", ""))
+    retornos = [i for i in itens if i.get("tipo") == "pos" and hoje_ou_atrasado(i)]
+    niver = [i for i in itens if i.get("tipo") == "aniversario" and i.get("quando") == "hoje"]
+    receber = [i for i in itens if i.get("tipo") == "receber" and hoje_ou_atrasado(i)]
+    pagar = [i for i in itens if i.get("tipo") == "pagar" and hoje_ou_atrasado(i)]
+    partes = []
+    if niver:
+        nomes = ", ".join(str(i["titulo"]).split(" ")[0] for i in niver[:2])
+        partes.append(f"aniversário de {nomes}" + (f" e mais {len(niver) - 2}" if len(niver) > 2 else ""))
+    if retornos:
+        partes.append(f"{len(retornos)} retorno{'s' if len(retornos) > 1 else ''} de cliente")
+    if receber:
+        partes.append(f"{len(receber)} valor{'es' if len(receber) > 1 else ''} a receber")
+    if pagar:
+        partes.append(f"{len(pagar)} conta{'s' if len(pagar) > 1 else ''} a pagar")
+    if not partes:
+        return None
+    texto = partes[0] if len(partes) == 1 else ", ".join(partes[:-1]) + " e " + partes[-1]
+    nome = inicio.get("nome") or ""
+    return (f"Bom dia{', ' + nome if nome else ''}! Hoje no Planner", texto[0].upper() + texto[1:] + ".")
+
+
+def _enviar_expo(mensagens):
+    """Envia em lotes de 100 e devolve os tokens que o Expo diz não existirem mais."""
+    mortos = []
+    for i in range(0, len(mensagens), 100):
+        lote = mensagens[i:i + 100]
+        r = requests.post(EXPO_PUSH_URL, json=lote, timeout=30,
+                          headers={"Accept": "application/json", "Content-Type": "application/json"})
+        for msg, ticket in zip(lote, (r.json() or {}).get("data", []) if r.ok else []):
+            if ticket.get("status") == "error" and (ticket.get("details") or {}).get("error") == "DeviceNotRegistered":
+                mortos.append(msg["to"])
+        if not r.ok:
+            print(f"[push] Expo respondeu {r.status_code}: {r.text[:200]}")
+    return mortos
+
+
+@api.post("/tarefas/lembretes-diarios")
+async def lembretes_diarios(request: Request):
+    chave = os.environ.get("TAREFAS_CHAVE", "")
+    if not chave:
+        raise HTTPException(status_code=503, detail="TAREFAS_CHAVE não configurada")
+    import hmac
+    if not hmac.compare_digest(request.headers.get("X-Tarefa-Chave", ""), chave):
+        raise HTTPException(status_code=401, detail="Chave inválida")
+    conn = _pg()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT usuario_id, array_agg(token) FROM push_tokens GROUP BY usuario_id")
+        contas = cur.fetchall()
+    finally:
+        conn.close()
+    mensagens, sem_nada, erros = [], 0, 0
+    for uid, tokens in contas:
+        try:
+            if _em_modo_consulta(uid):
+                continue
+            resumo = _resumo_do_dia(_montar_inicio(uid))
+        except Exception as e:
+            erros += 1
+            print(f"[push] erro ao montar o dia de {uid}: {e}")
+            continue
+        if not resumo:
+            sem_nada += 1
+            continue
+        titulo, texto = resumo
+        for t in tokens:
+            mensagens.append({"to": t, "title": titulo, "body": texto, "sound": "default",
+                              "channelId": "planner", "data": {"tipo": "resumo_dia"}})
+    mortos = _enviar_expo(mensagens) if mensagens else []
+    if mortos:
+        conn = _pg()
+        try:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM push_tokens WHERE token = ANY(%s)", (mortos,))
+            conn.commit()
+        finally:
+            conn.close()
+    print(f"[push] contas={len(contas)} enviados={len(mensagens)} sem_nada={sem_nada} erros={erros} removidos={len(mortos)}")
+    return {"contas": len(contas), "enviados": len(mensagens), "sem_nada": sem_nada, "erros": erros, "removidos": len(mortos)}

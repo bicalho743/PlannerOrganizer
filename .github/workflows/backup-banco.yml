@@ -1,0 +1,48 @@
+# Cópia de segurança semanal do banco (fora do Render), criptografada.
+# O Render já guarda os últimos 3 dias (recuperação "ponto no tempo"), mas não guarda nada se o
+# banco for apagado. Esta cópia fica 90 dias nos artefatos do GitHub (repositório privado).
+#
+# Segredos necessários (Settings > Secrets and variables > Actions):
+#   BACKUP_DATABASE_URL  URL externa do banco (Render > PlannerOrganizer_db > Connect > External)
+#   BACKUP_SENHA         senha para criptografar o arquivo (guarde num lugar seguro)
+#
+# Restaurar: baixe o artefato, depois
+#   gpg --decrypt banco.dump.gpg > banco.dump
+#   pg_restore --no-owner --dbname "URL_DO_BANCO_NOVO" banco.dump
+name: Backup do banco
+
+on:
+  schedule:
+    - cron: "17 6 * * 0"   # domingo, 03:17 em Brasília
+  workflow_dispatch: {}
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    container: postgres:16
+    steps:
+      - name: Conferir segredos
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          BACKUP_SENHA: ${{ secrets.BACKUP_SENHA }}
+        run: |
+          if [ -z "$BACKUP_DATABASE_URL" ] || [ -z "$BACKUP_SENHA" ]; then
+            echo "Configure os segredos BACKUP_DATABASE_URL e BACKUP_SENHA no repositório."; exit 1
+          fi
+      - name: Gerar e criptografar a cópia
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          BACKUP_SENHA: ${{ secrets.BACKUP_SENHA }}
+        run: |
+          apt-get update -qq && apt-get install -y -qq gnupg >/dev/null
+          pg_dump --format=custom --no-owner --dbname "$BACKUP_DATABASE_URL" --file banco.dump
+          ls -lh banco.dump
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$BACKUP_SENHA" \
+              --symmetric --cipher-algo AES256 --output banco.dump.gpg banco.dump
+          rm banco.dump
+      - name: Guardar no GitHub (90 dias)
+        uses: actions/upload-artifact@v4
+        with:
+          name: banco-${{ github.run_number }}
+          path: banco.dump.gpg
+          retention-days: 90

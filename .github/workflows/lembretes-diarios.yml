@@ -1,0 +1,26 @@
+# Aviso da manhã no celular: chama a API, que monta o "Para fazer" de cada conta e envia pelo Expo Push.
+# Segredo necessário (Settings > Secrets and variables > Actions):
+#   TAREFAS_CHAVE  o mesmo valor da variável TAREFAS_CHAVE do serviço plannerorganiza-api no Render
+name: Lembretes diários
+
+on:
+  schedule:
+    - cron: "7 11 * * *"   # 08:07 em Brasília, todos os dias
+  workflow_dispatch: {}
+
+jobs:
+  enviar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar o resumo do dia
+        env:
+          TAREFAS_CHAVE: ${{ secrets.TAREFAS_CHAVE }}
+        run: |
+          if [ -z "$TAREFAS_CHAVE" ]; then echo "Configure o segredo TAREFAS_CHAVE."; exit 1; fi
+          # a API pode estar acordando: tenta até 3 vezes
+          for i in 1 2 3; do
+            if curl -fsS -X POST https://plannerorganiza-api.onrender.com/tarefas/lembretes-diarios \
+                 -H "X-Tarefa-Chave: $TAREFAS_CHAVE" --max-time 120; then exit 0; fi
+            sleep 30
+          done
+          exit 1
