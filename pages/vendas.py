@@ -92,10 +92,13 @@ def _render_nova_venda_form(clientes_df, produtos_df):
     if "produtos_venda" not in st.session_state:
         st.session_state.produtos_venda = []
 
+    # Mesma busca da proposta: lista em ordem alfabética, começa vazia (digite para filtrar)
     cliente_id = st.selectbox(
         "Cliente",
         options=clientes_df["id"].tolist(),
         format_func=lambda x: clientes_df[clientes_df["id"] == x]["nome"].iloc[0],
+        index=None,
+        placeholder="Digite o nome do cliente",
         key="nv_cliente_id"
     )
 
@@ -184,7 +187,10 @@ def _render_nova_venda_form(clientes_df, produtos_df):
 
         col_fin, col_lim = st.columns(2)
         with col_fin:
-            if st.button("FINALIZAR VENDA", type="primary", use_container_width=True, key="nv_finalizar"):
+            finalizar = st.button("FINALIZAR VENDA", type="primary", use_container_width=True, key="nv_finalizar")
+            if finalizar and cliente_id is None:
+                st.error("Selecione um cliente antes de finalizar a venda.")
+            elif finalizar:
                 try:
                     itens = [{"produto_id": it["produto_id"], "quantidade": it["quantidade"], "preco_unitario": it["preco_unitario"]}
                              for it in st.session_state.produtos_venda]

@@ -42,9 +42,11 @@ def _render_nova_proposta_form(clientes):
     )
 
     with st.form(key="nova_proposta_form"):
-        clientes_lista = clientes['nome'].tolist()
-        cliente = st.selectbox("Cliente:", clientes_lista,
-                               index=None, placeholder="Selecione um cliente")
+        # Mesma busca da venda: ordem alfabética, escolha pelo id (nomes repetidos não se confundem)
+        _clis = clientes.sort_values('nome').reset_index(drop=True) if not clientes.empty else clientes
+        _nomes = dict(zip(_clis['id'].tolist(), _clis['nome'].tolist())) if not _clis.empty else {}
+        cliente = st.selectbox("Cliente:", list(_nomes.keys()), format_func=lambda x: _nomes.get(x, ''),
+                               index=None, placeholder="Digite o nome do cliente")
         descricao = st.text_area("Descrição do serviço:", height=100)
         valor = input_moeda("Valor do serviço (R$):", "valor_nova_proposta")
         sinal_nova = input_moeda(
@@ -96,7 +98,7 @@ def _render_nova_proposta_form(clientes):
             st.error("Selecione um cliente antes de salvar a proposta.")
         elif submitted:
             try:
-                cliente_id = clientes[clientes['nome'] == cliente]['id'].iloc[0]
+                cliente_id = int(cliente)
 
                 from utils.proposta_status import (
                     STATUS_EM_ABERTO, STATUS_APROVADA, STATUS_RECUSADA,
