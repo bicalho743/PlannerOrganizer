@@ -380,6 +380,22 @@ async def create_proposta(body: PropostaCreate, uid: str = Depends(verify_fireba
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@api.delete("/propostas/{proposta_id}")
+async def delete_proposta(proposta_id: int, uid: str = Depends(verify_firebase_token)):
+    """Exclui a proposta e tudo ligado a ela (produtos, acréscimos, financeiro, vendas, pós-organização).
+    Mesma exclusão da web; só apaga se a proposta for da usuária."""
+    try:
+        db = get_db(uid)
+        ok, msg = db.excluir_proposta_segura(proposta_id, uid)
+        if not ok:
+            raise HTTPException(status_code=404 if "não encontrada" in msg or "permissão" in msg else 500, detail=msg)
+        db.invalidar_cache()
+        return JSONResponse(content={"success": True, "message": msg})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api.put("/propostas/{proposta_id}")
 async def update_proposta(proposta_id: int, body: PropostaUpdate, uid: str = Depends(verify_firebase_token)):
     try:
