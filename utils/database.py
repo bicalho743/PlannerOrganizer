@@ -316,6 +316,9 @@ class Database:
                 conn.execute(_sa_text(
                     "CREATE TABLE IF NOT EXISTS push_tokens (token TEXT PRIMARY KEY, usuario_id TEXT NOT NULL, "
                     "plataforma TEXT, atualizado_em TIMESTAMP DEFAULT NOW())"))
+                # dia do último resumo enviado ao celular: a tarefa da manhã pode ser chamada de novo
+                # (tentativas do GitHub Actions) sem o aviso chegar repetido
+                conn.execute(_sa_text("ALTER TABLE push_tokens ADD COLUMN IF NOT EXISTS ultimo_resumo DATE"))
                 conn.execute(_sa_text("ALTER TABLE itens_venda ADD COLUMN IF NOT EXISTS custo_unitario DOUBLE PRECISION"))
                 conn.execute(_sa_text("ALTER TABLE itens_venda ADD COLUMN IF NOT EXISTS baixou_estoque BOOLEAN"))
                 # Agenda (o create_all não cria tabelas novas: o refresh_schema_metadata troca os modelos pelo reflect)

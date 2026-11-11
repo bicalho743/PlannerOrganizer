@@ -73,6 +73,18 @@ def test_resumo_da_manha(ambiente):
     assert len(meus) == 2 and not any(m["to"] == "ExponentPushToken[SEM]" for m in enviados)
     assert meus[0]["title"] == "Bom dia, Ana! Hoje no Planner"
     assert meus[0]["body"] == "Aniversário de Fernanda."
+    assert meus[0]["data"] == {"tipo": "resumo_dia", "tela": "/"}  # o toque abre o Início
+
+    # chamada repetida no mesmo dia (tentativa do GitHub Actions): ninguém recebe de novo
+    antes = len(enviados)
+    r = cli.post("/tarefas/lembretes-diarios", headers={"X-Tarefa-Chave": "chave-teste"})
+    assert r.status_code == 200 and len(enviados) == antes
+    # no dia seguinte volta a mandar
+    with engine.begin() as c:
+        c.execute(text("UPDATE push_tokens SET ultimo_resumo = :d WHERE usuario_id = :a"),
+                  {"a": com, "d": date(2000, 1, 1)})
+    cli.post("/tarefas/lembretes-diarios", headers={"X-Tarefa-Chave": "chave-teste"})
+    assert [m["to"] for m in enviados[antes:]] == ["ExponentPushToken[BOM]"]
     with engine.begin() as c:
         tokens = {t for (t,) in c.execute(text("SELECT token FROM push_tokens WHERE usuario_id IN (:a, :b)"), {"a": com, "b": sem})}
     assert tokens == {"ExponentPushToken[BOM]", "ExponentPushToken[SEM]"}  # o desinstalado saiu

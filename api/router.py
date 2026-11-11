@@ -2432,14 +2432,24 @@ async def lembretes_diarios(request: Request):
     import hmac
     if not hmac.compare_digest(request.headers.get("X-Tarefa-Chave", ""), chave):
         raise HTTPException(status_code=401, detail="Chave inválida")
+    from datetime import datetime as _dt
+    from zoneinfo import ZoneInfo as _Zone
+    hoje = _dt.now(_Zone("America/Sao_Paulo")).date()
     conn = _pg()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT usuario_id, array_agg(token) FROM push_tokens GROUP BY usuario_id")
-        contas = cur.fetchall()
+        # Reserva os celulares que ainda não receberam o resumo de hoje, num passo só: se a tarefa
+        # for chamada de novo (tentativa repetida, disparo manual), ninguém recebe duas vezes.
+        cur.execute("UPDATE push_tokens SET ultimo_resumo = %s "
+                    "WHERE ultimo_resumo IS NULL OR ultimo_resumo < %s RETURNING usuario_id, token", (hoje, hoje))
+        por_conta = {}
+        for uid, token in cur.fetchall():
+            por_conta.setdefault(uid, []).append(token)
+        conn.commit()
     finally:
         conn.close()
-    mensagens, sem_nada, erros = [], 0, 0
+    contas = list(por_conta.items())
+    mensagens, sem_nada, erros, devolver = [], 0, 0, []
     for uid, tokens in contas:
         try:
             if _em_modo_consulta(uid):
@@ -2447,6 +2457,7 @@ async def lembretes_diarios(request: Request):
             resumo = _resumo_do_dia(_montar_inicio(uid))
         except Exception as e:
             erros += 1
+            devolver.extend(tokens)  # deu erro: uma nova chamada hoje pode tentar de novo
             print(f"[push] erro ao montar o dia de {uid}: {e}")
             continue
         if not resumo:
@@ -2455,13 +2466,18 @@ async def lembretes_diarios(request: Request):
         titulo, texto = resumo
         for t in tokens:
             mensagens.append({"to": t, "title": titulo, "body": texto, "sound": "default",
-                              "channelId": "planner", "data": {"tipo": "resumo_dia"}})
+                              "channelId": "planner",
+                              # ao tocar, o app abre o Início, onde o Para fazer tem as ações (WhatsApp, Feito)
+                              "data": {"tipo": "resumo_dia", "tela": "/"}})
     mortos = _enviar_expo(mensagens) if mensagens else []
-    if mortos:
+    if mortos or devolver:
         conn = _pg()
         try:
             cur = conn.cursor()
-            cur.execute("DELETE FROM push_tokens WHERE token = ANY(%s)", (mortos,))
+            if mortos:
+                cur.execute("DELETE FROM push_tokens WHERE token = ANY(%s)", (mortos,))
+            if devolver:
+                cur.execute("UPDATE push_tokens SET ultimo_resumo = NULL WHERE token = ANY(%s)", (devolver,))
             conn.commit()
         finally:
             conn.close()
