@@ -9,6 +9,7 @@ import requests
 import stripe
 from pydantic import BaseModel
 from utils.database import Database
+from utils.proposta_status import label_for as _label_status
 
 api = FastAPI(title="Planner Organiza API", version="3.0.0")
 
@@ -884,7 +885,7 @@ async def pdf_proposta_cliente(proposta_id: int, uid: str = Depends(verify_fireb
             'cliente': str(cliente.get('nome', prop.get('cliente_nome', 'Cliente'))),
             'telefone': str(cliente.get('telefone', '') or ''),
             'tipo': tipo_prop,
-            'status': str(prop.get('status', '')).capitalize(),
+            'status': _label_status(prop.get('status', '')),
             'descricao': str(prop.get('descricao', '') or ''),
             'itens': itens_final,
             'total': total_final,
@@ -1020,7 +1021,7 @@ async def pdf_proposta_interno(proposta_id: int, uid: str = Depends(verify_fireb
             'proposta_id': prop.get('numero', proposta_id),
             'cliente': str(cliente.get('nome', prop.get('cliente_nome', 'Cliente'))),
             'tipo': str(prop.get('tipo_proposta', 'Organização')),
-            'status': str(prop.get('status', '')).capitalize(),
+            'status': _label_status(prop.get('status', '')),
             'periodo': periodo_str,
             'itens_custo': itens_custo,
             'total_custo': total_custo_cliente,
@@ -1069,7 +1070,7 @@ async def pdf_proposta_fornecedores(proposta_id: int, uid: str = Depends(verify_
             'cliente': str(cliente.get('nome', prop.get('cliente_nome', 'Cliente'))),
             'telefone': str(cliente.get('telefone', '') or ''),
             'tipo': str(prop.get('tipo_proposta', 'Organização')),
-            'status': str(prop.get('status', '')).capitalize(),
+            'status': _label_status(prop.get('status', '')),
             'itens': itens_forn,
             'total': sum(i['total'] for i in itens_forn),
         }
@@ -1272,7 +1273,7 @@ async def pdf_proposta_comercial(proposta_id: int, uid: str = Depends(verify_fir
             'cliente': str(cliente.get('nome', prop.get('cliente_nome', 'Cliente'))),
             'telefone': str(cliente.get('telefone', '') or ''),
             'tipo': str(prop.get('tipo_proposta', 'Organização')),
-            'status': str(prop.get('status', '')).capitalize(),
+            'status': _label_status(prop.get('status', '')),
             'descricao': str(prop.get('descricao', '') or ''),
             'itens': [(f"Personal Organizer - {prop.get('tipo_proposta', 'Organização')}", valor_proposta, False)] + itens,
             'total': total,
@@ -1283,7 +1284,7 @@ async def pdf_proposta_comercial(proposta_id: int, uid: str = Depends(verify_fir
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False, dir='/tmp') as tmp:
             path = tmp.name
 
-        gerar_pdf_cliente(dados, path, perfil=get_perfil_dados(uid))
+        gerar_pdf_cliente(dados, path, perfil=get_perfil_dados(uid), titulo="Proposta de Serviço")
         nome_cli = str(cliente.get('nome', 'cliente')).replace(' ', '_').lower()
         num = prop.get('numero', proposta_id)
         return FileResponse(path, media_type='application/pdf',
