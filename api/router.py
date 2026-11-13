@@ -176,7 +176,7 @@ class PropostaCreate(BaseModel):
     cliente_id: int
     descricao: str
     valor: float
-    status: str = 'em_elaboracao'
+    status: str = 'em_aberto'
     tipo_proposta: Optional[str] = None
     ambiente: Optional[str] = None
     sinal: Optional[float] = None
