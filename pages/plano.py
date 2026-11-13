@@ -26,7 +26,6 @@ CSS = """
 .pl-card .selo { position: absolute; top: -10px; left: 18px; background: var(--gold); color: var(--navy);
                  font-size: .68rem; font-weight: 700; letter-spacing: .04em; padding: 2px 10px; border-radius: 999px; }
 .pl-card .nome { font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #475467; }
-.pl-fundadora { background: #FBF5E6; border: 1px solid #E3CF97; color: #5C4712; border-radius: 10px; padding: 10px 14px; font-size: .9rem; margin-bottom: 12px; }
 .pl-card .preco { font-size: 1.6rem; font-weight: 700; color: #101828; margin: 4px 0; font-variant-numeric: tabular-nums; }
 .pl-card .preco span { font-size: .85rem; font-weight: 500; color: #667085; }
 .pl-card .obs { font-size: .82rem; color: #475467; min-height: 1.2em; }
@@ -40,6 +39,14 @@ CSS = """
 @media (max-width: 600px) { .pl-cards { grid-template-columns: 1fr; } }
 </style>
 """
+
+# assinaturas feitas no celular: nome da loja, onde gerenciar e link
+LOJAS_CELULAR = {
+    "google": ("Google Play", "o app Google Play no celular (Perfil → Pagamentos e assinaturas → Assinaturas)",
+               "https://play.google.com/store/account/subscriptions?package=com.plannerorganiza.app"),
+    "apple": ("iPhone (App Store)", "os Ajustes do iPhone (seu nome → Assinaturas)",
+              "https://apps.apple.com/account/subscriptions"),
+}
 
 
 def show():
@@ -58,6 +65,17 @@ def show():
 
     # ---------- situação ----------
     if is_pro(perfil):
+        # cada assinatura é gerenciada onde foi feita: site (Stripe), Google Play ou App Store
+        from utils.assinatura import dados_assinatura
+        origem = dados_assinatura(uid).get("origem") if uid else None
+        if origem in LOJAS_CELULAR:
+            nome, onde, link = LOJAS_CELULAR[origem]
+            st.markdown('<div class="pl-status pro"><span class="rot">Situação</span>'
+                        f'<div class="val">Plano Pro ativo · assinado pelo {nome}</div>'
+                        f'<span class="sub">Para trocar o cartão ou cancelar, use {onde}.</span></div>',
+                        unsafe_allow_html=True)
+            st.link_button(f"Gerenciar no {nome}", link, icon=":material/open_in_new:")
+            return
         st.markdown('<div class="pl-status pro"><span class="rot">Situação</span>'
                     '<div class="val">Plano Pro ativo</div>'
                     '<span class="sub">Todos os recursos liberados. Cartão, faturas e cancelamento ficam no portal do Stripe.</span></div>',
@@ -95,7 +113,6 @@ def show():
     url_mensal = checkout_url(STRIPE_CHECKOUT_MENSAL, email, uid)
     url_anual = checkout_url(STRIPE_CHECKOUT_ANUAL, email, uid)
     st.markdown(f"""
-    <div class="pl-fundadora"><b>Cupom de lançamento ORGANIZA:</b> 25% de desconto nos 6 primeiros meses. No mensal, cerca de R$ 29,90 por mês nos 6 primeiros meses; no anual, R$ 222,75 no primeiro ano. Digite o cupom na tela de pagamento.</div>
     <div class="pl-cards">
       <div class="pl-card">
         <div class="nome">Mensal</div>

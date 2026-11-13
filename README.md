@@ -55,8 +55,15 @@ Domínios (DNS na Locaweb): `plannerorganiza.com.br` e `www` → página de vend
   `utils/database.py`).
 
 ### Assinatura e teste grátis
-- Assinatura **pelo site**, no Stripe (links de pagamento mensal e anual em `pages/perfil.py`, com o UID em
-  `client_reference_id`). Cupom de lançamento ORGANIZA.
+- A conta tem **um plano só**, assinado em um de três lugares (`perfis.assinatura_origem`, em `utils/assinatura.py`):
+  - **site**, no Stripe (links de pagamento mensal e anual em `pages/perfil.py`, com o UID em `client_reference_id`);
+  - **app Android**, pelo Google Play; **app iPhone**, pela App Store. As duas lojas passam pelo **RevenueCat**
+    (o app entra com o UID do Firebase; acesso `pro`). O RevenueCat avisa a API em `/webhook/revenuecat`
+    (cabeçalho Authorization = `REVENUECAT_WEBHOOK_AUTH`) e o app chama `/assinatura/sincronizar` logo depois de
+    comprar (consulta com `REVENUECAT_SECRET_KEY`), para liberar na hora.
+  - Cada canal só tira o acesso que ele mesmo deu: a assinatura antiga do site que termina não bloqueia quem passou a
+    pagar pelo celular. Cada assinatura é **gerenciada onde foi feita** (Plano e cobrança mostra o caminho certo).
+  - Preço igual nos três: mensal R$ 39,90 e anual R$ 297. Sem cupom.
 - O Stripe avisa a API em `/webhook/stripe`:
   - `checkout.session.completed`: ativa o plano pela conta do UID e guarda o **código do cliente** do Stripe
     (`perfis.stripe_customer_id`);
@@ -151,6 +158,7 @@ tests/                 testes (pytest) contra um PostgreSQL de teste
 | `FIREBASE_API_KEY` (e demais `FIREBASE_*`) | login |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | login com Google na web |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | assinatura |
+| `REVENUECAT_WEBHOOK_AUTH`, `REVENUECAT_SECRET_KEY` | assinatura pelas lojas (só na API `plannerorganiza-api`) |
 | `TRIAL_ISENTOS` | e-mails sempre liberados, separados por vírgula |
 | `TAREFAS_CHAVE` | protege `/tarefas/lembretes-diarios` (o mesmo valor vai como segredo no GitHub) |
 | `CORS_ALLOWED_ORIGINS` | origens aceitas pela API |
@@ -184,7 +192,12 @@ python -m pytest -q tests                              # testes
 - [ ] **Cópia do banco**: segredos `BACKUP_DATABASE_URL` (URL externa do banco no Render) e `BACKUP_SENHA` no GitHub; rodar uma vez em Actions → Backup do banco → *Run workflow* e guardar a senha num lugar seguro.
 
 **Lojas e app**
-- [ ] App Store: revisão em andamento; usar o build com as correções; lançar manualmente após aprovar; trocar na página de vendas o botão "Safari" pelo selo da App Store.
+- [x] App Store: app publicado; página de vendas com o selo da App Store.
+- [ ] **Assinatura pelas lojas**: Small Business Program da Apple; contrato de apps pagos e dados bancários/fiscais
+      na App Store Connect e no Play Console; produtos `planner_mensal` (R$ 39,90) e `planner_anual` (R$ 297) nas duas
+      lojas, sem período grátis; RevenueCat com o acesso `pro` e a oferta `default`; no Render (API),
+      `REVENUECAT_WEBHOOK_AUTH` e `REVENUECAT_SECRET_KEY`; no EAS, as chaves públicas do RevenueCat; desativar o cupom
+      ORGANIZA nos links de pagamento do Stripe.
 - [ ] Android: próximo build com excluir conta, aniversário dia/mês, e-mail sem correção automática, avisos pelo servidor.
 - [ ] Logo e cores só podem ser enviados pela web.
 - [ ] Tela de login do app ainda no visual antigo (azul-marinho).

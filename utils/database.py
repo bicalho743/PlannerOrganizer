@@ -312,6 +312,9 @@ class Database:
                 # código do cliente no Stripe: liga renovações e cancelamentos à conta certa mesmo
                 # quando a pessoa pagou com um e-mail diferente do login
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT"))
+                # de onde vem a assinatura ('stripe', 'google', 'apple') e a validade dada pela loja
+                conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS assinatura_origem TEXT"))
+                conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS assinatura_expira_em TIMESTAMP"))
                 # celulares que recebem o resumo diário (Expo Push)
                 conn.execute(_sa_text(
                     "CREATE TABLE IF NOT EXISTS push_tokens (token TEXT PRIMARY KEY, usuario_id TEXT NOT NULL, "

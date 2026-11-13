@@ -31,8 +31,11 @@ SECOES = [
         "até a regularização.",
     ], None),
     ("3. Cancelamento e reembolso", [
-        "Você pode cancelar a qualquer momento pelo portal de cobrança (Plano e cobrança). O cancelamento "
+        "Você pode cancelar a qualquer momento onde assinou: pelo site, no portal de cobrança (Plano e "
+        "cobrança); pelo celular, no Google Play ou nos Ajustes do iPhone (Assinaturas). O cancelamento "
         "interrompe as próximas renovações; o acesso segue até o fim do período já pago.",
+        "Reembolsos de assinaturas feitas pelo Google Play ou pela App Store seguem as regras e os canais da "
+        "loja onde a compra foi feita.",
         "Na primeira contratação, você pode desistir em até 7 dias do pagamento e receber o valor de volta "
         "(art. 49 do Código de Defesa do Consumidor), escrevendo para " + CONTATO + ".",
     ], None),

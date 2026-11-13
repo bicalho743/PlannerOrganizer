@@ -64,7 +64,7 @@ def verify_firebase_token(request: Request) -> str:
 MODO_CONSULTA = "modo_consulta"
 MENSAGEM_CONSULTA = "Seu teste grátis terminou. Assine para voltar a cadastrar, editar e gerar PDFs."
 _LIVRES_NO_CONSULTA = ("/webhook/", "/perfil", "/impostos/regime", "/precificacao", "/api/status", "/conta/excluir",
-                       "/push/", "/tarefas/")
+                       "/push/", "/tarefas/", "/assinatura/")
 
 
 def _uid_da_requisicao(request: Request):
@@ -808,6 +808,10 @@ async def get_perfil(uid: str = Depends(verify_firebase_token)):
                     from utils.trial import trial_expirado, dias_restantes_trial, is_pro
                     perfil["modo_consulta"] = trial_expirado(perfil)
                     perfil["dias_restantes_trial"] = None if is_pro(perfil) else dias_restantes_trial(perfil)
+                    from utils.assinatura import dados_assinatura
+                    _ass = dados_assinatura(uid)
+                    perfil["assinatura_origem"] = _ass["origem"] if is_pro(perfil) else None
+                    perfil["assinatura_expira_em"] = _ass["expira_em"]
                     # Serializar datas e outros tipos não-JSON para string
                     for k, v in perfil.items():
                         if hasattr(v, 'isoformat'):
@@ -1745,8 +1749,12 @@ async def stripe_webhook(request: Request):
             _conn = _pg2.connect(_db_url)
             _cur = _conn.cursor()
             uid = _conta_do_stripe(_cur, customer_id, email)
-            if uid:
-                _cur.execute("UPDATE perfis SET plano = %s WHERE usuario_id = %s", (plano, uid))
+            if uid and plano == "pro":
+                _cur.execute("UPDATE perfis SET plano = 'pro', assinatura_origem = 'stripe' WHERE usuario_id = %s", (uid,))
+            elif uid:
+                # só tira o plano que veio do site: quem passou a assinar pelo celular continua com acesso
+                _cur.execute("UPDATE perfis SET plano = %s WHERE usuario_id = %s "
+                             "AND COALESCE(assinatura_origem, 'stripe') = 'stripe'", (plano, uid))
             _conn.commit()
             print(f"[webhook] {origem}: plano={plano} cliente={customer_id} conta={uid or 'NÃO ENCONTRADA'}")
             _cur.close()
@@ -1780,7 +1788,7 @@ async def stripe_webhook(request: Request):
             if not conta:
                 conta = _conta_do_stripe(_cur, customer_id, email)
             if conta:
-                _cur.execute("UPDATE perfis SET plano = 'pro', ativo = TRUE, "
+                _cur.execute("UPDATE perfis SET plano = 'pro', ativo = TRUE, assinatura_origem = 'stripe', "
                              "stripe_customer_id = COALESCE(NULLIF(%s, ''), stripe_customer_id) WHERE usuario_id = %s",
                              (customer_id, conta))
                 print(f"[webhook] plano ativado: conta={conta} cliente={customer_id}")
@@ -1816,6 +1824,34 @@ async def stripe_webhook(request: Request):
         print(f"[webhook] pagamento falhou: {email}")
 
     return {"status": "ok"}
+
+
+# ── ASSINATURA PELAS LOJAS (RevenueCat) ──────────────────────────────────────
+
+@api.post("/webhook/revenuecat")
+async def revenuecat_webhook(request: Request):
+    """Compras, renovações e vencimentos do Google Play e da App Store, avisados pelo RevenueCat."""
+    import hmac
+    esperado = os.environ.get("REVENUECAT_WEBHOOK_AUTH", "")
+    if not esperado:
+        raise HTTPException(status_code=503, detail="Webhook não configurado")
+    recebido = request.headers.get("authorization", "")
+    if not (hmac.compare_digest(recebido, esperado) or hmac.compare_digest(recebido, f"Bearer {esperado}")):
+        raise HTTPException(status_code=401, detail="Não autorizado")
+    corpo = await request.json()
+    from utils.assinatura import aplicar_evento_revenuecat
+    return {"status": aplicar_evento_revenuecat((corpo or {}).get("event") or {})}
+
+
+@api.post("/assinatura/sincronizar")
+async def assinatura_sincronizar(uid: str = Depends(verify_firebase_token)):
+    """Chamado pelo app logo depois de comprar ou restaurar: confere no RevenueCat e libera na hora."""
+    from utils.assinatura import sincronizar_revenuecat
+    try:
+        return sincronizar_revenuecat(uid)
+    except Exception as e:
+        print(f"[revenuecat] erro ao sincronizar {uid}: {e}")
+        raise HTTPException(status_code=502, detail="Não foi possível confirmar a assinatura agora")
 
 
 @api.get("/stripe/portal")
