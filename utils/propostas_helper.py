@@ -277,7 +277,7 @@ def gerar_pdf_proposta(db, proposta_id, custom_filename=None):
                 itens_tuples.append({'nome': nome_it, 'quantidade': int(qtd), 'valor_unit': val, 'total': subtotal})
             valor_proposta = float(proposta_dict.get('valor', proposta_dict.get('valor_total', total_calculado)))
             dados_pdf = {
-                'proposta_id': proposta_dict.get('id', ''),
+                'proposta_id': proposta_dict.get('numero') or proposta_dict.get('id', ''),
                 'cliente': cliente_dict.get('nome', ''),
                 'telefone': cliente_dict.get('telefone', ''),
                 'tipo': proposta_dict.get('tipo_proposta', ''),
@@ -562,7 +562,7 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None, tipo_docum
 
         from utils.pdf_generator_v2 import gerar_pdf_cliente
         dados_pdf = {
-            'proposta_id': proposta.get('id', ''),
+            'proposta_id': proposta.get('numero') or proposta.get('id', ''),
             'cliente': cliente.get('nome', ''),
             'telefone': cliente.get('telefone', ''),
             'tipo': tipo_proposta,
@@ -836,7 +836,7 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
 
         from utils.pdf_generator_v2 import gerar_pdf_interno
         dados_pdf = {
-            'proposta_id': proposta.get('id', ''),
+            'proposta_id': proposta.get('numero') or proposta.get('id', ''),
             'cliente': cliente.get('nome', ''),
             'tipo': proposta.get('tipo_proposta', ''),
             'status': _label_status(proposta.get('status', '')),
