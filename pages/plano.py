@@ -49,12 +49,31 @@ LOJAS_CELULAR = {
 }
 
 
+# símbolo da loja no botão de gerenciar (Google Play: triângulo colorido; App Store: maçã)
+ICONE_LOJA = {
+    "google": ('<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">'
+               '<path fill="#00D7FE" d="M3.6 1.8 13.4 12 3.6 22.2c-.4-.2-.6-.7-.6-1.2V3c0-.5.2-1 .6-1.2z"/>'
+               '<path fill="#32BBFF" d="M3.6 1.8 13.4 12 3.6 22.2c-.4-.2-.6-.7-.6-1.2V3c0-.5.2-1 .6-1.2z" opacity=".35"/>'
+               '<path fill="#00F076" d="M16.8 8.6 13.4 12 3.6 1.8c.3-.2.8-.2 1.2 0z"/>'
+               '<path fill="#FF3A44" d="M16.8 15.4 4.8 22.2c-.4.2-.9.2-1.2 0L13.4 12z"/>'
+               '<path fill="#FFD109" d="m20.6 10.7-3.8-2.1L13.4 12l3.4 3.4 3.8-2.1c.9-.5.9-2.1 0-2.6z"/></svg>'),
+    "apple": ('<svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><path fill="#111" d="M16.4 12.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9s-2-.9-3.4-.9C5.8 6.8 4.2 7.9 3.3 9.5c-1.8 3.2-.5 7.8 1.3 10.4.9 1.3 1.9 2.7 3.3 2.6 1.3-.1 1.8-.9 3.4-.9s2 .9 3.4.8c1.4 0 2.3-1.3 3.2-2.6 1-1.5 1.4-2.9 1.4-3-.1 0-2.9-1.1-2.9-4.2zM13.8 4.9c.7-.9 1.2-2.1 1.1-3.3-1 0-2.3.7-3 1.6-.7.8-1.3 2-1.1 3.2 1.1.1 2.3-.6 3-1.5z"/></svg>'),
+}
+PL_LOJA_CSS = """<style>
+.pl-loja { display:inline-flex; align-items:center; gap:10px; padding:9px 16px; border-radius:10px;
+  border:1px solid #D0D5DD; background:#fff; color:#101828 !important; text-decoration:none !important;
+  font-size:.92rem; font-weight:500; margin-top:4px; }
+.pl-loja:hover { border-color:#C9A84C; background:#FFFDF7; }
+</style>"""
+
+
 def show():
     from utils.auth_guard import require_auth
     require_auth()
     from utils.database import get_usuario_id_from_session
 
     st.markdown(CSS, unsafe_allow_html=True)
+    st.markdown(PL_LOJA_CSS, unsafe_allow_html=True)
     st.markdown('<h1 class="page-title">Plano e cobrança</h1>', unsafe_allow_html=True)
 
     usuario = st.session_state.get("usuario") or {}
@@ -74,7 +93,9 @@ def show():
                         f'<div class="val">Plano Pro ativo · assinado pelo {nome}</div>'
                         f'<span class="sub">Para trocar o cartão ou cancelar, use {onde}.</span></div>',
                         unsafe_allow_html=True)
-            st.link_button(f"Gerenciar no {nome}", link, icon=":material/open_in_new:")
+            st.markdown(f'<a class="pl-loja" href="{link}" target="_blank" rel="noopener">'
+                        f'{ICONE_LOJA.get(origem, "")}<span>Gerenciar no {nome}</span></a>',
+                        unsafe_allow_html=True)
             return
         st.markdown('<div class="pl-status pro"><span class="rot">Situação</span>'
                     '<div class="val">Plano Pro ativo</div>'
