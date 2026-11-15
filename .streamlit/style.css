@@ -210,6 +210,13 @@ section[data-testid="stSidebar"] p { color: #344054 !important; }
 .sb-logo::before { content: ""; display: inline-block; width: 28px; height: 28px; border-radius: 7px;
     background: url('/app/static/icon-192.png') center / cover no-repeat; margin-right: 9px; vertical-align: -7px; }
 .sb-conta { font-size: 0.8rem; color: #667085; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-email { font-size: 0.74rem; color: #98A2B3; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-plano { margin-top: 8px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sb-selo { display: inline-block; font-size: 0.7rem; font-weight: 700; letter-spacing: .04em; padding: 3px 9px; border-radius: 999px; }
+.sb-selo-pro { background: var(--navy, #0D1B2A); color: #E8C97A; }
+.sb-selo-trial { background: #FBF5E6; color: #6B5314; border: 1px solid #EBDDB4; font-weight: 600; letter-spacing: 0; }
+.sb-selo-consulta { background: #FEF3F2; color: #B42318; border: 1px solid #FECDCA; font-weight: 600; letter-spacing: 0; }
+.sb-selo-origem { font-size: 0.72rem; color: #667085; }
 /* títulos de grupo: texto, não botão */
 .sb-grupo { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase;
     color: #98A2B3; padding: 16px 10px 6px; cursor: default; user-select: none; }

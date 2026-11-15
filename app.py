@@ -785,9 +785,33 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
     _usuario = st.session_state.get('usuario') or {}
     _nome_menu = (_usuario.get('nome') if isinstance(_usuario, dict) else getattr(_usuario, 'nome', '')) or _perfil_menu.get('nome') or ''
     _empresa_menu = _perfil_menu.get('empresa') or ''
+    # conta logada e situação do plano, sempre à vista no topo do menu
+    import html as _html_menu
+    _sessao_user = st.session_state.get('user') or {}
+    _email_menu = _perfil_menu.get('email') or (_sessao_user.get('email') if isinstance(_sessao_user, dict) else '') \
+        or (_usuario.get('email') if isinstance(_usuario, dict) else getattr(_usuario, 'email', '')) or ''
+    _selo_menu = ''
+    try:
+        from utils.trial import is_pro as _is_pro_selo, dias_restantes_trial as _dias_selo
+        if _perfil_menu and _is_pro_selo(_perfil_menu):
+            from utils.assinatura import dados_assinatura as _dados_ass
+            _uid_selo = st.session_state.get('usuario_id') or (_sessao_user.get('localId') if isinstance(_sessao_user, dict) else None)
+            _origem_selo = {'google': 'Google Play', 'apple': 'App Store', 'stripe': 'site'}.get(
+                (_dados_ass(_uid_selo) if _uid_selo else {}).get('origem') or '', '')
+            _selo_menu = '<span class="sb-selo sb-selo-pro">PRO</span>' + (
+                f'<span class="sb-selo-origem">pelo {_origem_selo}</span>' if _origem_selo else '')
+        elif _perfil_menu and st.session_state.get("somente_leitura"):
+            _selo_menu = '<span class="sb-selo sb-selo-consulta">Modo consulta</span>'
+        elif _perfil_menu:
+            _d_selo = _dias_selo(_perfil_menu)
+            _selo_menu = f'<span class="sb-selo sb-selo-trial">Teste grátis · {_d_selo} dia{"s" if _d_selo != 1 else ""}</span>'
+    except Exception:
+        pass
     st.sidebar.markdown(
         '<div class="sb-marca"><div class="sb-logo">Planner Organiza</div>'
-        + (f'<div class="sb-conta">{_empresa_menu or _nome_menu}</div>' if (_empresa_menu or _nome_menu) else '')
+        + (f'<div class="sb-conta">{_html_menu.escape(_empresa_menu or _nome_menu)}</div>' if (_empresa_menu or _nome_menu) else '')
+        + (f'<div class="sb-email" title="Conta conectada">{_html_menu.escape(_email_menu)}</div>' if _email_menu else '')
+        + (f'<div class="sb-plano">{_selo_menu}</div>' if _selo_menu else '')
         + '</div>', unsafe_allow_html=True)
     # teste grátis: quantos dias faltam, sempre à vista, com o caminho para assinar
     try:
