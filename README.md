@@ -63,7 +63,7 @@ Domínios (DNS na Locaweb): `plannerorganiza.com.br` e `www` → página de vend
     comprar (consulta com `REVENUECAT_SECRET_KEY`), para liberar na hora.
   - Cada canal só tira o acesso que ele mesmo deu: a assinatura antiga do site que termina não bloqueia quem passou a
     pagar pelo celular. Cada assinatura é **gerenciada onde foi feita** (Plano e cobrança mostra o caminho certo).
-  - Preço igual nos três: mensal R$ 39,90 e anual R$ 297. Sem cupom.
+  - Mensal R$ 39,90 nos três canais. Anual: R$ 297 no site (Stripe) e R$ 199,90 nas lojas (Brasil, desde 16/11/2026). Sem cupom.
 - O Stripe avisa a API em `/webhook/stripe`:
   - `checkout.session.completed`: ativa o plano pela conta do UID e guarda o **código do cliente** do Stripe
     (`perfis.stripe_customer_id`);
@@ -196,7 +196,7 @@ python -m pytest -q tests                              # testes
 **Lojas e app**
 - [x] App Store: app publicado; página de vendas com o selo da App Store.
 - [ ] **Assinatura pelas lojas**: Small Business Program da Apple; contrato de apps pagos e dados bancários/fiscais
-      na App Store Connect e no Play Console; produtos `planner_mensal` (R$ 39,90) e `planner_anual` (R$ 297) nas duas
+      na App Store Connect e no Play Console; produtos `planner_mensal` (R$ 39,90) e `planner_anual` (R$ 199,90 no Brasil) nas duas
       lojas, sem período grátis; RevenueCat com o acesso `pro` e a oferta `default`; no Render (API),
       `REVENUECAT_WEBHOOK_AUTH` e `REVENUECAT_SECRET_KEY`; no EAS, as chaves públicas do RevenueCat; desativar o cupom
       ORGANIZA nos links de pagamento do Stripe.
