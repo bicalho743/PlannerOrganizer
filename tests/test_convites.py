@@ -46,3 +46,11 @@ def test_trial_de_30_dias_nao_expira_no_dia_8():
     perfil = {"plano": "gratuito", "data_cadastro": (date.today() - timedelta(days=8)).isoformat()}
     assert trial_expirado(perfil) is True                 # padrão de 7 dias
     assert trial_expirado(perfil, 30) is False            # convite de 30 dias
+
+
+def test_dias_trial_da_conta_web_e_api(engine):
+    from utils.convites import dias_trial_da_conta
+    assert dias_trial_da_conta(engine, "sem-convite") == DIAS_TRIAL
+    assert dias_trial_da_conta(engine, None) == DIAS_TRIAL
+    resgatar(engine, "uid-a", novo_convite(engine, dias=30))
+    assert dias_trial_da_conta(engine, "uid-a") == 30

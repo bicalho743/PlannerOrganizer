@@ -77,6 +77,13 @@ def resgatar(engine, uid: str, codigo: str) -> int:
     return dias
 
 
+def dias_trial_da_conta(engine, uid) -> int:
+    """Dias de teste desta conta: os do convite, se usou um, senão o padrão (DIAS_TRIAL).
+    Web e API usam esta função para valerem os mesmos dias."""
+    from utils.trial import DIAS_TRIAL
+    return (dias_do_convite(engine, uid) if uid else None) or DIAS_TRIAL
+
+
 def dias_do_convite(engine, uid: str):
     """Dias de teste do convite usado por esta conta, ou None se não usou convite."""
     try:

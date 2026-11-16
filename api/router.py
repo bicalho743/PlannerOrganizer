@@ -17,7 +17,7 @@ ALLOWED_ORIGINS = [
     o.strip() for o in os.environ.get(
         "CORS_ALLOWED_ORIGINS",
         "https://app.plannerorganiza.com.br,https://plannerorganiza.com.br,https://www.plannerorganiza.com.br,"
-        "https://plannerorganiza-api.onrender.com,http://localhost:8081,http://localhost:19006"
+        "https://plannerorganiza-api.onrender.com,https://api.plannerorganiza.com.br,http://localhost:8081,http://localhost:19006"
     ).split(",") if o.strip()
 ]
 
@@ -76,10 +76,9 @@ def _uid_da_requisicao(request: Request):
 
 def _dias_trial_da_conta(uid: str) -> int:
     """7 dias padrão, ou os dias do convite que a conta usou (ex.: 30)."""
-    from utils.trial import DIAS_TRIAL
-    from utils.convites import dias_do_convite
+    from utils.convites import dias_trial_da_conta
     from utils.database import engine as _engine
-    return dias_do_convite(_engine, uid) or DIAS_TRIAL
+    return dias_trial_da_conta(_engine, uid)
 
 
 def _em_modo_consulta(uid: str) -> bool:

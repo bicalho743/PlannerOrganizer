@@ -756,7 +756,12 @@ try:
     rastreamento.compra_se_assinante(_perfil_trial, _uid_trial)
     # Teste grátis acabou e sem assinatura: a conta continua entrando, em modo consulta
     # (vê tudo, não grava nem gera PDF; utils/somente_leitura.py)
-    st.session_state["somente_leitura"] = bool(trial_expirado(_perfil_trial))
+    # conta com convite tem mais dias de teste (utils/convites.py); sem convite valem os 7 padrão
+    from utils.convites import dias_trial_da_conta
+    from utils.database import engine as _engine_trial
+    _dias_conta = dias_trial_da_conta(_engine_trial, _uid_trial)
+    st.session_state["dias_trial_conta"] = _dias_conta
+    st.session_state["somente_leitura"] = bool(trial_expirado(_perfil_trial, _dias_conta))
 except Exception as _e_trial:
     # Fail-open: se der erro ao checar, NÃO bloqueia (não trava quem pagou).
     print(f"[trial] erro ao verificar bloqueio: {_e_trial}")
@@ -803,7 +808,7 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
         elif _perfil_menu and st.session_state.get("somente_leitura"):
             _selo_menu = '<span class="sb-selo sb-selo-consulta">Modo consulta</span>'
         elif _perfil_menu:
-            _d_selo = _dias_selo(_perfil_menu)
+            _d_selo = _dias_selo(_perfil_menu, st.session_state.get('dias_trial_conta') or 7)
             _selo_menu = f'<span class="sb-selo sb-selo-trial">Teste grátis · {_d_selo} dia{"s" if _d_selo != 1 else ""}</span>'
     except Exception:
         pass
@@ -817,7 +822,7 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
     try:
         from utils.trial import is_pro as _is_pro_menu, dias_restantes_trial as _dias_menu
         if _perfil_menu and not _is_pro_menu(_perfil_menu):
-            _d = _dias_menu(_perfil_menu)
+            _d = _dias_menu(_perfil_menu, st.session_state.get('dias_trial_conta') or 7)
             with st.sidebar.container(key="cta_trial"):
                 if st.session_state.get("somente_leitura"):
                     st.markdown('<div class="sb-trial">Teste grátis <b>encerrado</b> · modo consulta</div>',

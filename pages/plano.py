@@ -113,7 +113,10 @@ def show():
                             'Entre no portal pelo seu e-mail</a>.', unsafe_allow_html=True)
         return
 
-    dias = dias_restantes_trial(perfil)
+    from utils.convites import dias_trial_da_conta
+    from utils.database import engine as _engine_plano
+    dias_teste = dias_trial_da_conta(_engine_plano, uid)   # 30 para quem entrou com convite, senão 7
+    dias = dias_restantes_trial(perfil, dias_teste)
     if plano == "cancelado":
         st.markdown('<div class="pl-status alerta"><span class="rot">Situação</span>'
                     '<div class="val">Assinatura cancelada</div>'
@@ -122,7 +125,7 @@ def show():
     elif dias > 0:
         st.markdown(f'<div class="pl-status"><span class="rot">Situação</span>'
                     f'<div class="val">Teste grátis: {dias} dia{"s" if dias != 1 else ""} restante{"s" if dias != 1 else ""}</div>'
-                    f'<span class="sub">O teste dura {DIAS_TRIAL} dias com tudo liberado. Assine antes do fim para não interromper o acesso.</span></div>',
+                    f'<span class="sub">O teste dura {dias_teste} dias com tudo liberado. Assine antes do fim para não interromper o acesso.</span></div>',
                     unsafe_allow_html=True)
     else:
         st.markdown('<div class="pl-status alerta"><span class="rot">Situação</span>'
