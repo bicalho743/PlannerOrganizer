@@ -64,7 +64,7 @@ def verify_firebase_token(request: Request) -> str:
 MODO_CONSULTA = "modo_consulta"
 MENSAGEM_CONSULTA = "Seu teste grátis terminou. Assine para voltar a cadastrar, editar e gerar PDFs."
 _LIVRES_NO_CONSULTA = ("/webhook/", "/perfil", "/impostos/regime", "/precificacao", "/api/status", "/conta/excluir",
-                       "/push/", "/tarefas/", "/assinatura/")
+                       "/push/", "/tarefas/", "/assinatura/", "/convites/")
 
 
 def _uid_da_requisicao(request: Request):
@@ -74,10 +74,18 @@ def _uid_da_requisicao(request: Request):
         return None
 
 
+def _dias_trial_da_conta(uid: str) -> int:
+    """7 dias padrão, ou os dias do convite que a conta usou (ex.: 30)."""
+    from utils.trial import DIAS_TRIAL
+    from utils.convites import dias_do_convite
+    from utils.database import engine as _engine
+    return dias_do_convite(_engine, uid) or DIAS_TRIAL
+
+
 def _em_modo_consulta(uid: str) -> bool:
     from utils.trial import trial_expirado
     try:
-        return trial_expirado(get_db(uid).get_perfil_usuario() or None)
+        return trial_expirado(get_db(uid).get_perfil_usuario() or None, _dias_trial_da_conta(uid))
     except Exception as e:
         print(f"[modo consulta] {e}")
         return False  # na dúvida, não bloqueia
@@ -806,8 +814,9 @@ async def get_perfil(uid: str = Depends(verify_firebase_token)):
                     perfil = perfil.to_dict()
                 if isinstance(perfil, dict):
                     from utils.trial import trial_expirado, dias_restantes_trial, is_pro
-                    perfil["modo_consulta"] = trial_expirado(perfil)
-                    perfil["dias_restantes_trial"] = None if is_pro(perfil) else dias_restantes_trial(perfil)
+                    _dias = _dias_trial_da_conta(uid)
+                    perfil["modo_consulta"] = trial_expirado(perfil, _dias)
+                    perfil["dias_restantes_trial"] = None if is_pro(perfil) else dias_restantes_trial(perfil, _dias)
                     from utils.assinatura import dados_assinatura
                     _ass = dados_assinatura(uid)
                     perfil["assinatura_origem"] = _ass["origem"] if is_pro(perfil) else None
@@ -826,6 +835,21 @@ async def get_perfil(uid: str = Depends(verify_firebase_token)):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@api.post("/convites/resgatar")
+async def resgatar_convite(request: Request, uid: str = Depends(verify_firebase_token)):
+    """A conta nova digita o código do convite e ganha o teste estendido (ex.: 30 dias)."""
+    from utils.convites import resgatar, ConviteInvalido
+    from utils.database import engine as _engine
+    try:
+        dados = await request.json()
+    except Exception:
+        dados = {}
+    try:
+        dias = resgatar(_engine, uid, (dados or {}).get("codigo", ""))
+    except ConviteInvalido as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"ok": True, "dias": dias}
 
 # ── ENDPOINTS DE PDF ─────────────────────────────────────────────────────────
 import tempfile
