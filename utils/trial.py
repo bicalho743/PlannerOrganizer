@@ -31,6 +31,12 @@ def is_pro(perfil) -> bool:
     return plano in ("pro", "ativo", "admin") or role == "admin"
 
 
+def cleo_liberada(perfil) -> bool:
+    """A assistente Cléo (custo por uso de IA) é do Plano Pro. Também liberada para e-mails em TRIAL_ISENTOS
+    (dono, testadores e a conta de demonstração das lojas)."""
+    return bool(perfil) and (is_pro(perfil) or _isento_por_email(perfil))
+
+
 def _data_cadastro_para_date(dc):
     if isinstance(dc, datetime):
         return dc.date()

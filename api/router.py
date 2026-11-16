@@ -815,6 +815,8 @@ async def get_perfil(uid: str = Depends(verify_firebase_token)):
                     from utils.trial import trial_expirado, dias_restantes_trial, is_pro
                     _dias = _dias_trial_da_conta(uid)
                     perfil["modo_consulta"] = trial_expirado(perfil, _dias)
+                    from utils.trial import cleo_liberada
+                    perfil["cleo_liberada"] = cleo_liberada(perfil)
                     perfil["dias_restantes_trial"] = None if is_pro(perfil) else dias_restantes_trial(perfil, _dias)
                     from utils.assinatura import dados_assinatura
                     _ass = dados_assinatura(uid)
@@ -861,6 +863,15 @@ async def assistente_comando(request: Request, uid: str = Depends(verify_firebas
     dados = dados if isinstance(dados, dict) else {}
     if not os.getenv("ANTHROPIC_API_KEY"):
         raise HTTPException(status_code=503, detail="A Cléo ainda não está ligada neste servidor.")
+    from utils.trial import cleo_liberada
+    try:
+        _perfil_cleo = get_db(uid).get_perfil_usuario()
+        if hasattr(_perfil_cleo, 'to_dict'):
+            _perfil_cleo = _perfil_cleo.to_dict()
+    except Exception:
+        _perfil_cleo = None
+    if not cleo_liberada(_perfil_cleo):
+        raise HTTPException(status_code=403, detail="A Cléo faz parte do Plano Pro.")
     from utils.cleo import dentro_do_limite
     if not dentro_do_limite(uid):
         raise HTTPException(status_code=429, detail="Você usou muito a Cléo hoje. Ela volta amanhã.")

@@ -67,3 +67,25 @@ def test_limite_diario(monkeypatch):
     c._usos.clear()
     assert c.dentro_do_limite("u") and c.dentro_do_limite("u") and not c.dentro_do_limite("u")
     assert c.dentro_do_limite("outra")
+
+
+def test_dados_sensiveis_nao_vao_no_prompt():
+    visto = {}
+    def espia(corpo):
+        visto.update(corpo); return {"content": []}
+    interpretar("ok", formulario="cliente", valores={"nome": "Ana", "cpf": "123.456.789-00", "telefone": "31999990000",
+                                                      "email": "a@b.com", "endereco": "Rua X"}, chamar=espia)
+    assert "Ana" in visto["system"]
+    for segredo in ("123.456.789-00", "31999990000", "a@b.com", "Rua X"):
+        assert segredo not in visto["system"]
+
+
+def test_cleo_so_no_plano_pro(monkeypatch):
+    from utils.trial import cleo_liberada
+    monkeypatch.setenv("TRIAL_ISENTOS", "dono@exemplo.com")
+    assert cleo_liberada({"plano": "pro"})
+    assert cleo_liberada({"plano": "ativo"})
+    assert cleo_liberada({"plano": "gratuito", "email": "Dono@Exemplo.com"})
+    assert not cleo_liberada({"plano": "gratuito", "email": "outra@exemplo.com"})
+    assert not cleo_liberada({"plano": "cancelado"})
+    assert not cleo_liberada(None)

@@ -18,6 +18,8 @@ MODELO = os.getenv("CLEO_MODELO", "claude-haiku-5-5")
 FUSO = ZoneInfo("America/Sao_Paulo")   # o servidor roda em UTC: depois das 21h "amanhã" cairia um dia adiante
 LIMITE_DIARIO = int(os.getenv("CLEO_LIMITE_DIARIO", "150"))   # pedidos por conta por dia (protege o gasto com a API)
 MAX_TEXTO = 600
+# dados pessoais das clientes que nunca vão ao modelo (o app também os retira antes de enviar)
+CAMPOS_SENSIVEIS = {"cpf", "telefone", "email", "endereco", "pix", "data_nascimento"}
 MAX_CLIENTES = 300
 
 TELAS = ["inicio", "propostas", "agenda", "financeiro", "clientes", "vendas",
@@ -112,7 +114,8 @@ def dentro_do_limite(uid: str, agora: datetime | None = None) -> bool:
 def _valores_texto(valores) -> str:
     if not isinstance(valores, dict) or not valores:
         return "(nenhum)"
-    limpo = {str(k)[:30]: str(v)[:120] for k, v in list(valores.items())[:12] if v not in (None, "")}
+    limpo = {str(k)[:30]: str(v)[:120] for k, v in list(valores.items())[:12]
+             if v not in (None, "") and str(k).lower() not in CAMPOS_SENSIVEIS}
     return json.dumps(limpo, ensure_ascii=False) if limpo else "(nenhum)"
 
 

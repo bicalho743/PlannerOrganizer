@@ -45,6 +45,9 @@ SECOES = [
         "Google Firebase (login) e Google Analytics (estatísticas de uso).",
         "Stripe (pagamentos).",
         "Brevo (envio de e-mails).",
+        "RevenueCat, Google Play e Apple App Store (assinatura feita pelo aplicativo no celular).",
+        "Expo (envio do aviso diário ao celular).",
+        "Anthropic (inteligência artificial da assistente Cléo, somente se você permitir o uso; veja a seção 11).",
         "Autoridades, quando houver obrigação legal ou ordem judicial.",
     ]),
     ("5. Transferência internacional", [
@@ -82,10 +85,28 @@ SECOES = [
     ("10. Menores de idade", [
         "O Planner Organiza é destinado a profissionais maiores de 18 anos.",
     ], None),
-    ("11. Encarregado e contato", [
+    ("11. Assistente de voz Cléo (em fase de testes)", [
+        "A Cléo é uma assistente do aplicativo de celular, em fase de testes (Prévia). Ela só funciona depois que "
+        "você der permissão, na primeira vez que usar, e você pode retirá-la a qualquer momento no painel da Cléo. "
+        "Quando você pede algo por voz:",
+    ], [
+        "O microfone é usado só enquanto você toca no botão da Cléo. A transcrição da fala é feita pelo "
+        "reconhecimento de voz do próprio celular (Apple ou Google, conforme o aparelho), que segue as políticas "
+        "dessas empresas. Nós não recebemos nem guardamos o áudio.",
+        "Para entender o pedido, enviamos à Anthropic, empresa de inteligência artificial, o texto do que você falou, "
+        "os nomes das suas clientes cadastradas, a tela em que você está e o que já foi preenchido no formulário aberto. "
+        "Não enviamos CPF, telefone, e-mail, endereço nem chave PIX das clientes. Os campos que você mesma está "
+        "preenchendo no formulário aberto (por exemplo, valor e sinal de uma proposta) vão junto, para a Cléo "
+        "entender correções como \"muda o valor para 500\".",
+        "Usamos esse envio somente para responder ao seu pedido. A Cléo apenas abre formulários preenchidos: "
+        "nada é gravado sem a sua confirmação.",
+        "Base legal: o seu consentimento. Se você não permitir, a Cléo não funciona e o restante do aplicativo continua igual.",
+        "Cada conta tem um limite diário de pedidos à Cléo, para evitar uso indevido.",
+    ]),
+    ("12. Encarregado e contato", [
         "Para assuntos de privacidade, fale com o encarregado pelo tratamento de dados em " + CONTATO + ".",
     ], None),
-    ("12. Alterações", [
+    ("13. Alterações", [
         "Mudanças relevantes nesta política serão avisadas por e-mail ou no sistema antes de valerem.",
     ], None),
 ]
