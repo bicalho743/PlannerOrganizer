@@ -1,0 +1,117 @@
+"""
+Cléo, a assistente de voz do app.
+
+O app transcreve a fala no próprio celular e manda o TEXTO para cá. Este módulo pede ao Claude
+(Haiku, o mais barato) para entender o pedido e devolver ações simples que o app executa:
+abrir uma tela, abrir um formulário já preenchido, salvar ou fechar. Nada é gravado aqui:
+quem grava é o app, depois que a usuária confere e confirma.
+"""
+import os
+from datetime import date
+
+import requests
+
+MODELO = os.getenv("CLEO_MODELO", "claude-haiku-5-5")
+URL = "https://api.anthropic.com/v1/messages"
+MAX_TEXTO = 600
+MAX_CLIENTES = 300
+
+TELAS = ["inicio", "propostas", "agenda", "financeiro", "clientes", "vendas",
+         "pos_organizacao", "relatorios", "pdf", "precificacao", "perfil", "menu"]
+
+SISTEMA = """Você é a Cléo, assistente de voz do app Planner Organiza, usado por personal organizers no Brasil.
+Fale sempre em português do Brasil, em frases curtas e simpáticas, como quem conversa. Sem jargão.
+
+O que você faz: abrir telas e abrir formulários JÁ PREENCHIDOS com o que a usuária disse. Você nunca grava
+nada sozinha: a usuária confere o formulário na tela e diz "salvar" (ou toca em salvar).
+
+Regras:
+- Hoje é {hoje} ({dia_semana}). Converta datas faladas ("amanhã", "sexta", "dia 20") para AAAA-MM-DD e horas para HH:MM (24h).
+- Valores em reais viram número (ex.: "mil e duzentos" = 1200).
+- Cliente: use exatamente um nome da lista de clientes quando a usuária citar uma. Se não achar, passe o nome falado
+  mesmo assim e avise que não encontrou. Nunca invente cliente, valor, data ou telefone: se faltar algo importante,
+  preencha o que sabe e pergunte o resto em uma frase.
+- "Salvar", "confirma", "pode salvar" -> use salvar_formulario. "Fecha", "cancela", "deixa pra lá" -> use fechar_formulario.
+- Se o pedido não tiver relação com o app, diga com gentileza que você ajuda com propostas, agenda, financeiro e clientes.
+- Sempre responda com uma frase curta de fala (o app lê e mostra). Use as ferramentas para as ações.
+
+Tela atual da usuária: {tela}. Formulário aberto agora: {formulario}.
+Clientes cadastradas (nomes): {clientes}"""
+
+FERRAMENTAS = [
+    {"name": "abrir_tela", "description": "Abre uma tela do app.",
+     "input_schema": {"type": "object", "properties": {"tela": {"type": "string", "enum": TELAS}},
+                      "required": ["tela"]}},
+    {"name": "preencher_compromisso",
+     "description": "Abre o formulário de novo compromisso da Agenda, preenchido.",
+     "input_schema": {"type": "object", "properties": {
+         "titulo": {"type": "string"}, "data": {"type": "string", "description": "AAAA-MM-DD"},
+         "hora": {"type": "string", "description": "HH:MM"}, "cliente": {"type": "string"},
+         "local": {"type": "string"}, "valor": {"type": "number"}, "observacoes": {"type": "string"}}}},
+    {"name": "preencher_proposta",
+     "description": "Abre o formulário de nova proposta, preenchido.",
+     "input_schema": {"type": "object", "properties": {
+         "cliente": {"type": "string"}, "descricao": {"type": "string"}, "ambiente": {"type": "string"},
+         "valor": {"type": "number"}, "sinal": {"type": "number"}}}},
+    {"name": "preencher_lancamento",
+     "description": "Abre o formulário de novo lançamento financeiro (receita ou despesa), preenchido.",
+     "input_schema": {"type": "object", "properties": {
+         "tipo": {"type": "string", "enum": ["receita", "despesa"]}, "descricao": {"type": "string"},
+         "valor": {"type": "number"}, "categoria": {"type": "string"}}}},
+    {"name": "preencher_cliente",
+     "description": "Abre o formulário de nova cliente, preenchido.",
+     "input_schema": {"type": "object", "properties": {
+         "nome": {"type": "string"}, "telefone": {"type": "string"}, "email": {"type": "string"},
+         "cidade": {"type": "string"}, "bairro": {"type": "string"},
+         "aniversario": {"type": "string", "description": "DD/MM"}, "observacoes": {"type": "string"}}}},
+    {"name": "salvar_formulario", "description": "Confirma e salva o formulário que está aberto.",
+     "input_schema": {"type": "object", "properties": {}}},
+    {"name": "fechar_formulario", "description": "Fecha o formulário aberto sem salvar.",
+     "input_schema": {"type": "object", "properties": {}}},
+]
+
+DIAS = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
+
+# nome da ferramenta -> tipo de ação que o app entende
+_FORMULARIOS = {"preencher_compromisso": "compromisso", "preencher_proposta": "proposta",
+                "preencher_lancamento": "lancamento", "preencher_cliente": "cliente"}
+
+
+def _chamar_claude(corpo: dict) -> dict:
+    chave = os.getenv("ANTHROPIC_API_KEY")
+    if not chave:
+        raise RuntimeError("ANTHROPIC_API_KEY não configurada")
+    r = requests.post(URL, json=corpo, timeout=25, headers={
+        "x-api-key": chave, "anthropic-version": "2023-06-01", "content-type": "application/json"})
+    r.raise_for_status()
+    return r.json()
+
+
+def interpretar(texto: str, tela: str = "", formulario: str = "", clientes=None,
+                hoje: date | None = None, chamar=_chamar_claude) -> dict:
+    """Devolve {"fala": str, "acoes": [ {tipo, ...} ]}. `chamar` existe para os testes."""
+    texto = (texto or "").strip()[:MAX_TEXTO]
+    if not texto:
+        return {"fala": "Não ouvi nada. Pode repetir?", "acoes": []}
+    hoje = hoje or date.today()
+    nomes = [str(n)[:80] for n in (clientes or [])][:MAX_CLIENTES]
+    sistema = SISTEMA.format(
+        hoje=hoje.isoformat(), dia_semana=DIAS[hoje.weekday()], tela=tela or "desconhecida",
+        formulario=formulario or "nenhum", clientes="; ".join(nomes) if nomes else "(nenhuma)")
+    resp = chamar({"model": MODELO, "max_tokens": 500, "system": sistema,
+                   "tools": FERRAMENTAS, "messages": [{"role": "user", "content": texto}]})
+    fala, acoes = [], []
+    for bloco in resp.get("content", []):
+        if bloco.get("type") == "text" and bloco.get("text", "").strip():
+            fala.append(bloco["text"].strip())
+        elif bloco.get("type") == "tool_use":
+            nome, dados = bloco.get("name"), bloco.get("input") or {}
+            if nome == "abrir_tela" and dados.get("tela") in TELAS:
+                acoes.append({"tipo": "abrir_tela", "tela": dados["tela"]})
+            elif nome in _FORMULARIOS:
+                campos = {k: v for k, v in dados.items() if v not in (None, "")}
+                acoes.append({"tipo": "formulario", "formulario": _FORMULARIOS[nome], "campos": campos})
+            elif nome in ("salvar_formulario", "fechar_formulario"):
+                acoes.append({"tipo": nome.split("_")[0]})
+    return {"fala": " ".join(fala) or ("Pronto." if acoes else "Não entendi. Pode falar de outro jeito?"),
+            "acoes": acoes}

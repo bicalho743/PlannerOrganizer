@@ -130,6 +130,7 @@ Domínios (DNS na Locaweb): `plannerorganiza.com.br` e `www` → página de vend
 | PDFs | `/pdf/proposta/{id}/comercial`, `/cliente`, `/interno`, `/produtos`, `/fornecedores`, `/pdf/venda/{id}` |
 | Relatórios | `GET /relatorios` |
 | Avisos | `POST /push/token`, `POST /push/remover`, `POST /tarefas/lembretes-diarios` |
+| Cléo (voz) | `POST /assistente/comando`: recebe o texto falado e devolve fala e ações para o app (`utils/cleo.py`, Claude Haiku). Não grava nada |
 | Stripe | `POST /webhook/stripe` |
 
 Rotas de gravação e PDFs respondem **402** no modo consulta, exceto perfil, regime de impostos, precificação,
@@ -160,6 +161,7 @@ tests/                 testes (pytest) contra um PostgreSQL de teste
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | assinatura |
 | `REVENUECAT_WEBHOOK_AUTH`, `REVENUECAT_SECRET_KEY` | assinatura pelas lojas (só na API `plannerorganiza-api`) |
 | `TRIAL_ISENTOS` | e-mails sempre liberados, separados por vírgula |
+| `ANTHROPIC_API_KEY` | chave da Anthropic para a Cléo (assistente de voz). Sem ela `/assistente/comando` responde 503. `CLEO_MODELO` troca o modelo (padrão `claude-haiku-5-5`) |
 | `TAREFAS_CHAVE` | protege `/tarefas/lembretes-diarios` (o mesmo valor vai como segredo no GitHub) |
 | `CORS_ALLOWED_ORIGINS` | origens aceitas pela API |
 

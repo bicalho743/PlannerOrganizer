@@ -64,7 +64,7 @@ def verify_firebase_token(request: Request) -> str:
 MODO_CONSULTA = "modo_consulta"
 MENSAGEM_CONSULTA = "Seu teste grátis terminou. Assine para voltar a cadastrar, editar e gerar PDFs."
 _LIVRES_NO_CONSULTA = ("/webhook/", "/perfil", "/impostos/regime", "/precificacao", "/api/status", "/conta/excluir",
-                       "/push/", "/tarefas/", "/assinatura/", "/convites/")
+                       "/push/", "/tarefas/", "/assinatura/", "/convites/", "/assistente/")
 
 
 def _uid_da_requisicao(request: Request):
@@ -850,6 +850,24 @@ async def resgatar_convite(request: Request, uid: str = Depends(verify_firebase_
     except ConviteInvalido as e:
         raise HTTPException(status_code=400, detail=str(e))
     return {"ok": True, "dias": dias}
+
+@api.post("/assistente/comando")
+async def assistente_comando(request: Request, uid: str = Depends(verify_firebase_token)):
+    """Cléo: recebe o texto falado e devolve a fala e as ações que o app executa (não grava nada)."""
+    from utils.cleo import interpretar
+    try:
+        dados = await request.json()
+    except Exception:
+        dados = {}
+    dados = dados if isinstance(dados, dict) else {}
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        raise HTTPException(status_code=503, detail="A Cléo ainda não está ligada neste servidor.")
+    try:
+        return interpretar(dados.get("texto", ""), tela=str(dados.get("tela", ""))[:40],
+                           formulario=str(dados.get("formulario", ""))[:40], clientes=dados.get("clientes"))
+    except Exception as e:
+        print(f"[cleo] {e}")
+        raise HTTPException(status_code=502, detail="A Cléo não conseguiu responder agora. Tente de novo.")
 
 # ── ENDPOINTS DE PDF ─────────────────────────────────────────────────────────
 import tempfile
