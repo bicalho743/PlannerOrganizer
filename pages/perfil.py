@@ -5,7 +5,7 @@ from utils.ui import botao_documento
 
 # Links de checkout do Stripe (mesmos usados no app mobile)
 STRIPE_CHECKOUT_MENSAL = "https://buy.stripe.com/aFa00j27UbE5cXjfQO18c02"  # R$ 39,90/mês (desde out/2026)
-STRIPE_CHECKOUT_ANUAL = "https://buy.stripe.com/8x26oHaEqbE5g9vbAy18c00"
+STRIPE_CHECKOUT_ANUAL = "https://buy.stripe.com/eVq14n4g2dMde1ndIG18c03"  # R$ 199,90/ano (desde nov/2026; o antigo de R$ 297 foi substituído)
 STRIPE_PORTAL_RETURN_URL = "https://app.plannerorganiza.com.br"
 
 # Link direto do Portal do Cliente (login por e-mail). Configurável por env

@@ -16,7 +16,7 @@ Responda em português, passo a passo e sem jargão. O README.md tem arquitetura
 ## Assinatura: um plano por conta, três canais
 - `perfis.plano` + `perfis.assinatura_origem` (`stripe` | `google` | `apple`) + `assinatura_expira_em`.
   Um canal só derruba o plano que ele mesmo deu (`utils/assinatura.py`).
-- Stripe (site): links de pagamento mensal R$ 39,90 e anual R$ 297, **sem códigos promocionais**; o código
+- Stripe (site): links de pagamento mensal R$ 39,90 e anual R$ 199,90 (o link antigo de R$ 297, `plink_1Tb02G…`, segue ativo até o deploy da web e depois deve ser desativado), **sem códigos promocionais**; o código
   ORGANIZA está inativo (cupom 49hDR0oH mantido). Conta Stripe "Coruja Labs".
 - Lojas pelo RevenueCat (projeto `proj1aebd2c2`, acesso `pro`):
   - `POST /webhook/revenuecat`: confere o Authorization com `REVENUECAT_WEBHOOK_AUTH` (aceita com ou sem

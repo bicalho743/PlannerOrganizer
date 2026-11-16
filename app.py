@@ -710,15 +710,15 @@ def _render_bloqueio_trial(perfil=None, uid=None):
         <div class='pw-card featured'>
           <div class='pw-ribbon'>MELHOR CUSTO-BENEFÍCIO</div>
           <div class='pw-plan'>Anual</div>
-          <div class='pw-price'>R$ 297 <span>/ano</span></div>
-          <div class='pw-save'>38% mais barato que o mensal</div>
+          <div class='pw-price'>R$ 199,90 <span>/ano</span></div>
+          <div class='pw-save'>58% mais barato que o mensal</div>
           <ul class='pw-features'>
             <li>Propostas e clientes ilimitados</li>
             <li>Financeiro completo</li>
             <li>Relatórios e PDFs</li>
             <li>Pós-organização</li>
           </ul>
-          <a class='pw-cta primary' href='{_url_anual}' target='_blank' {rastreamento.onclick_checkout('anual', 297)}>Assinar anual</a>
+          <a class='pw-cta primary' href='{_url_anual}' target='_blank' {rastreamento.onclick_checkout('anual', 199.9)}>Assinar anual</a>
         </div>
       </div>
       <div class='pw-trust'>Pagamento seguro via Stripe · Cancele quando quiser · Dados sempre preservados</div>

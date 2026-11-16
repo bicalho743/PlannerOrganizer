@@ -145,11 +145,11 @@ def show():
         <a class="cta secundario" href="{url_mensal}" target="_blank" rel="noopener" {onclick_checkout('mensal', 39.9)}>Assinar mensal</a>
       </div>
       <div class="pl-card destaque">
-        <span class="selo">38% MAIS BARATO</span>
+        <span class="selo">58% MAIS BARATO</span>
         <div class="nome">Anual</div>
-        <div class="preco">R$ 297 <span>/ano</span></div>
-        <div class="obs">Equivale a R$ 24,75 por mês.</div>
-        <a class="cta primario" href="{url_anual}" target="_blank" rel="noopener" {onclick_checkout('anual', 297)}>Assinar anual</a>
+        <div class="preco">R$ 199,90 <span>/ano</span></div>
+        <div class="obs">Equivale a R$ 16,66 por mês.</div>
+        <a class="cta primario" href="{url_anual}" target="_blank" rel="noopener" {onclick_checkout('anual', 199.9)}>Assinar anual</a>
       </div>
     </div>
     <ul class="pl-lista">
