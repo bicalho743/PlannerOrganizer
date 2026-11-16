@@ -4,8 +4,9 @@ Responda em português, passo a passo e sem jargão. O README.md tem arquitetura
 
 ## Publicação (Render)
 - API `plannerorganiza-api.onrender.com` (`api/router.py`): publica sozinha a cada push na `main`.
-- Web `app.plannerorganiza.com.br` (`app.py`, `pages/`): deploy **manual** (Render > PlannerOrganizer >
-  Manual Deploy). Avise a usuária sempre que mudar algo da web.
+- Web `app.plannerorganiza.com.br` (`app.py`, `pages/`): serviço `PlannerOrganizer`, também **publica sozinha**
+  a cada push na `main` (conferido no Render em 16/11/2026, autoDeploy ligado). Avise a usuária sempre que mudar
+  algo da web, pois vai ao ar na hora.
 - Trabalhe na branch da sessão e leve para a `main` com os testes passando.
 
 ## Testes
@@ -35,5 +36,4 @@ Responda em português, passo a passo e sem jargão. O README.md tem arquitetura
   o status legível (`utils/proposta_status.label_for`).
 
 ## Pendências (15/11/2026)
-- Deploy manual da web no Render para levar o topo com conta/plano e o ícone da loja.
 - Recebimento da Apple: conta Itaú em BRL exige cadastro na StoneX; alternativa: conta USD da Wise no nome do titular.

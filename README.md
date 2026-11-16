@@ -181,7 +181,7 @@ python -m pytest -q tests                              # testes
 
 - Trabalho no branch de desenvolvimento e envio ao `main` com os testes passando.
 - **API**: publica sozinha a cada envio ao `main`.
-- **Web**: hoje publica **manualmente** (Render → PlannerOrganizer → Manual Deploy). Ver pendências.
+- **Web**: publica sozinha a cada push na `main` (Render → PlannerOrganizer, autoDeploy ligado).
 - **App**: `npx eas-cli build --platform android|ios --profile production` no repositório `planner-app`.
 
 ---
