@@ -44,3 +44,26 @@ def test_prompt_traz_data_e_clientes():
         visto.update(corpo); return {"content": []}
     interpretar("oi", tela="agenda", clientes=["Bia"], hoje=date(2026, 11, 16), chamar=espia)
     assert "2026-11-16" in visto["system"] and "segunda-feira" in visto["system"] and "Bia" in visto["system"]
+
+
+def test_valores_do_formulario_vao_no_prompt():
+    visto = {}
+    def espia(corpo):
+        visto.update(corpo); return {"content": []}
+    interpretar("sexta", formulario="compromisso", valores={"titulo": "Visita", "hora": ""}, chamar=espia)
+    assert '"titulo": "Visita"' in visto["system"] and "hora" not in visto["system"].split("Valores já preenchidos")[1].split("\n")[0]
+
+
+def test_data_de_hoje_usa_horario_de_brasilia():
+    from utils.cleo import FUSO
+    from datetime import datetime
+    # 01:00 UTC de 17/11 ainda é 16/11 em Brasília
+    assert datetime(2026, 11, 17, 1, 0, tzinfo=__import__("zoneinfo").ZoneInfo("UTC")).astimezone(FUSO).date().isoformat() == "2026-11-16"
+
+
+def test_limite_diario(monkeypatch):
+    import utils.cleo as c
+    monkeypatch.setattr(c, "LIMITE_DIARIO", 2)
+    c._usos.clear()
+    assert c.dentro_do_limite("u") and c.dentro_do_limite("u") and not c.dentro_do_limite("u")
+    assert c.dentro_do_limite("outra")

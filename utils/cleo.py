@@ -6,13 +6,17 @@ O app transcreve a fala no próprio celular e manda o TEXTO para cá. Este módu
 abrir uma tela, abrir um formulário já preenchido, salvar ou fechar. Nada é gravado aqui:
 quem grava é o app, depois que a usuária confere e confirma.
 """
+import json
 import os
-from datetime import date
+import threading
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
-import requests
+import anthropic
 
 MODELO = os.getenv("CLEO_MODELO", "claude-haiku-5-5")
-URL = "https://api.anthropic.com/v1/messages"
+FUSO = ZoneInfo("America/Sao_Paulo")   # o servidor roda em UTC: depois das 21h "amanhã" cairia um dia adiante
+LIMITE_DIARIO = int(os.getenv("CLEO_LIMITE_DIARIO", "150"))   # pedidos por conta por dia (protege o gasto com a API)
 MAX_TEXTO = 600
 MAX_CLIENTES = 300
 
@@ -36,6 +40,9 @@ Regras:
 - Sempre responda com uma frase curta de fala (o app lê e mostra). Use as ferramentas para as ações.
 
 Tela atual da usuária: {tela}. Formulário aberto agora: {formulario}.
+Valores já preenchidos nesse formulário: {valores}
+Se já há formulário aberto do mesmo tipo e a usuária só complementa ou corrige ("sexta", "muda o valor para 500", "põe o
+telefone"), use a ferramenta de preencher apenas com o que MUDA: o app junta com o que já estava. Nunca repita tudo.
 Clientes cadastradas (nomes): {clientes}"""
 
 FERRAMENTAS = [
@@ -77,27 +84,49 @@ _FORMULARIOS = {"preencher_compromisso": "compromisso", "preencher_proposta": "p
                 "preencher_lancamento": "lancamento", "preencher_cliente": "cliente"}
 
 
+_cliente = None
+
+
 def _chamar_claude(corpo: dict) -> dict:
-    chave = os.getenv("ANTHROPIC_API_KEY")
-    if not chave:
-        raise RuntimeError("ANTHROPIC_API_KEY não configurada")
-    r = requests.post(URL, json=corpo, timeout=25, headers={
-        "x-api-key": chave, "anthropic-version": "2023-06-01", "content-type": "application/json"})
-    r.raise_for_status()
-    return r.json()
+    """Chama o Claude pelo SDK oficial e devolve a resposta como dicionário."""
+    global _cliente
+    if _cliente is None:
+        _cliente = anthropic.Anthropic(timeout=25.0, max_retries=1)   # lê ANTHROPIC_API_KEY do ambiente
+    return _cliente.messages.create(**corpo).model_dump()
 
 
-def interpretar(texto: str, tela: str = "", formulario: str = "", clientes=None,
+_usos: dict = {}
+_trava = threading.Lock()
+
+
+def dentro_do_limite(uid: str, agora: datetime | None = None) -> bool:
+    """Conta um pedido da conta hoje (horário de Brasília). False quando passou do limite diário."""
+    dia = (agora or datetime.now(FUSO)).date().isoformat()
+    with _trava:
+        for chave in [k for k in _usos if k[1] != dia]:
+            del _usos[chave]
+        _usos[(uid, dia)] = _usos.get((uid, dia), 0) + 1
+        return _usos[(uid, dia)] <= LIMITE_DIARIO
+
+
+def _valores_texto(valores) -> str:
+    if not isinstance(valores, dict) or not valores:
+        return "(nenhum)"
+    limpo = {str(k)[:30]: str(v)[:120] for k, v in list(valores.items())[:12] if v not in (None, "")}
+    return json.dumps(limpo, ensure_ascii=False) if limpo else "(nenhum)"
+
+
+def interpretar(texto: str, tela: str = "", formulario: str = "", clientes=None, valores=None,
                 hoje: date | None = None, chamar=_chamar_claude) -> dict:
     """Devolve {"fala": str, "acoes": [ {tipo, ...} ]}. `chamar` existe para os testes."""
     texto = (texto or "").strip()[:MAX_TEXTO]
     if not texto:
         return {"fala": "Não ouvi nada. Pode repetir?", "acoes": []}
-    hoje = hoje or date.today()
+    hoje = hoje or datetime.now(FUSO).date()
     nomes = [str(n)[:80] for n in (clientes or [])][:MAX_CLIENTES]
     sistema = SISTEMA.format(
         hoje=hoje.isoformat(), dia_semana=DIAS[hoje.weekday()], tela=tela or "desconhecida",
-        formulario=formulario or "nenhum", clientes="; ".join(nomes) if nomes else "(nenhuma)")
+        formulario=formulario or "nenhum", valores=_valores_texto(valores), clientes="; ".join(nomes) if nomes else "(nenhuma)")
     resp = chamar({"model": MODELO, "max_tokens": 500, "system": sistema,
                    "tools": FERRAMENTAS, "messages": [{"role": "user", "content": texto}]})
     fala, acoes = [], []
