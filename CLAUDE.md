@@ -31,6 +31,12 @@ Responda em português, passo a passo e sem jargão. O README.md tem arquitetura
 - `/tarefas/lembretes-diarios` (GitHub Actions `lembretes-diarios.yml`, 08h07 Brasília, segredo `TAREFAS_CHAVE`):
   um resumo por celular por dia (`push_tokens.ultimo_resumo`), abre o Início ao tocar.
 
+## Onboarding (igual ao do app 1.0.16)
+- `perfis.onboarding` (JSON: tempo, dores, formal, origem, passos ativo|fechado); API `GET/PUT /onboarding`.
+- Web (`utils/onboarding_web.py`): conta nova sem resposta vê a janela de perguntas (depois vem o tutorial rápido);
+  Início mostra os 5 Primeiros passos do app (o 3º é "Receba os avisos no celular", feito quando há push_tokens).
+- Tutorial rápido não abre sozinho para conta que já tem proposta (`utils/tour.py`).
+
 ## PDFs de proposta
 - Proposta Comercial sai como "Proposta de Serviço"; todos os PDFs mostram `propostas.numero` (não o id interno) e
   o status legível (`utils/proposta_status.label_for`).

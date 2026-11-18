@@ -64,7 +64,7 @@ def verify_firebase_token(request: Request) -> str:
 MODO_CONSULTA = "modo_consulta"
 MENSAGEM_CONSULTA = "Seu teste grátis terminou. Assine para voltar a cadastrar, editar e gerar PDFs."
 _LIVRES_NO_CONSULTA = ("/webhook/", "/perfil", "/impostos/regime", "/precificacao", "/api/status", "/conta/excluir",
-                       "/push/", "/tarefas/", "/assinatura/", "/convites/")
+                       "/push/", "/tarefas/", "/assinatura/", "/convites/", "/onboarding")
 
 
 def _uid_da_requisicao(request: Request):
@@ -1752,6 +1752,24 @@ async def update_perfil(body: PerfilUpdate, uid: str = Depends(verify_firebase_t
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# Onboarding: respostas (nome do negócio, o que mais pesa, regime) e o cartão Primeiros passos,
+# iguais no app e na web.
+@api.get("/onboarding")
+async def get_onboarding(uid: str = Depends(verify_firebase_token)):
+    return get_db(uid).get_onboarding()
+
+@api.put("/onboarding")
+async def put_onboarding(request: Request, uid: str = Depends(verify_firebase_token)):
+    try:
+        dados = await request.json()
+    except Exception:
+        dados = {}
+    permitidos = {"tempo", "dores", "formal", "origem", "respondido", "pulou", "passos"}
+    limpos = {k: v for k, v in (dados or {}).items() if k in permitidos}
+    if not get_db(uid).salvar_onboarding(limpos):
+        raise HTTPException(status_code=404, detail="Perfil não encontrado.")
+    return {"ok": True}
 
 # ── WEBHOOK STRIPE ────────────────────────────────────────────────────────────
 

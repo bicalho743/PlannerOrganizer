@@ -93,6 +93,7 @@ class Perfil(Base):
     precificacao = Column(Text)  # parâmetros da aba Precificação (JSON)
     regime_tributario = Column(Text)
     tutorial_visto = Column(Text)
+    onboarding = Column(Text)  # JSON: respostas do onboarding (nome do negócio, dores, regime) e "passos": ativo|fechado
     origem_cadastro = Column(Text)  # JSON com tema do anúncio e UTMs da visita em que a conta foi criada  # data em que viu (ou pulou) o tutorial rápido; vazio = mostrar na entrada  # JSON: {"regime": "MEI"|"Simples Nacional"|"Outro", "aliquota": %}
     role = Column(String, default='user')
     plano = Column(String, default='gratuito')

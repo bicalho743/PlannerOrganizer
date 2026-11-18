@@ -67,10 +67,12 @@ CSS = """
 
 
 def precisa_mostrar():
-    """True na primeira entrada da conta (uma consulta por sessão)."""
+    """True na primeira entrada da conta (uma consulta por sessão). Quem já tem proposta (ex.: fez o
+    onboarding no app) não recebe o tutorial sozinho: ele continua no botão do menu."""
     if "_tour_visto" not in st.session_state:
         try:
-            st.session_state["_tour_visto"] = bool(st.session_state.db.get_tutorial_visto())
+            db = st.session_state.db
+            st.session_state["_tour_visto"] = bool(db.get_tutorial_visto()) or not db.get_propostas().empty
         except Exception as e:
             print(f"[tour] {e}")
             st.session_state["_tour_visto"] = True  # na dúvida, não atrapalha

@@ -981,8 +981,11 @@ st.session_state["_last_page_rendered"] = st.session_state.get("current_page")
 if st.session_state.get("authenticated"):
     try:
         from utils import tour
+        from utils import onboarding_web
         if not somente_leitura.janela_se_tentou():  # uma janela por vez: o convite para assinar vem antes
-            tour.mostrar()  # na primeira entrada da conta, ou pelo botão "Tutorial rápido" do menu
+            # conta nova: primeiro as perguntas do onboarding; depois delas, o tutorial rápido
+            if not onboarding_web.mostrar_perguntas():
+                tour.mostrar()  # na primeira entrada da conta, ou pelo botão "Tutorial rápido" do menu
     except Exception as _e_tour:
         print(f"[tour] {_e_tour}")
 rastreamento.disparar()

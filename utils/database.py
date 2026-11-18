@@ -309,6 +309,8 @@ class Database:
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS regime_tributario TEXT"))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS tutorial_visto TEXT"))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS origem_cadastro TEXT"))
+                # respostas do onboarding (app e web) e o estado do cartão Primeiros passos (JSON)
+                conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS onboarding TEXT"))
                 # código do cliente no Stripe: liga renovações e cancelamentos à conta certa mesmo
                 # quando a pessoa pagou com um e-mail diferente do login
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT"))
@@ -646,6 +648,34 @@ class Database:
             if not perfil or perfil.origem_cadastro:
                 return False
             perfil.origem_cadastro = json.dumps(origem, ensure_ascii=False)
+            self.session.flush()
+            return True
+        return self._safe_query(query)
+
+    def get_onboarding(self):
+        """Respostas do onboarding e estado dos Primeiros passos (dict; vazio se nunca respondeu)."""
+        import json
+        def query():
+            perfil = self.session.query(Perfil).filter_by(usuario_id=self.usuario_id).first()
+            try:
+                return json.loads(perfil.onboarding) if perfil and perfil.onboarding else {}
+            except (TypeError, ValueError):
+                return {}
+        return self._safe_query(query) or {}
+
+    def salvar_onboarding(self, dados):
+        """Junta `dados` ao que já estava guardado (não apaga respostas anteriores)."""
+        import json
+        def query():
+            perfil = self.session.query(Perfil).filter_by(usuario_id=self.usuario_id).first()
+            if not perfil:
+                return False
+            try:
+                atual = json.loads(perfil.onboarding) if perfil.onboarding else {}
+            except (TypeError, ValueError):
+                atual = {}
+            atual.update(dados or {})
+            perfil.onboarding = json.dumps(atual, ensure_ascii=False)
             self.session.flush()
             return True
         return self._safe_query(query)

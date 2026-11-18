@@ -209,31 +209,6 @@ def _aniversario(cli, hoje):
     return d if d >= hoje else d.replace(year=hoje.year + 1)
 
 
-def _onboarding(perfil, clientes, propostas):
-    st.markdown('<div class="ini-secao">Primeiros passos</div>', unsafe_allow_html=True)
-    passos = [
-        ("Coloque sua marca", "Logotipo, cores e contatos saem em todas as propostas em PDF.", "Perfil", "Abrir Perfil e marca",
-         bool(perfil.get("logo"))),
-        ("Cadastre sua primeira cliente", "Nome e telefone já bastam para enviar mensagens pelo WhatsApp.", "Clientes",
-         "Cadastrar cliente", not clientes.empty),
-        ("Crie a primeira proposta", "Monte o orçamento e gere o PDF para enviar.", "Propostas", "Criar proposta",
-         not propostas.empty),
-    ]
-    # o próximo passo pendente é a chamada dourada da tela; os outros ficam discretos
-    proximo = next((i for i, p in enumerate(passos, 1) if not p[4]), None)
-    for i, (t, d, pagina, rotulo, feito) in enumerate(passos, 1):
-        with st.container(border=True):
-            c1, c2 = st.columns([5, 2], vertical_alignment="center")
-            marca = ('<span class="n ok">✓</span>' if feito
-                     else f'<span class="n{" prox" if i == proximo else ""}">{i}</span>')
-            c1.markdown(f'<div class="ini-passo">{marca}<div class="ini-txt"><b>{t}</b>'
-                        f'<span class="det">{d}</span></div></div>', unsafe_allow_html=True)
-            if not feito:
-                with c2.container(key=f"cta_passo_{i}" if i == proximo else f"passo_{i}"):
-                    if st.button(rotulo, key=f"ini_passo_{i}", use_container_width=True):
-                        _ir(pagina)
-
-
 def _perfil():
     try:
         from pages.perfil import carregar_perfil
@@ -276,8 +251,10 @@ def show():
         acoes_pos = pd.DataFrame()
 
     perfil = _perfil()
+    # Primeiros passos (iguais aos do app): conta sem dados ou que respondeu o onboarding, até fechar/terminar
+    from utils import onboarding_web
+    onboarding_web.mostrar_passos(perfil, clientes, propostas)
     if clientes.empty and propostas.empty:
-        _onboarding(perfil, clientes, propostas)
         # dados de exemplo só em ambiente de demonstração (nunca para quem assina)
         if os.environ.get("MODO_DEMO") == "1" and st.button("Adicionar dados de exemplo", key="btn_add_test_data_dashboard"):
             db.add_test_data()
