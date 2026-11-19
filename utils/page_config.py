@@ -72,5 +72,5 @@ def apply_page_footer():
         '<div class="sb-rodape">'
         '<a href="https://app.plannerorganiza.com.br/?show_termos=true" target="_blank">Termos de uso</a> · '
         '<a href="https://app.plannerorganiza.com.br/?show_politica=true" target="_blank">Privacidade</a><br>'
-        'contato@plannerorganiza.com.br</div>',
+        'contato@candeiatec.com.br</div>',
         unsafe_allow_html=True)

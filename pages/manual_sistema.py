@@ -511,7 +511,7 @@ def gerar_manual_sistema(verificar_auth=True):
     bullet("Impostos, enquadramento (MEI, Simples) e declarações: o app ajuda a acompanhar, mas a palavra final é "
            "do contador. Em caso de dúvida, procure um.")
     e.append(Spacer(1, 14))
-    texto("Dúvidas ou sugestões: <b>contato@plannerorganiza.com.br</b> ou o WhatsApp do suporte, em "
+    texto("Dúvidas ou sugestões: <b>contato@candeiatec.com.br</b> ou o WhatsApp do suporte, em "
           "plannerorganiza.com.br.")
     e.append(Spacer(1, 10))
     e.append(Paragraph(f"© {datetime.now().year} Planner Organiza — Versão {VERSAO}", st_rodape))
