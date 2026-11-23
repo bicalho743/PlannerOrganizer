@@ -2,12 +2,12 @@
 Plano e cobrança — situação da assinatura e o que fazer a seguir.
 
 - Pro: portal do cliente Stripe (cartão, faturas, cancelamento).
-- Teste grátis ou expirado/cancelado: planos mensal e anual (Payment Links do Stripe
+- Teste grátis ou expirado/cancelado: planos mensal, trimestral e anual (Payment Links do Stripe
   com o UID da conta em client_reference_id; o webhook da API ativa o plano).
 """
 import streamlit as st
 
-from pages.perfil import (STRIPE_CHECKOUT_MENSAL, STRIPE_CHECKOUT_ANUAL, STRIPE_PORTAL_LINK,
+from pages.perfil import (STRIPE_CHECKOUT_MENSAL, STRIPE_CHECKOUT_TRIMESTRAL, STRIPE_CHECKOUT_ANUAL, STRIPE_PORTAL_LINK,
                           checkout_url, carregar_perfil, _criar_portal_session)
 from utils.trial import is_pro, dias_restantes_trial, DIAS_TRIAL
 from utils.rastreamento import onclick_checkout
@@ -20,7 +20,7 @@ CSS = """
 .pl-status .sub { font-size: .88rem; color: #475467; }
 .pl-status.alerta { border-color: #FEC84B; background: #FFFAEB; }
 .pl-status.pro { border-color: var(--navy); }
-.pl-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; max-width: 640px; }
+.pl-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; max-width: 860px; }
 .pl-card { border: 1px solid #E4E7EC; border-radius: 12px; padding: 18px 20px; background: #fff; position: relative; }
 .pl-card.destaque { border: 2px solid var(--navy); }
 .pl-card .selo { position: absolute; top: -10px; left: 18px; background: var(--gold); color: var(--navy);
@@ -36,7 +36,7 @@ CSS = """
 .pl-lista { margin: 18px 0 0; padding: 0; list-style: none; color: #344054; font-size: .9rem; }
 .pl-lista li { padding: 3px 0; }
 .pl-lista li::before { content: "✓"; color: #067647; font-weight: 700; margin-right: 8px; }
-@media (max-width: 600px) { .pl-cards { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { .pl-cards { grid-template-columns: 1fr; } }
 </style>
 """
 
@@ -135,21 +135,29 @@ def show():
 
     # ---------- planos ----------
     url_mensal = checkout_url(STRIPE_CHECKOUT_MENSAL, email, uid)
+    url_trimestral = checkout_url(STRIPE_CHECKOUT_TRIMESTRAL, email, uid)
     url_anual = checkout_url(STRIPE_CHECKOUT_ANUAL, email, uid)
     st.markdown(f"""
     <div class="pl-cards">
       <div class="pl-card">
         <div class="nome">Mensal</div>
-        <div class="preco">R$ 39,90 <span>/mês</span></div>
-        <div class="obs">Cancele quando quiser.</div>
-        <a class="cta secundario" href="{url_mensal}" target="_blank" rel="noopener" {onclick_checkout('mensal', 39.9)}>Assinar mensal</a>
+        <div class="preco">R$ 59,90 <span>/mês</span></div>
+        <div class="obs">Sem fidelidade. Cancele quando quiser.</div>
+        <a class="cta secundario" href="{url_mensal}" target="_blank" rel="noopener" {onclick_checkout('mensal', 59.9)}>Assinar mensal</a>
+      </div>
+      <div class="pl-card">
+        <span class="selo">17% MAIS BARATO</span>
+        <div class="nome">Trimestral</div>
+        <div class="preco">R$ 49,97 <span>/mês</span></div>
+        <div class="obs">R$ 149,90 a cada 3 meses.</div>
+        <a class="cta secundario" href="{url_trimestral}" target="_blank" rel="noopener" {onclick_checkout('trimestral', 149.9)}>Assinar trimestral</a>
       </div>
       <div class="pl-card destaque">
-        <span class="selo">58% MAIS BARATO</span>
+        <span class="selo">MELHOR PREÇO · 33% OFF</span>
         <div class="nome">Anual</div>
-        <div class="preco">R$ 199,90 <span>/ano</span></div>
-        <div class="obs">Equivale a R$ 16,66 por mês.</div>
-        <a class="cta primario" href="{url_anual}" target="_blank" rel="noopener" {onclick_checkout('anual', 199.9)}>Assinar anual</a>
+        <div class="preco">R$ 39,99 <span>/mês</span></div>
+        <div class="obs">R$ 479,90 por ano. Menos de R$ 1,35 por dia.</div>
+        <a class="cta primario" href="{url_anual}" target="_blank" rel="noopener" {onclick_checkout('anual', 479.9)}>Assinar anual</a>
       </div>
     </div>
     <ul class="pl-lista">

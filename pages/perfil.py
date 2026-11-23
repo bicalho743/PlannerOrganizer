@@ -4,8 +4,10 @@ from datetime import datetime
 from utils.ui import botao_documento
 
 # Links de checkout do Stripe (mesmos usados no app mobile)
-STRIPE_CHECKOUT_MENSAL = "https://buy.stripe.com/aFa00j27UbE5cXjfQO18c02"  # R$ 39,90/mês (desde out/2026)
-STRIPE_CHECKOUT_ANUAL = "https://buy.stripe.com/eVq14n4g2dMde1ndIG18c03"  # R$ 199,90/ano (desde nov/2026; o antigo de R$ 297 foi substituído)
+# Preços desde 23/11/2026 (quem já assinava segue no preço antigo):
+STRIPE_CHECKOUT_MENSAL = "https://buy.stripe.com/9B6cN53bYbE53mJeMK18c04"      # R$ 59,90/mês
+STRIPE_CHECKOUT_TRIMESTRAL = "https://buy.stripe.com/14A5kD5k623vbTfawu18c05"  # R$ 149,90 a cada 3 meses
+STRIPE_CHECKOUT_ANUAL = "https://buy.stripe.com/00w14n3bY8rT1eB8om18c06"       # R$ 479,90/ano
 STRIPE_PORTAL_RETURN_URL = "https://app.plannerorganiza.com.br"
 
 # Link direto do Portal do Cliente (login por e-mail). Configurável por env

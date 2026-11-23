@@ -635,9 +635,10 @@ padding-top: 2rem !important;}
 # (espelha o bloqueio do app em app/_layout.tsx)
 # ══════════════════════════════════════════════════════════
 def _render_bloqueio_trial(perfil=None, uid=None):
-    from pages.perfil import STRIPE_CHECKOUT_MENSAL, STRIPE_CHECKOUT_ANUAL, STRIPE_PORTAL_LINK, checkout_url
+    from pages.perfil import STRIPE_CHECKOUT_MENSAL, STRIPE_CHECKOUT_TRIMESTRAL, STRIPE_CHECKOUT_ANUAL, STRIPE_PORTAL_LINK, checkout_url
     _email = (perfil or {}).get('email') or ''
     _url_mensal = checkout_url(STRIPE_CHECKOUT_MENSAL, _email, uid)
+    _url_trimestral = checkout_url(STRIPE_CHECKOUT_TRIMESTRAL, _email, uid)
     _url_anual = checkout_url(STRIPE_CHECKOUT_ANUAL, _email, uid)
 
     st.markdown("""
@@ -698,27 +699,40 @@ def _render_bloqueio_trial(perfil=None, uid=None):
       <div class='pw-cards'>
         <div class='pw-card'>
           <div class='pw-plan'>Mensal</div>
-          <div class='pw-price'>R$ 39,90 <span>/mês</span></div>
+          <div class='pw-price'>R$ 59,90 <span>/mês</span></div>
+          <div class='pw-save'>Sem fidelidade</div>
           <ul class='pw-features'>
             <li>Propostas e clientes ilimitados</li>
             <li>Financeiro completo</li>
             <li>Relatórios e PDFs</li>
             <li>Pós-organização</li>
           </ul>
-          <a class='pw-cta outline' href='{_url_mensal}' target='_blank' {rastreamento.onclick_checkout('mensal', 39.9)}>Assinar mensal</a>
+          <a class='pw-cta outline' href='{_url_mensal}' target='_blank' {rastreamento.onclick_checkout('mensal', 59.9)}>Assinar mensal</a>
+        </div>
+        <div class='pw-card'>
+          <div class='pw-plan'>Trimestral</div>
+          <div class='pw-price'>R$ 49,97 <span>/mês</span></div>
+          <div class='pw-save'>R$ 149,90 a cada 3 meses · 17% mais barato</div>
+          <ul class='pw-features'>
+            <li>Propostas e clientes ilimitados</li>
+            <li>Financeiro completo</li>
+            <li>Relatórios e PDFs</li>
+            <li>Pós-organização</li>
+          </ul>
+          <a class='pw-cta outline' href='{_url_trimestral}' target='_blank' {rastreamento.onclick_checkout('trimestral', 149.9)}>Assinar trimestral</a>
         </div>
         <div class='pw-card featured'>
-          <div class='pw-ribbon'>MELHOR CUSTO-BENEFÍCIO</div>
+          <div class='pw-ribbon'>MELHOR PREÇO</div>
           <div class='pw-plan'>Anual</div>
-          <div class='pw-price'>R$ 199,90 <span>/ano</span></div>
-          <div class='pw-save'>58% mais barato que o mensal</div>
+          <div class='pw-price'>R$ 39,99 <span>/mês</span></div>
+          <div class='pw-save'>R$ 479,90 por ano · 33% mais barato</div>
           <ul class='pw-features'>
             <li>Propostas e clientes ilimitados</li>
             <li>Financeiro completo</li>
             <li>Relatórios e PDFs</li>
             <li>Pós-organização</li>
           </ul>
-          <a class='pw-cta primary' href='{_url_anual}' target='_blank' {rastreamento.onclick_checkout('anual', 199.9)}>Assinar anual</a>
+          <a class='pw-cta primary' href='{_url_anual}' target='_blank' {rastreamento.onclick_checkout('anual', 479.9)}>Assinar anual</a>
         </div>
       </div>
       <div class='pw-trust'>Pagamento seguro via Stripe · Cancele quando quiser · Dados sempre preservados</div>
