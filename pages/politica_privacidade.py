@@ -24,6 +24,8 @@ SECOES = [
         "Login: e-mail e senha (ou conta Google), gerenciados pelo Google Firebase Authentication. Não guardamos sua senha.",
         "Assinatura: plano, situação e histórico de cobrança. Os dados do cartão são digitados e guardados pelo Stripe; nós não os recebemos.",
         "Uso: datas de cadastro e último acesso, páginas visitadas e dados técnicos do navegador, por meio do Google Analytics.",
+        "Anúncios: no aplicativo, o identificador de publicidade do aparelho (no iPhone, só se você permitir) e eventos do uso "
+        "(instalação, abertura, criação da conta, início do teste e assinatura). No site, o Pixel da Meta registra visitas e a criação da conta.",
     ]),
     ("2. Dados que você cadastra sobre terceiros", [
         "Clientes, fornecedores, assistentes e parceiros que você cadastra podem incluir nome, telefone, e-mail, "
@@ -37,6 +39,8 @@ SECOES = [
         "E-mails sobre a conta, o teste grátis e a cobrança: execução de contrato.",
         "E-mails com novidades e materiais: consentimento, que você pode retirar pelo link de descadastro.",
         "Estatísticas de uso para melhorar o sistema e segurança contra abuso: legítimo interesse.",
+        "Medir quais anúncios trouxeram novas assinantes e mostrar anúncios a quem tem interesse: legítimo interesse "
+        "(no iPhone, com a sua permissão no aviso de rastreamento).",
     ]),
     ("4. Com quem compartilhamos", [
         "Não vendemos dados. Compartilhamos apenas com fornecedores necessários para o serviço funcionar:",
@@ -47,7 +51,9 @@ SECOES = [
         "Brevo (envio de e-mails).",
         "RevenueCat, Google Play e Apple App Store (assinatura feita pelo aplicativo no celular).",
         "Expo (envio do aviso diário ao celular).",
-        "Anthropic (inteligência artificial da assistente Cléo, somente se você permitir o uso; veja a seção 11).",
+        "Meta Platforms (Facebook e Instagram): medição de anúncios, pelo SDK da Meta no aplicativo, pelo Pixel no site e "
+        "pelo RevenueCat, que informa à Meta as assinaturas feitas pelo aplicativo (veja a seção 10).",
+        "Anthropic (inteligência artificial da assistente Cléo, somente se você permitir o uso; veja a seção 12).",
         "Autoridades, quando houver obrigação legal ou ordem judicial.",
     ]),
     ("5. Transferência internacional", [
@@ -79,13 +85,21 @@ SECOES = [
         "a você; ajudamos no que for preciso. Você também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD).",
     ], None),
     ("9. Cookies", [
-        "Usamos cookies essenciais para manter você conectada e cookies do Google Analytics para estatísticas. "
+        "Usamos cookies essenciais para manter você conectada, cookies do Google Analytics para estatísticas e o Pixel da Meta "
+        "para medir anúncios. "
         "Você pode bloqueá-los no navegador; o login pode deixar de funcionar sem os essenciais.",
     ], None),
-    ("10. Menores de idade", [
+    ("10. Anúncios e como desligar", [
+        "Usamos ferramentas da Meta para saber quais anúncios trouxeram você até nós. Enviamos à Meta: um identificador "
+        "do aparelho ou do navegador e eventos como instalação, abertura do app, criação da conta, início do teste grátis "
+        "e assinatura (com valor). Não enviamos seu nome, telefone, os dados das suas clientes nem o conteúdo das suas propostas.",
+        "Para desligar: no iPhone, Ajustes › Privacidade e Segurança › Rastreamento; no Android, Configurações › Google › "
+        "Anúncios › Excluir ID de publicidade; no site, bloqueie cookies de terceiros no navegador. O app funciona igual.",
+    ], None),
+    ("11. Menores de idade", [
         "O Planner Organiza é destinado a profissionais maiores de 18 anos.",
     ], None),
-    ("11. Assistente de voz Cléo (em fase de testes)", [
+    ("12. Assistente de voz Cléo (em fase de testes)", [
         "A Cléo é uma assistente do aplicativo de celular, em fase de testes (Prévia). Ela só funciona depois que "
         "você der permissão, na primeira vez que usar, e você pode retirá-la a qualquer momento no painel da Cléo. "
         "Quando você pede algo por voz:",
@@ -103,10 +117,10 @@ SECOES = [
         "Base legal: o seu consentimento. Se você não permitir, a Cléo não funciona e o restante do aplicativo continua igual.",
         "Cada conta tem um limite diário de pedidos à Cléo, para evitar uso indevido.",
     ]),
-    ("12. Encarregado e contato", [
+    ("13. Encarregado e contato", [
         "Para assuntos de privacidade, fale com o encarregado pelo tratamento de dados em " + CONTATO + ".",
     ], None),
-    ("13. Alterações", [
+    ("14. Alterações", [
         "Mudanças relevantes nesta política serão avisadas por e-mail ou no sistema antes de valerem.",
     ], None),
 ]
