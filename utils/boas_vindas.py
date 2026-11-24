@@ -1,5 +1,5 @@
 """
-E-mail de boas-vindas da Tâmara para cada conta nova (site ou app), enviado uma única vez pela Brevo.
+E-mail de boas-vindas da equipe Planner Organiza para cada conta nova (site ou app), enviado uma única vez pela Brevo.
 
 - Disparo: quando a conta aparece pela primeira vez (utils/funil.registrar "conta_criada" devolve True) e foi criada
   há no máximo 2 dias (contas antigas do app que só agora ganharam perfil não recebem).
@@ -15,8 +15,8 @@ from datetime import date, timedelta
 
 import requests
 
-REMETENTE = {"name": "Tâmara · Planner Organiza", "email": "contato@plannerorganiza.com.br"}
-RESPONDER_PARA = {"name": "Tâmara · Planner Organiza", "email": "contato@plannerorganiza.com.br"}
+REMETENTE = {"name": "Equipe Planner Organiza", "email": "contato@plannerorganiza.com.br"}
+RESPONDER_PARA = {"name": "Equipe Planner Organiza", "email": "contato@plannerorganiza.com.br"}
 APP_URL = "https://app.plannerorganiza.com.br"
 PLAY = "https://play.google.com/store/apps/details?id=com.plannerorganiza.app&referrer=utm_source%3Demail%26utm_medium%3Dboas_vindas"
 APP_STORE = "https://apps.apple.com/br/app/planner-organiza/id6832855561"
@@ -47,8 +47,8 @@ def montar(nome: str, email: str):
 <tr><td style="background:#0D1B2A;padding:22px 28px;color:#C9A84C;font-family:Georgia,serif;font-size:22px">Planner <span style="color:#fff">Organiza</span></td></tr>
 <tr><td style="padding:28px;font-size:15px;line-height:1.6">
 <p style="margin:0 0 14px;font-size:17px"><b>{ola}</b></p>
-<p style="margin:0 0 14px">Aqui é a Tâmara, personal organizer e criadora do Planner Organiza. Que bom ter você aqui!</p>
-<p style="margin:0 0 14px">Criei o Planner para a organizer gastar menos tempo com orçamento e mais tempo com as clientes.
+<p style="margin:0 0 14px">Aqui é a equipe do Planner Organiza. Que bom ter você aqui!</p>
+<p style="margin:0 0 14px">Criamos o Planner para a personal organizer gastar menos tempo com orçamento e mais tempo com as clientes.
 O melhor jeito de sentir a diferença é fazer a sua <b>primeira proposta</b> hoje. Leva uns 5 minutos:</p>
 <ol style="margin:0 0 18px;padding-left:20px">
 <li style="margin-bottom:6px"><b>Cadastre um cliente</b> (só o nome já basta).</li>
@@ -58,16 +58,16 @@ O melhor jeito de sentir a diferença é fazer a sua <b>primeira proposta</b> ho
 <p style="margin:0 0 22px;text-align:center"><a href="{APP_URL}" style="background:#C9A84C;color:#0D1B2A;text-decoration:none;font-weight:bold;padding:13px 26px;border-radius:24px;display:inline-block">Criar minha primeira proposta</a></p>
 <p style="margin:0 0 14px">Você tem <b>7 dias grátis com tudo liberado</b>. Use também no celular:
 <a href="{PLAY}" style="color:#8A6D12">Android</a> · <a href="{APP_STORE}" style="color:#8A6D12">iPhone</a>.</p>
-<p style="margin:0 0 14px">Ficou com alguma dúvida? É só <b>responder este e-mail</b> que eu te ajudo.</p>
-<p style="margin:18px 0 0">Um abraço,<br><b>Tâmara Cavalcante</b><br><span style="color:#6B7C94;font-size:13px">Personal organizer e criadora do Planner Organiza</span></p>
+<p style="margin:0 0 14px">Ficou com alguma dúvida? É só <b>responder este e-mail</b> que a gente te ajuda.</p>
+<p style="margin:18px 0 0">Um abraço,<br><b>Equipe Planner Organiza</b><br><span style="color:#6B7C94;font-size:13px">Gestão para personal organizers</span></p>
 </td></tr>
 <tr><td style="padding:16px 28px;background:#FBF6E9;color:#6B7C94;font-size:12px">Você recebeu este e-mail porque criou uma conta no Planner Organiza.</td></tr>
 </table></td></tr></table></body></html>"""
-    texto = (f"{ola}\n\nAqui é a Tâmara, personal organizer e criadora do Planner Organiza. Que bom ter você aqui!\n\n"
+    texto = (f"{ola}\n\nAqui é a equipe do Planner Organiza. Que bom ter você aqui!\n\n"
              "Faça a sua primeira proposta hoje (uns 5 minutos):\n1. Cadastre um cliente.\n2. Crie a proposta com o "
              "serviço e o valor.\n3. Gere o PDF com a sua marca e mande pelo WhatsApp.\n\n"
              f"Entrar: {APP_URL}\nAndroid: {PLAY}\niPhone: {APP_STORE}\n\nVocê tem 7 dias grátis com tudo liberado. "
-             "Ficou com dúvida? É só responder este e-mail.\n\nUm abraço,\nTâmara Cavalcante")
+             "Ficou com dúvida? É só responder este e-mail.\n\nUm abraço,\nEquipe Planner Organiza")
     return assunto, corpo, texto
 
 
