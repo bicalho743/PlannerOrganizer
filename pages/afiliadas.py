@@ -80,9 +80,39 @@ def show():
         return
 
     if not eu:
+        _codigo_de_indicacao(engine, uid, emails)
         _inscricao(engine, uid, email)
     else:
         _minha_situacao(engine, eu)
+
+
+DIAS_PARA_INFORMAR_CODIGO = 7  # conta nova pode informar quem a indicou, como o "Tenho um convite" do app
+
+
+def _codigo_de_indicacao(engine, uid, emails):
+    """Conta nova, ainda sem afiliada: pode digitar o código de quem a indicou (se o link não ligou sozinho)."""
+    try:
+        if not uid or af.codigo_da_indicacao(engine, uid):
+            return
+        from pages.perfil import carregar_perfil
+        from utils.trial import _data_cadastro_para_date
+        cadastro = _data_cadastro_para_date((carregar_perfil(uid) or {}).get("data_cadastro"))
+        if not cadastro or (date.today() - cadastro).days > DIAS_PARA_INFORMAR_CODIGO:
+            return
+    except Exception as e:
+        print(f"[afiliados] código de indicação: {e}")
+        return
+    with st.expander("Foi indicada por alguém? Digite o código da indicação"):
+        with st.form("form_codigo_indicacao"):
+            cod = st.text_input("Código", placeholder="Ex.: TAMARA")
+            if st.form_submit_button("Confirmar"):
+                try:
+                    from utils import convites
+                    convites.resgatar(engine, uid, cod)
+                    st.success("Pronto! Sua conta ficou ligada a quem indicou você.")
+                    st.rerun()
+                except Exception as e:
+                    st.error(str(e))
 
 
 def _minha_situacao(engine, eu):

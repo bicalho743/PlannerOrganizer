@@ -280,6 +280,8 @@ rastreamento.instalar()
 
 # tema do anúncio e UTMs (ex.: ?tema=retorno&utm_campaign=retorno) seguem até o cadastro
 rastreamento.guardar_origem(st.query_params)
+if st.query_params.get("ref"):  # código de afiliada: guardado à parte, para não se perder até a conta ficar pronta
+    st.session_state["_ref_afiliada"] = str(st.query_params.get("ref"))[:60]
 
 # Vindo da landing ("Começar grátis"): abre direto o cadastro, com o e-mail que ela já digitou lá
 if (not st.session_state.authenticated and st.query_params.get("cadastro") == "1"
@@ -767,13 +769,18 @@ try:
         if _origem and not st.session_state.get("_origem_salva"):
             st.session_state["_origem_salva"] = True
             st.session_state.db.salvar_origem_cadastro(_origem)
-            if _origem.get("ref"):  # veio pelo link de uma afiliada: liga a conta e dá 30 dias de teste
-                try:
-                    from utils.convites import resgatar as _resgatar
-                    from utils.database import engine as _eng_ref
-                    _resgatar(_eng_ref, _uid_trial, _origem["ref"])
-                except Exception as _e_ref:
-                    print(f"[afiliados] link {_origem.get('ref')}: {_e_ref}")
+        # veio pelo link de uma afiliada: liga a conta a ela (o teste continua de 7 dias).
+        # O código vem da sessão, do endereço ou do que ficou guardado ao abrir o cadastro.
+        _ref = (_origem.get("ref") or st.query_params.get("ref") or st.session_state.get("_ref_afiliada") or "").strip()
+        if _ref and not st.session_state.get("_ref_ligado"):
+            st.session_state["_ref_ligado"] = True
+            try:
+                from utils.convites import resgatar as _resgatar
+                from utils.database import engine as _eng_ref
+                _resgatar(_eng_ref, _uid_trial, _ref)
+                print(f"[afiliados] conta {_uid_trial} ligada ao código {_ref}")
+            except Exception as _e_ref:
+                print(f"[afiliados] link {_ref}: {_e_ref}")
     rastreamento.compra_se_assinante(_perfil_trial, _uid_trial)
     # Teste grátis acabou e sem assinatura: a conta continua entrando, em modo consulta
     # (vê tudo, não grava nem gera PDF; utils/somente_leitura.py)
