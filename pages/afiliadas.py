@@ -219,3 +219,20 @@ def _administracao(engine):
                            "Assinantes": p["assinantes"], "A liberar": _brl(p["a_liberar"]),
                            "Liberado": _brl(p["liberado"]), "Recebido": _brl(p["recebido"])})
         st.dataframe(linhas, hide_index=True, use_container_width=True)
+
+    todas = [a for a in af.listar_afiliadas(engine) if a["status"] != "recusada"]
+    if todas:
+        with st.expander("Excluir afiliada (ex.: inscrições de teste)"):
+            st.caption("Apaga a afiliada, as indicações ligadas ao código dela e as comissões ainda não pagas. "
+                       "As contas indicadas continuam existindo, só perdem o vínculo e o desconto. "
+                       "Não dá para excluir quem já recebeu comissão.")
+            opcoes = {f"{a['nome']} · {a['codigo']} · {a['status']}": a["codigo"] for a in todas}
+            escolha = st.selectbox("Afiliada", list(opcoes), key="af_excluir_sel")
+            certeza = st.checkbox("Tenho certeza: excluir para sempre", key="af_excluir_ok")
+            if st.button("Excluir afiliada", key="af_excluir_btn", disabled=not certeza):
+                try:
+                    r = af.excluir(engine, opcoes[escolha])
+                    st.success(f"Excluída. Indicações desligadas: {r['indicacoes']} · comissões apagadas: {r['comissoes']}.")
+                    st.rerun()
+                except af.AfiliadoInvalido as e:
+                    st.error(str(e))

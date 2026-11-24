@@ -143,3 +143,23 @@ def test_cpf_e_pix_unicos_e_desconto_da_indicada(engine):
     assert af.tem_desconto_indicada(engine, "uid-maria") is False
     af.vincular(engine, "uid-maria", codigo)
     assert af.tem_desconto_indicada(engine, "uid-maria") is True
+
+
+def test_excluir_afiliada_de_teste(engine):
+    codigo = _aprovada(engine)
+    af.vincular(engine, "uid-indicada", codigo)
+    r = af.excluir(engine, codigo)
+    assert r["indicacoes"] == 1
+    assert af.afiliada_da_conta(engine, "uid-tamara") is None
+    assert af.codigo_da_indicacao(engine, "uid-indicada") is None
+    with pytest.raises(af.AfiliadoInvalido):
+        af.excluir(engine, codigo)
+
+
+def test_nao_exclui_quem_ja_recebeu(engine):
+    codigo = _aprovada(engine)
+    af.vincular(engine, "uid-indicada", codigo)
+    af.registrar_pagamento(engine, "uid-indicada", "stripe", "inv_1", 59.90, pago_em=date(2026, 1, 1))
+    af.marcar_pago(engine, codigo, hoje=date(2026, 3, 1))
+    with pytest.raises(af.AfiliadoInvalido):
+        af.excluir(engine, codigo)

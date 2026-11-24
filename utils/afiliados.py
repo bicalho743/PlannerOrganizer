@@ -127,6 +127,24 @@ def mudar_status(engine, codigo, status) -> None:
                   {"s": status, "c": _codigo(codigo)})
 
 
+def excluir(engine, codigo) -> dict:
+    """Apaga a afiliada (ex.: inscrição de teste), as indicações ligadas ao código e as comissões não pagas.
+
+    Recusa se já houver comissão paga, para não perder o histórico do que saiu por Pix.
+    As contas indicadas continuam existindo; só deixam de estar ligadas a esse código (e perdem o desconto).
+    """
+    codigo = _codigo(codigo)
+    with engine.begin() as c:
+        if not c.execute(text("SELECT 1 FROM afiliados WHERE codigo = :c"), {"c": codigo}).first():
+            raise AfiliadoInvalido("Afiliada não encontrada.")
+        if c.execute(text("SELECT 1 FROM comissoes WHERE codigo = :c AND status = 'paga'"), {"c": codigo}).first():
+            raise AfiliadoInvalido("Essa afiliada já recebeu comissão: não dá para excluir. Recuse ou deixe como está.")
+        com = c.execute(text("DELETE FROM comissoes WHERE codigo = :c"), {"c": codigo}).rowcount
+        ind = c.execute(text("DELETE FROM indicacoes WHERE codigo = :c"), {"c": codigo}).rowcount
+        c.execute(text("DELETE FROM afiliados WHERE codigo = :c"), {"c": codigo})
+    return {"indicacoes": ind, "comissoes": com}
+
+
 def listar_afiliadas(engine, status=None):
     criar_tabelas(engine)
     sql = "SELECT * FROM afiliados" + (" WHERE status = :s" if status else "") + " ORDER BY criado_em"
