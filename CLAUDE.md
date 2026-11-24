@@ -28,6 +28,15 @@ Responda em português, passo a passo e sem jargão. O README.md tem arquitetura
 - Web: topo do menu mostra o e-mail conectado e o selo do plano; em Plano e cobrança o botão de gerenciar mostra o
   símbolo da loja (`pages/plano.py`).
 
+## Programa de afiliadas (24/11/2026)
+- `utils/afiliados.py` + `pages/afiliadas.py` (menu "Indique e ganhe"). 30% do valor líquido de cada pagamento da
+  indicada por 12 meses (Stripe, App Store e Google Play), liberado 30 dias depois, Pix mensal manual a partir de R$ 50.
+- Vínculo: link `plannerorganiza.com.br/?ref=CODIGO` (a landing guarda o `ref`, o site liga ao criar a conta) ou o código
+  em "Tenho um convite" (`/convites/resgatar` aceita código de afiliada; dá 30 dias de teste). Sem autoindicação.
+- Comissão: Stripe `invoice.paid` (estorno em `charge.refunded`); lojas em `utils/assinatura._comissao_loja`
+  (INITIAL_PURCHASE/RENEWAL em BRL; CANCELLATION por reembolso estorna).
+- Administração (aprovar, Pix do mês, marcar pago) aparece para os e-mails em `ADMIN_EMAILS` (variável no Render).
+
 ## Avisos no celular
 - `/tarefas/lembretes-diarios` (GitHub Actions `lembretes-diarios.yml`, 08h07 Brasília, segredo `TAREFAS_CHAVE`):
   um resumo por celular por dia (`push_tokens.ultimo_resumo`), abre o Início ao tocar.
