@@ -30,6 +30,11 @@ TERMOS = f"""
 - Não é permitido anunciar no Google usando o nome "Planner Organiza" nem fingir ser o Planner Organiza.
 - Comissões pagas a pessoa física podem ter retenção de impostos conforme a lei; se você for MEI, pode emitir nota.
 - O programa pode mudar ou acabar com aviso de 30 dias; comissões já liberadas continuam garantidas.
+
+**No celular, vale o código:** quem cria a conta no app Android ou iPhone precisa tocar em "Tenho um convite"
+e digitar o seu código. No site, o seu link já liga a conta sozinho.
+
+[Leia os termos completos do programa](https://plannerorganiza.com.br/indique/termos)
 """
 
 
@@ -137,7 +142,7 @@ def _inscricao(engine, uid, email):
         instagram = st.text_input("Instagram (opcional)", placeholder="@seuperfil")
         codigo = st.text_input("Código que você quer usar (opcional)", placeholder="Ex.: TAMARA",
                                help="Só letras e números. Se ficar em branco, usamos o seu primeiro nome.")
-        aceite = st.checkbox("Li e aceito as regras do programa")
+        aceite = st.checkbox("Li e aceito os termos do programa de afiliadas")
         if st.form_submit_button("Quero ser afiliada", type="primary"):
             if not aceite:
                 st.error("Para continuar, marque que aceita as regras do programa.")
