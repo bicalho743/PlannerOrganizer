@@ -156,6 +156,12 @@ def baixar_pdf(rotulo, key, gerar, legenda=None):
         if caminho:
             st.session_state[estado] = {"path": caminho, "name": nome}
             st.session_state[auto] = True
+            try:  # funil de conversão: primeiro PDF gerado pela conta (utils/funil.py)
+                from utils import funil
+                from utils.database import engine as _eng, get_usuario_id_from_session
+                funil.registrar(_eng, get_usuario_id_from_session(), "primeiro_pdf", "site")
+            except Exception as _e:
+                print(f"[funil] pdf: {_e}")
             st.rerun()
         else:
             st.error(erro or "Erro ao gerar o PDF.")

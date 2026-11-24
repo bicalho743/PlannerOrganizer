@@ -75,6 +75,12 @@ def show():
     st.markdown(CSS, unsafe_allow_html=True)
     st.markdown(PL_LOJA_CSS, unsafe_allow_html=True)
     st.markdown('<h1 class="page-title">Plano e cobrança</h1>', unsafe_allow_html=True)
+    try:  # funil de conversão: viu os planos (utils/funil.py)
+        from utils import funil
+        from utils.database import engine as _eng, get_usuario_id_from_session
+        funil.registrar(_eng, get_usuario_id_from_session(), "planos_vistos", "site")
+    except Exception as _e:
+        print(f"[funil] planos: {_e}")
 
     usuario = st.session_state.get("usuario") or {}
     email = (usuario.get("email") if isinstance(usuario, dict) else getattr(usuario, "email", "")) or ""

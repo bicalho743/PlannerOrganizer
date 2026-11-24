@@ -68,6 +68,8 @@ def garantir_perfil(conta: dict) -> None:
                 {"u": uid, "e": email, "n": nome, "d": criado, "agora": datetime.now()})
         _PERFIS_CONFERIDOS.add(uid)
         print(f"[perfil] criado para a conta do app {uid} (cadastro em {criado})")
+        from utils import funil
+        funil.registrar(_engine, uid, "conta_criada", "app")
     except Exception as e:
         print(f"[perfil] erro ao garantir perfil de {uid}: {e}")
 
@@ -107,7 +109,7 @@ def verify_firebase_token(request: Request) -> str:
 MODO_CONSULTA = "modo_consulta"
 MENSAGEM_CONSULTA = "Seu teste grátis terminou. Assine para voltar a cadastrar, editar e gerar PDFs."
 _LIVRES_NO_CONSULTA = ("/webhook/", "/perfil", "/impostos/regime", "/precificacao", "/api/status", "/conta/excluir",
-                       "/push/", "/tarefas/", "/assinatura/", "/convites/", "/onboarding")
+                       "/push/", "/tarefas/", "/assinatura/", "/convites/", "/onboarding", "/eventos")
 
 
 def _uid_da_requisicao(request: Request):
@@ -141,7 +143,14 @@ async def bloquear_no_modo_consulta(request: Request, call_next):
         uid = _uid_da_requisicao(request)
         if uid and _em_modo_consulta(uid):
             return JSONResponse(status_code=402, content={"detail": MENSAGEM_CONSULTA, "codigo": MODO_CONSULTA})
-    return await call_next(request)
+    resposta = await call_next(request)
+    if caminho.startswith("/pdf/proposta/") and resposta.status_code == 200:
+        uid = _uid_da_requisicao(request)  # token já está em cache: não consulta o Firebase de novo
+        if uid:
+            from utils import funil
+            from utils.database import engine as _engine
+            funil.registrar(_engine, uid, "primeiro_pdf", "app")
+    return resposta
 
 
 # CORS por último: o middleware adicionado depois fica por fora, e o 402 acima sai com os cabeçalhos.
@@ -1801,6 +1810,21 @@ async def update_perfil(body: PerfilUpdate, uid: str = Depends(verify_firebase_t
 @api.get("/onboarding")
 async def get_onboarding(uid: str = Depends(verify_firebase_token)):
     return get_db(uid).get_onboarding()
+
+@api.post("/eventos")
+async def registrar_evento(request: Request, uid: str = Depends(verify_firebase_token)):
+    """Evento do funil que só o app sabe (hoje: planos_vistos). Grava só a primeira vez."""
+    from utils import funil
+    from utils.database import engine as _engine
+    try:
+        dados = await request.json()
+    except Exception:
+        dados = {}
+    nome = (dados or {}).get("nome", "")
+    if nome not in ("planos_vistos",):
+        raise HTTPException(status_code=400, detail="Evento desconhecido.")
+    funil.registrar(_engine, uid, nome, "app")
+    return {"ok": True}
 
 @api.put("/onboarding")
 async def put_onboarding(request: Request, uid: str = Depends(verify_firebase_token)):

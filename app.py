@@ -766,6 +766,12 @@ try:
     if _uid_trial and _data_cadastro_para_date((_perfil_trial or {}).get("data_cadastro")) == _date.today():
         _origem = rastreamento.origem_da_visita()
         rastreamento.evento("sign_up", "CompleteRegistration", params=_origem, uma_vez=f"po_cadastro_{_uid_trial}")
+        try:  # funil de conversão (utils/funil.py): vale o primeiro canal em que a conta apareceu
+            from utils import funil as _funil
+            from utils.database import engine as _eng_funil
+            _funil.registrar(_eng_funil, _uid_trial, "conta_criada", "site")
+        except Exception as _e_funil:
+            print(f"[funil] cadastro: {_e_funil}")
         if _origem and not st.session_state.get("_origem_salva"):
             st.session_state["_origem_salva"] = True
             st.session_state.db.salvar_origem_cadastro(_origem)
@@ -885,6 +891,13 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
             ("Indique e ganhe", "Afiliadas", ":material/handshake:"),
         ]),
     ]
+
+    try:  # só a administração vê o funil de vendas (ADMIN_EMAILS)
+        from pages.funil import e_admin as _e_admin_funil
+        if _e_admin_funil():
+            MENU_PRINCIPAL[-1][1].append(("Funil de vendas", "Funil", ":material/filter_alt:"))
+    except Exception:
+        pass
 
     for _grupo, _itens in MENU_PRINCIPAL:
         if _grupo:
@@ -1009,6 +1022,8 @@ try:
         from pages.plano import show; show()
     elif st.session_state.current_page == "Afiliadas":
         from pages.afiliadas import show; show()
+    elif st.session_state.current_page == "Funil":
+        from pages.funil import show; show()
 except Exception as e:
     st.error(f"Erro ao carregar página: {str(e)}")
 
