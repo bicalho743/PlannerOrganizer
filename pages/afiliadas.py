@@ -37,6 +37,20 @@ def _brl(v):
     return f"R$ {float(v or 0):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
+def _emails_da_sessao(uid):
+    """E-mails da conta conectada, das mesmas fontes do topo do menu (perfil, login do Firebase, usuário)."""
+    usuario = st.session_state.get("usuario") or {}
+    user = st.session_state.get("user") or {}
+    lista = [(user.get("email") if isinstance(user, dict) else ""),
+             (usuario.get("email") if isinstance(usuario, dict) else getattr(usuario, "email", ""))]
+    try:
+        from pages.perfil import carregar_perfil
+        lista.append((carregar_perfil(uid) or {}).get("email"))
+    except Exception:
+        pass
+    return [e.strip() for e in lista if e and e.strip()]
+
+
 def _admin(email):
     lista = [e.strip().lower() for e in os.environ.get("ADMIN_EMAILS", "").split(",") if e.strip()]
     return bool(email) and email.strip().lower() in lista
@@ -47,13 +61,13 @@ def show():
     require_auth()
     from utils.database import get_usuario_id_from_session, engine
 
-    usuario = st.session_state.get("usuario") or {}
-    email = (usuario.get("email") if isinstance(usuario, dict) else getattr(usuario, "email", "")) or ""
     uid = get_usuario_id_from_session()
+    emails = _emails_da_sessao(uid)
+    email = emails[0] if emails else ""
 
     st.markdown('<h1 class="page-title">Indique e ganhe</h1>', unsafe_allow_html=True)
     eu = af.afiliada_da_conta(engine, uid)
-    admin = _admin(email)
+    admin = any(_admin(e) for e in emails)
 
     if admin:  # administradora: a administração vem primeiro; a inscrição dela mesma fica recolhida
         _administracao(engine)
