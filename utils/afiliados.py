@@ -1,6 +1,6 @@
 """
 Programa de afiliadas: quem indica o Planner ganha 25% de cada pagamento da conta indicada, por 12 meses,
-e a indicada ganha 10% de desconto no plano anual (R$ 431,90 em vez de R$ 479,90).
+e a indicada ganha 10% de desconto no plano anual (R$ 429,90 em vez de R$ 479,90).
 
 Fluxo
 - A afiliada se inscreve no site (com a conta dela) e fica `pendente` até a dona aprovar.
@@ -21,8 +21,8 @@ from datetime import date, datetime, timedelta
 from sqlalchemy import text
 
 PERCENTUAL = 0.25  # até 24/11/2026 era 30% (sem desconto para a indicada)
-DESCONTO_INDICADA = 0.10  # no plano anual: R$ 431,90 em vez de R$ 479,90 (site e, no app, a partir da 1.0.20)
-PRECO_ANUAL_INDICADA = 431.90
+DESCONTO_INDICADA = 0.10  # no plano anual: R$ 429,90 em vez de R$ 479,90 (site e, no app, a partir da 1.0.20)
+PRECO_ANUAL_INDICADA = 429.90
 MESES_COMISSAO = 12
 DIAS_LIBERAR = 30
 MINIMO_PAGAMENTO = 50.0

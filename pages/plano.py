@@ -148,7 +148,7 @@ def show():
     indicada = tem_desconto_indicada(_engine_plano, uid)
     if indicada:
         url_anual = checkout_url(STRIPE_CHECKOUT_ANUAL_INDICADA, email, uid)
-        anual_mes, anual_obs, anual_valor = "R$ 35,99", "R$ 431,90 por ano, com 10% de desconto por indicação.", 431.9
+        anual_mes, anual_obs, anual_valor = "R$ 35,83", "R$ 429,90 por ano, com 10% de desconto por indicação.", 429.9
         anual_selo = "INDICAÇÃO · 10% OFF NO ANUAL"
     else:
         url_anual = checkout_url(STRIPE_CHECKOUT_ANUAL, email, uid)

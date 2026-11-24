@@ -176,7 +176,7 @@ def sincronizar_revenuecat(uid: str) -> dict:
 
 
 # ── oferta da indicada (10% no anual) ────────────────────────────────────────
-# Conta indicada por uma afiliada recebe no RevenueCat a oferta "indicacao" (anual R$ 431,90) no lugar da padrão.
+# Conta indicada por uma afiliada recebe no RevenueCat a oferta "indicacao" (anual R$ 429,90) no lugar da padrão.
 # O app já usa a oferta "atual" da conta (Purchases.getOfferings().current), então não precisa de versão nova.
 OFERTA_INDICACAO = os.environ.get("REVENUECAT_OFERTA_INDICACAO", "") or "ofrngb11c7e45cc"  # oferta "indicacao"
 

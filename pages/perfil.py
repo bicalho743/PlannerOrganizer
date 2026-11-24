@@ -8,7 +8,7 @@ from utils.ui import botao_documento
 STRIPE_CHECKOUT_MENSAL = "https://buy.stripe.com/9B6cN53bYbE53mJeMK18c04"      # R$ 59,90/mês
 STRIPE_CHECKOUT_TRIMESTRAL = "https://buy.stripe.com/14A5kD5k623vbTfawu18c05"  # R$ 149,90 a cada 3 meses
 STRIPE_CHECKOUT_ANUAL = "https://buy.stripe.com/00w14n3bY8rT1eB8om18c06"       # R$ 479,90/ano
-STRIPE_CHECKOUT_ANUAL_INDICADA = "https://buy.stripe.com/cNifZh9Am9vX0ax9sq18c07"  # R$ 431,90/ano (10% para indicadas)
+STRIPE_CHECKOUT_ANUAL_INDICADA = "https://buy.stripe.com/dRmdR9dQCfUl0axeMK18c08"  # R$ 429,90/ano (10% para indicadas)
 STRIPE_PORTAL_RETURN_URL = "https://app.plannerorganiza.com.br"
 
 # Link direto do Portal do Cliente (login por e-mail). Configurável por env
