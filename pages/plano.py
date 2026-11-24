@@ -8,6 +8,7 @@ Plano e cobrança — situação da assinatura e o que fazer a seguir.
 import streamlit as st
 
 from pages.perfil import (STRIPE_CHECKOUT_MENSAL, STRIPE_CHECKOUT_TRIMESTRAL, STRIPE_CHECKOUT_ANUAL, STRIPE_PORTAL_LINK,
+                          STRIPE_CHECKOUT_ANUAL_INDICADA,
                           checkout_url, carregar_perfil, _criar_portal_session)
 from utils.trial import is_pro, dias_restantes_trial, DIAS_TRIAL
 from utils.rastreamento import onclick_checkout
@@ -142,7 +143,17 @@ def show():
     # ---------- planos ----------
     url_mensal = checkout_url(STRIPE_CHECKOUT_MENSAL, email, uid)
     url_trimestral = checkout_url(STRIPE_CHECKOUT_TRIMESTRAL, email, uid)
-    url_anual = checkout_url(STRIPE_CHECKOUT_ANUAL, email, uid)
+    # indicada por uma afiliada: anual com 10% de desconto (utils/afiliados.py)
+    from utils.afiliados import tem_desconto_indicada
+    indicada = tem_desconto_indicada(_engine_plano, uid)
+    if indicada:
+        url_anual = checkout_url(STRIPE_CHECKOUT_ANUAL_INDICADA, email, uid)
+        anual_mes, anual_obs, anual_valor = "R$ 35,99", "R$ 431,90 por ano, com 10% de desconto por indicação.", 431.9
+        anual_selo = "INDICAÇÃO · 10% OFF NO ANUAL"
+    else:
+        url_anual = checkout_url(STRIPE_CHECKOUT_ANUAL, email, uid)
+        anual_mes, anual_obs, anual_valor = "R$ 39,99", "R$ 479,90 por ano. Menos de R$ 1,35 por dia.", 479.9
+        anual_selo = "MELHOR PREÇO · 33% OFF"
     st.markdown(f"""
     <div class="pl-cards">
       <div class="pl-card">
@@ -159,11 +170,11 @@ def show():
         <a class="cta secundario" href="{url_trimestral}" target="_blank" rel="noopener" {onclick_checkout('trimestral', 149.9)}>Assinar trimestral</a>
       </div>
       <div class="pl-card destaque">
-        <span class="selo">MELHOR PREÇO · 33% OFF</span>
+        <span class="selo">{anual_selo}</span>
         <div class="nome">Anual</div>
-        <div class="preco">R$ 39,99 <span>/mês</span></div>
-        <div class="obs">R$ 479,90 por ano. Menos de R$ 1,35 por dia.</div>
-        <a class="cta primario" href="{url_anual}" target="_blank" rel="noopener" {onclick_checkout('anual', 479.9)}>Assinar anual</a>
+        <div class="preco">{anual_mes} <span>/mês</span></div>
+        <div class="obs">{anual_obs}</div>
+        <a class="cta primario" href="{url_anual}" target="_blank" rel="noopener" {onclick_checkout('anual', anual_valor)}>Assinar anual</a>
       </div>
     </div>
     <ul class="pl-lista">

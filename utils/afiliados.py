@@ -1,5 +1,6 @@
 """
-Programa de afiliadas: quem indica o Planner ganha 30% de cada pagamento da conta indicada, por 12 meses.
+Programa de afiliadas: quem indica o Planner ganha 25% de cada pagamento da conta indicada, por 12 meses,
+e a indicada ganha 10% de desconto no plano anual (R$ 431,90 em vez de R$ 479,90).
 
 Fluxo
 - A afiliada se inscreve no site (com a conta dela) e fica `pendente` até a dona aprovar.
@@ -7,10 +8,11 @@ Fluxo
 - A conta nova fica ligada à afiliada quando entra pelo link (o site guarda o `ref` da visita) ou digita o
   código em "Tenho um convite" (app e site). O teste grátis continua o padrão (7 dias). Cada conta tem uma afiliada só, e
   ninguém indica a si mesma.
-- Cada pagamento da conta indicada (Stripe, App Store ou Google Play) gera uma comissão de 30% do valor
+- Cada pagamento da conta indicada (Stripe, App Store ou Google Play) gera uma comissão de 25% do valor
   líquido (sem a taxa da loja ou do cartão), durante 12 meses a partir do 1º pagamento.
 - A comissão fica liberada 30 dias depois do pagamento (prazo de reembolso). Reembolso cancela a comissão.
 - Todo mês a dona paga por Pix quem tem R$ 50 ou mais liberados e marca como pago.
+- Contra fraude: cada CPF e cada chave Pix só podem ter uma inscrição (que não tenha sido recusada).
 
 As tabelas são criadas aqui (CREATE IF NOT EXISTS) e funcionam no Postgres e no SQLite dos testes.
 """
@@ -18,7 +20,9 @@ import re
 from datetime import date, datetime, timedelta
 from sqlalchemy import text
 
-PERCENTUAL = 0.30
+PERCENTUAL = 0.25  # até 24/11/2026 era 30% (sem desconto para a indicada)
+DESCONTO_INDICADA = 0.10  # no plano anual: R$ 431,90 em vez de R$ 479,90 (site e, no app, a partir da 1.0.20)
+PRECO_ANUAL_INDICADA = 431.90
 MESES_COMISSAO = 12
 DIAS_LIBERAR = 30
 MINIMO_PAGAMENTO = 50.0
@@ -84,6 +88,12 @@ def inscrever(engine, uid, nome, email, cpf, pix, instagram="", codigo_desejado=
         raise AfiliadoInvalido("Digite um CPF com 11 números.")
     if afiliada_da_conta(engine, uid):
         raise AfiliadoInvalido("Esta conta já tem uma inscrição no programa.")
+    with engine.connect() as c:  # um CPF e uma chave Pix por afiliada (contra contas duplicadas)
+        if c.execute(text("SELECT 1 FROM afiliados WHERE cpf = :c AND status <> 'recusada'"), {"c": cpf}).first():
+            raise AfiliadoInvalido("Este CPF já tem uma inscrição no programa.")
+        if c.execute(text("SELECT 1 FROM afiliados WHERE lower(pix) = :p AND status <> 'recusada'"),
+                     {"p": pix.lower()}).first():
+            raise AfiliadoInvalido("Esta chave Pix já está cadastrada no programa.")
     base = _codigo(codigo_desejado) or _codigo(nome.split()[0])
     if len(base) < 3:
         raise AfiliadoInvalido("O código precisa de pelo menos 3 letras ou números.")
@@ -148,6 +158,14 @@ def vincular(engine, uid, codigo, origem="codigo", email_conta="") -> dict:
         c.execute(text("INSERT INTO indicacoes (usuario_id, codigo, origem) VALUES (:u, :c, :o)"),
                   {"u": uid, "c": af["codigo"], "o": origem})
     return af
+
+
+def tem_desconto_indicada(engine, uid) -> bool:
+    """A conta foi indicada por uma afiliada: vê o anual com 10% de desconto."""
+    try:
+        return bool(uid and codigo_da_indicacao(engine, uid))
+    except Exception:
+        return False
 
 
 def codigo_da_indicacao(engine, uid):

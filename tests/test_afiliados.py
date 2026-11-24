@@ -32,7 +32,7 @@ def test_inscricao_gera_codigo_pelo_nome_e_fica_pendente(engine):
 
 def test_codigo_repetido_ganha_numero(engine):
     c1 = af.inscrever(engine, "uid-1", "Ana", "a@x.com", "12345678900", "pix", codigo_desejado="ANA")
-    c2 = af.inscrever(engine, "uid-2", "Ana", "b@x.com", "12345678901", "pix", codigo_desejado="ANA")
+    c2 = af.inscrever(engine, "uid-2", "Ana", "b@x.com", "12345678901", "pix2", codigo_desejado="ANA")
     assert (c1, c2) == ("ANA", "ANA2")
 
 
@@ -59,7 +59,7 @@ def test_comissao_30_por_cento_do_liquido_e_sem_duplicar(engine):
     codigo = _aprovada(engine)
     af.vincular(engine, "uid-maria", codigo)
     c = af.registrar_pagamento(engine, "uid-maria", "apple", "tx-1", 59.90, date(2026, 12, 1))
-    assert c["valor_liquido"] == 50.91 and c["comissao"] == 15.27
+    assert c["valor_liquido"] == 50.91 and c["comissao"] == 12.73
     assert af.registrar_pagamento(engine, "uid-maria", "apple", "tx-1", 59.90, date(2026, 12, 1)) is None
     s = af.registrar_pagamento(engine, "uid-maria", "stripe", "in_2", 479.90, date(2026, 12, 2))
     assert s["valor_liquido"] == round(479.90 * (1 - 0.0399) - 0.39, 2)
@@ -70,7 +70,7 @@ def test_takehome_do_revenuecat(engine):
     codigo = _aprovada(engine)
     af.vincular(engine, "uid-maria", codigo)
     c = af.registrar_pagamento(engine, "uid-maria", "google", "gpa-1", 100.0, date(2026, 12, 1), takehome=0.70)
-    assert c["comissao"] == 21.0
+    assert c["comissao"] == 17.5
 
 
 def test_so_12_meses_de_comissao(engine):
@@ -124,7 +124,7 @@ def test_evento_da_loja_gera_e_estorna_comissao(engine, monkeypatch):
           "price_in_purchased_currency": 149.90, "takehome_percentage": 0.85, "purchased_at_ms": 1795000000000}
     assinatura._comissao_loja(ev, "INITIAL_PURCHASE", "apple", ["uid-maria"])
     p = af.painel(engine, codigo)
-    assert len(p["comissoes"]) == 1 and float(p["comissoes"][0]["comissao"]) == round(round(149.90 * 0.85, 2) * 0.30, 2)
+    assert len(p["comissoes"]) == 1 and float(p["comissoes"][0]["comissao"]) == round(round(149.90 * 0.85, 2) * 0.25, 2)
     assinatura._comissao_loja({"type": "CANCELLATION", "transaction_id": "1000", "cancel_reason": "CUSTOMER_SUPPORT"},
                               "CANCELLATION", "apple", ["uid-maria"])
     assert af.painel(engine, codigo)["comissoes"][0]["status"] == "cancelada"
@@ -132,3 +132,14 @@ def test_evento_da_loja_gera_e_estorna_comissao(engine, monkeypatch):
     assinatura._comissao_loja({**ev, "transaction_id": "2", "period_type": "TRIAL"}, "INITIAL_PURCHASE", "apple", ["uid-maria"])
     assinatura._comissao_loja({**ev, "transaction_id": "3", "currency": "USD"}, "INITIAL_PURCHASE", "apple", ["uid-maria"])
     assert len(af.painel(engine, codigo)["comissoes"]) == 1
+
+
+def test_cpf_e_pix_unicos_e_desconto_da_indicada(engine):
+    codigo = _aprovada(engine)
+    with pytest.raises(af.AfiliadoInvalido):  # mesmo CPF
+        af.inscrever(engine, "uid-x", "Outra", "o@x.com", "123.456.789-00", "outro@pix")
+    with pytest.raises(af.AfiliadoInvalido):  # mesma chave Pix
+        af.inscrever(engine, "uid-y", "Outra", "o@x.com", "98765432100", "TAMARA@pix")
+    assert af.tem_desconto_indicada(engine, "uid-maria") is False
+    af.vincular(engine, "uid-maria", codigo)
+    assert af.tem_desconto_indicada(engine, "uid-maria") is True

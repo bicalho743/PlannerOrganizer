@@ -29,8 +29,13 @@ Responda em português, passo a passo e sem jargão. O README.md tem arquitetura
   símbolo da loja (`pages/plano.py`).
 
 ## Programa de afiliadas (24/11/2026)
-- `utils/afiliados.py` + `pages/afiliadas.py` (menu "Indique e ganhe"). 30% do valor líquido de cada pagamento da
-  indicada por 12 meses (Stripe, App Store e Google Play), liberado 30 dias depois, Pix mensal manual a partir de R$ 50.
+- `utils/afiliados.py` + `pages/afiliadas.py` (menu "Indique e ganhe"). 25% do valor líquido de cada pagamento da
+  indicada por 12 meses (Stripe, App Store e Google Play), liberado 30 dias depois, Pix mensal manual a partir de R$ 50
+  (era 30% até 24/11/2026). A indicada ganha 10% no anual: site com o link Stripe `STRIPE_CHECKOUT_ANUAL_INDICADA`
+  (R$ 431,90, price_1UfHBzIrr8YI3LjjTA4xR9eH) em Plano e cobrança; nos apps, pendente para a 1.0.20 (produto/oferta
+  própria + RevenueCat). Um CPF e uma chave Pix por inscrição. Página pública e termos: plannerorganiza.com.br/indique e /indique/termos.
+- Funil de vendas (`utils/funil.py`, `pages/funil.py`, menu só para ADMIN_EMAILS): eventos conta_criada, primeiro_pdf e
+  planos_vistos em `eventos_funil`; o resto vem das tabelas. Conta do app ganha perfil na API (`garantir_perfil`).
 - Vínculo: link `plannerorganiza.com.br/?ref=CODIGO` (a landing guarda o `ref`, o site liga ao criar a conta) ou o código
   em "Tenho um convite" (`/convites/resgatar` aceita código de afiliada; o teste continua de 7 dias). Sem autoindicação.
 - Comissão: Stripe `invoice.paid` (estorno em `charge.refunded`); lojas em `utils/assinatura._comissao_loja`

@@ -20,13 +20,14 @@ TERMOS = f"""
 - Você ganha **{int(af.PERCENTUAL * 100)}% de cada pagamento** de quem assinar pelo seu link ou código,
   **durante {af.MESES_COMISSAO} meses** a partir do primeiro pagamento, no site, no iPhone ou no Android.
 - A comissão é calculada sobre o valor que de fato entra (sem a taxa do cartão ou da loja).
-- Quem usa o seu link ou código testa o Planner grátis por {af.DIAS_TESTE_INDICADA} dias, como todo mundo.
+- Quem usa o seu link ou código testa o Planner grátis por {af.DIAS_TESTE_INDICADA} dias, como todo mundo, e ganha
+  **{int(af.DESCONTO_INDICADA * 100)}% de desconto no plano anual** (R$ 431,90 por ano em vez de R$ 479,90).
 - A comissão fica liberada **{af.DIAS_LIBERAR} dias depois** do pagamento da indicada (prazo de reembolso).
   Se houver reembolso, a comissão é cancelada.
 - O pagamento é feito **todo mês por Pix**, quando o valor liberado chega a **R$ {af.MINIMO_PAGAMENTO:.0f}**.
 
 **Regras**
-- Não vale indicar a si mesma nem criar contas para ganhar comissão.
+- Não vale indicar a si mesma nem criar contas para ganhar comissão. Cada CPF e cada chave Pix têm uma inscrição só.
 - Não é permitido anunciar no Google usando o nome "Planner Organiza" nem fingir ser o Planner Organiza.
 - Comissões pagas a pessoa física podem ter retenção de impostos conforme a lei; se você for MEI, pode emitir nota.
 - O programa pode mudar ou acabar com aviso de 30 dias; comissões já liberadas continuam garantidas.
@@ -161,7 +162,8 @@ def _painel_afiliada(engine, eu):
     p = af.painel(engine, eu["codigo"])
     st.markdown("**Seu link para divulgar**")
     st.code(link, language=None)
-    st.markdown(f"Ou peça para digitarem o código **{eu['codigo']}** em \"Tenho um convite\", ao criar a conta no app.")
+    st.markdown(f"Ou peça para digitarem o código **{eu['codigo']}** em \"Tenho um convite\", ao criar a conta no app. "
+                f"Quem usa o seu link ou código ganha **{int(af.DESCONTO_INDICADA * 100)}% de desconto no plano anual**.")
     c = st.columns(4)
     c[0].metric("Indicadas", p["indicadas"])
     c[1].metric("Assinantes", p["assinantes"])
