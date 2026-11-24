@@ -30,6 +30,48 @@ _TOKENS = {}  # id_token -> (uid, validade): o middleware do modo consulta e a r
 _TOKEN_TTL = 300
 
 
+_PERFIS_CONFERIDOS = set()  # uids que já têm perfil (conferidos neste processo)
+
+
+def garantir_perfil(conta: dict) -> None:
+    """Conta criada pelo app ganha o perfil (ficha) que o site já cria no cadastro.
+
+    Sem o perfil, a conta não tinha data de cadastro: o teste grátis nunca acabava, e onboarding, origem e plano
+    não eram gravados. A data de cadastro é a de criação da conta no Firebase (createdAt), não a de hoje.
+    """
+    uid = conta.get("localId")
+    if not uid or uid in _PERFIS_CONFERIDOS:
+        return
+    try:
+        from sqlalchemy import text as _text
+        from utils.database import engine as _engine
+        email = (conta.get("email") or "").strip().lower()
+        try:
+            criado = datetime.fromtimestamp(int(conta.get("createdAt")) / 1000).date()
+        except (TypeError, ValueError):
+            criado = datetime.now().date()
+        nome = (conta.get("displayName") or "").strip() or (email.split("@")[0].title() if email else "Usuária")
+        with _engine.begin() as c:
+            if c.execute(_text("SELECT 1 FROM perfis WHERE usuario_id = :u"), {"u": uid}).first():
+                _PERFIS_CONFERIDOS.add(uid)
+                return
+            if not email:
+                print(f"[perfil] conta {uid} sem e-mail: perfil não criado")
+                return
+            if c.execute(_text("SELECT 1 FROM perfis WHERE lower(email) = :e"), {"e": email}).first():
+                print(f"[perfil] conta {uid}: o e-mail já tem perfil de outra conta (conta recriada?)")
+                _PERFIS_CONFERIDOS.add(uid)
+                return
+            c.execute(_text(
+                "INSERT INTO perfis (usuario_id, email, nome, empresa, role, plano, data_cadastro, ultimo_login, ativo) "
+                "VALUES (:u, :e, :n, '', 'user', 'gratuito', :d, :agora, TRUE)"),
+                {"u": uid, "e": email, "n": nome, "d": criado, "agora": datetime.now()})
+        _PERFIS_CONFERIDOS.add(uid)
+        print(f"[perfil] criado para a conta do app {uid} (cadastro em {criado})")
+    except Exception as e:
+        print(f"[perfil] erro ao garantir perfil de {uid}: {e}")
+
+
 def verify_firebase_token(request: Request) -> str:
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
@@ -51,6 +93,7 @@ def verify_firebase_token(request: Request) -> str:
         if len(_TOKENS) > 5000:
             _TOKENS.clear()
         _TOKENS[id_token] = (users[0]["localId"], agora + _TOKEN_TTL)
+        garantir_perfil(users[0])
         return users[0]["localId"]
     except HTTPException:
         raise
