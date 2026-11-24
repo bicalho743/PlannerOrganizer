@@ -18,7 +18,11 @@ class ConviteInvalido(ValueError):
     """Mensagem já pronta para mostrar ao usuário."""
 
 
+_TABELAS_PRONTAS = set()  # engines em que as tabelas já foram conferidas neste processo
+
+
 def criar_tabelas(engine) -> None:
+    _TABELAS_PRONTAS.add(id(engine))
     with engine.begin() as conn:
         conn.execute(text(
             "CREATE TABLE IF NOT EXISTS convites ("
@@ -95,6 +99,8 @@ def dias_trial_da_conta(engine, uid) -> int:
 def dias_do_convite(engine, uid: str):
     """Dias de teste do convite usado por esta conta, ou None se não usou convite."""
     try:
+        if id(engine) not in _TABELAS_PRONTAS:  # sem isso a consulta falha até o 1º convite ser usado
+            criar_tabelas(engine)
         with engine.connect() as conn:
             linha = conn.execute(text("SELECT dias FROM convites_resgatados WHERE usuario_id = :u"),
                                  {"u": uid}).first()
