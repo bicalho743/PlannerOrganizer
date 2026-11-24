@@ -68,8 +68,9 @@ def garantir_perfil(conta: dict) -> None:
                 {"u": uid, "e": email, "n": nome, "d": criado, "agora": datetime.now()})
         _PERFIS_CONFERIDOS.add(uid)
         print(f"[perfil] criado para a conta do app {uid} (cadastro em {criado})")
-        from utils import funil
+        from utils import funil, boas_vindas
         funil.registrar(_engine, uid, "conta_criada", "app")
+        boas_vindas.enviar_se_nova(_engine, uid, email, nome, criado)
     except Exception as e:
         print(f"[perfil] erro ao garantir perfil de {uid}: {e}")
 

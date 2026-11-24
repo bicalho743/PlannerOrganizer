@@ -157,7 +157,21 @@ def vincular(engine, uid, codigo, origem="codigo", email_conta="") -> dict:
             raise AfiliadoInvalido("Esta conta já foi indicada por alguém.")
         c.execute(text("INSERT INTO indicacoes (usuario_id, codigo, origem) VALUES (:u, :c, :o)"),
                   {"u": uid, "c": af["codigo"], "o": origem})
+    _ligar_oferta_no_app(uid)
     return af
+
+
+def _ligar_oferta_no_app(uid):
+    """No app, a indicada passa a ver o anual com 10% (oferta 'indicacao' do RevenueCat), em segundo plano."""
+    import os
+    import threading
+    if not os.environ.get("REVENUECAT_SECRET_KEY"):
+        return  # testes e ambiente sem RevenueCat
+    try:
+        from utils.assinatura import aplicar_oferta_indicacao
+        threading.Thread(target=aplicar_oferta_indicacao, args=(uid,), daemon=True).start()
+    except Exception as e:
+        print(f"[afiliados] oferta do app para {uid}: {e}")
 
 
 def tem_desconto_indicada(engine, uid) -> bool:

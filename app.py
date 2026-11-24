@@ -770,6 +770,9 @@ try:
             from utils import funil as _funil
             from utils.database import engine as _eng_funil
             _funil.registrar(_eng_funil, _uid_trial, "conta_criada", "site")
+            from utils import boas_vindas as _bv  # e-mail da Tâmara, uma vez por conta (utils/boas_vindas.py)
+            _bv.enviar_se_nova(_eng_funil, _uid_trial, (_perfil_trial or {}).get("email") or "",
+                               (_perfil_trial or {}).get("nome") or "", _date.today())
         except Exception as _e_funil:
             print(f"[funil] cadastro: {_e_funil}")
         if _origem and not st.session_state.get("_origem_salva"):

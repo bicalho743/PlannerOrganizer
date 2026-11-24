@@ -1,0 +1,105 @@
+"""
+E-mail de boas-vindas da Tâmara para cada conta nova (site ou app), enviado uma única vez pela Brevo.
+
+- Disparo: quando a conta aparece pela primeira vez (utils/funil.registrar "conta_criada" devolve True) e foi criada
+  há no máximo 2 dias (contas antigas do app que só agora ganharam perfil não recebem).
+- Uma vez por conta: o envio grava o evento "boas_vindas" em eventos_funil antes de mandar.
+- Precisa da variável BREVO_API_KEY no serviço (a mesma da landing). Sem ela, só registra no log.
+- O envio roda em segundo plano para não atrasar o login.
+"""
+import html
+import os
+import threading
+from datetime import date, timedelta
+
+import requests
+
+REMETENTE = {"name": "Tâmara · Planner Organiza", "email": "contato@plannerorganiza.com.br"}
+RESPONDER_PARA = {"name": "Tâmara · Planner Organiza", "email": "contato@plannerorganiza.com.br"}
+APP_URL = "https://app.plannerorganiza.com.br"
+PLAY = "https://play.google.com/store/apps/details?id=com.plannerorganiza.app&referrer=utm_source%3Demail%26utm_medium%3Dboas_vindas"
+APP_STORE = "https://apps.apple.com/br/app/planner-organiza/id6832855561"
+DIAS_MAXIMOS = 2
+
+
+def primeiro_nome(nome: str, email: str = "") -> str:
+    n = (nome or "").strip().split()
+    if not n:
+        return ""
+    p = n[0]
+    genericos = {"usuário", "usuario", "usuária", "usuaria", "cliente", "teste"}
+    if p.lower() in genericos or "@" in p:
+        return ""
+    return p[:1].upper() + p[1:]
+
+
+def montar(nome: str, email: str):
+    """(assunto, html, texto)."""
+    pn = primeiro_nome(nome, email)
+    ola = f"Oi, {html.escape(pn)}!" if pn else "Oi!"
+    assunto = f"Bem-vinda ao Planner, {pn}! Vamos montar sua 1ª proposta?" if pn else \
+        "Bem-vinda ao Planner! Vamos montar sua 1ª proposta?"
+    corpo = f"""<!doctype html><html><body style="margin:0;background:#F6F1E7;font-family:Arial,Helvetica,sans-serif;color:#16283E">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F6F1E7;padding:24px 0"><tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">
+<tr><td style="background:#0D1B2A;padding:22px 28px;color:#C9A84C;font-family:Georgia,serif;font-size:22px">Planner <span style="color:#fff">Organiza</span></td></tr>
+<tr><td style="padding:28px;font-size:15px;line-height:1.6">
+<p style="margin:0 0 14px;font-size:17px"><b>{ola}</b></p>
+<p style="margin:0 0 14px">Aqui é a Tâmara, personal organizer e criadora do Planner Organiza. Que bom ter você aqui!</p>
+<p style="margin:0 0 14px">Criei o Planner para a organizer gastar menos tempo com orçamento e mais tempo com as clientes.
+O melhor jeito de sentir a diferença é fazer a sua <b>primeira proposta</b> hoje. Leva uns 5 minutos:</p>
+<ol style="margin:0 0 18px;padding-left:20px">
+<li style="margin-bottom:6px"><b>Cadastre um cliente</b> (só o nome já basta).</li>
+<li style="margin-bottom:6px"><b>Crie a proposta</b> com o serviço e o valor.</li>
+<li style="margin-bottom:6px"><b>Gere o PDF</b> com a sua marca e mande pelo WhatsApp.</li>
+</ol>
+<p style="margin:0 0 22px;text-align:center"><a href="{APP_URL}" style="background:#C9A84C;color:#0D1B2A;text-decoration:none;font-weight:bold;padding:13px 26px;border-radius:24px;display:inline-block">Criar minha primeira proposta</a></p>
+<p style="margin:0 0 14px">Você tem <b>7 dias grátis com tudo liberado</b>. Use também no celular:
+<a href="{PLAY}" style="color:#8A6D12">Android</a> · <a href="{APP_STORE}" style="color:#8A6D12">iPhone</a>.</p>
+<p style="margin:0 0 14px">Ficou com alguma dúvida? É só <b>responder este e-mail</b> que eu te ajudo.</p>
+<p style="margin:18px 0 0">Um abraço,<br><b>Tâmara Cavalcante</b><br><span style="color:#6B7C94;font-size:13px">Personal organizer e criadora do Planner Organiza</span></p>
+</td></tr>
+<tr><td style="padding:16px 28px;background:#FBF6E9;color:#6B7C94;font-size:12px">Você recebeu este e-mail porque criou uma conta no Planner Organiza.</td></tr>
+</table></td></tr></table></body></html>"""
+    texto = (f"{ola}\n\nAqui é a Tâmara, personal organizer e criadora do Planner Organiza. Que bom ter você aqui!\n\n"
+             "Faça a sua primeira proposta hoje (uns 5 minutos):\n1. Cadastre um cliente.\n2. Crie a proposta com o "
+             "serviço e o valor.\n3. Gere o PDF com a sua marca e mande pelo WhatsApp.\n\n"
+             f"Entrar: {APP_URL}\nAndroid: {PLAY}\niPhone: {APP_STORE}\n\nVocê tem 7 dias grátis com tudo liberado. "
+             "Ficou com dúvida? É só responder este e-mail.\n\nUm abraço,\nTâmara Cavalcante")
+    return assunto, corpo, texto
+
+
+def _enviar(email: str, nome: str) -> bool:
+    chave = (os.environ.get("BREVO_API_KEY") or "").strip()
+    if not chave:
+        print(f"[boas-vindas] BREVO_API_KEY não configurada: e-mail para {email} não enviado")
+        return False
+    assunto, corpo, texto = montar(nome, email)
+    try:
+        r = requests.post("https://api.brevo.com/v3/smtp/email", timeout=15,
+                          headers={"api-key": chave, "accept": "application/json", "content-type": "application/json"},
+                          json={"sender": REMETENTE, "replyTo": RESPONDER_PARA, "to": [{"email": email}],
+                                "subject": assunto, "htmlContent": corpo, "textContent": texto,
+                                "tags": ["boas-vindas"]})
+        ok = r.status_code in (200, 201, 202)
+        print(f"[boas-vindas] {email}: {'enviado' if ok else f'erro {r.status_code} {r.text[:200]}'}")
+        return ok
+    except Exception as e:
+        print(f"[boas-vindas] {email}: erro {e}")
+        return False
+
+
+def enviar_se_nova(engine, uid: str, email: str, nome: str = "", data_cadastro=None, em_segundo_plano=True) -> bool:
+    """Envia uma vez por conta, só para contas criadas há no máximo 2 dias. Devolve True se disparou."""
+    if not uid or not email or "@" not in email:
+        return False
+    if data_cadastro and data_cadastro < date.today() - timedelta(days=DIAS_MAXIMOS):
+        return False
+    from utils import funil
+    if not funil.registrar(engine, uid, "boas_vindas", ""):  # já enviado (ou erro ao gravar)
+        return False
+    if em_segundo_plano:
+        threading.Thread(target=_enviar, args=(email.strip(), nome), daemon=True).start()
+    else:
+        _enviar(email.strip(), nome)
+    return True

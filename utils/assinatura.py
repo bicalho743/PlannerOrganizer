@@ -173,3 +173,30 @@ def sincronizar_revenuecat(uid: str) -> dict:
     if atual in ("google", "apple"):
         encerrar_loja(uid, atual)
     return {"pro": False, "origem": atual}
+
+
+# ── oferta da indicada (10% no anual) ────────────────────────────────────────
+# Conta indicada por uma afiliada recebe no RevenueCat a oferta "indicacao" (anual R$ 431,90) no lugar da padrão.
+# O app já usa a oferta "atual" da conta (Purchases.getOfferings().current), então não precisa de versão nova.
+OFERTA_INDICACAO = os.environ.get("REVENUECAT_OFERTA_INDICACAO", "") or "ofrngb11c7e45cc"  # oferta "indicacao"
+
+
+def aplicar_oferta_indicacao(uid: str) -> bool:
+    """Liga a oferta da indicada para esta conta no RevenueCat (API v1). Devolve True se ficou ligada."""
+    chave = (os.environ.get("REVENUECAT_SECRET_KEY") or "").strip()
+    oferta = (os.environ.get("REVENUECAT_OFERTA_INDICACAO") or OFERTA_INDICACAO or "").strip()
+    if not uid or not chave or not oferta:
+        print(f"[revenuecat] oferta da indicada não aplicada a {uid}: falta chave ou oferta")
+        return False
+    cab = {"Authorization": f"Bearer {chave}", "Content-Type": "application/json"}
+    try:
+        # a consulta cria o cliente no RevenueCat se ele ainda não abriu o app
+        requests.get(f"https://api.revenuecat.com/v1/subscribers/{uid}", headers=cab, timeout=15)
+        r = requests.post(f"https://api.revenuecat.com/v1/subscribers/{uid}/offerings/{oferta}/override",
+                          headers=cab, timeout=15)
+        ok = r.status_code in (200, 201)
+        print(f"[revenuecat] oferta da indicada para {uid}: HTTP {r.status_code}" + ("" if ok else f" {r.text[:200]}"))
+        return ok
+    except Exception as e:
+        print(f"[revenuecat] oferta da indicada para {uid}: {e}")
+        return False
