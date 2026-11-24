@@ -69,10 +69,22 @@ O melhor jeito de sentir a diferença é fazer a sua <b>primeira proposta</b> ho
     return assunto, corpo, texto
 
 
-def _enviar(email: str, nome: str) -> bool:
+def _resultado(engine, uid, ok, detalhe):
+    """Guarda o resultado do envio no banco (os registros do site saem atrasados)."""
+    if engine is None or not uid:
+        return
+    try:
+        from utils import funil
+        funil.registrar(engine, uid, "boas_vindas_ok" if ok else "boas_vindas_erro", str(detalhe)[:20])
+    except Exception as e:
+        print(f"[boas-vindas] não gravou o resultado: {e}", flush=True)
+
+
+def _enviar(email: str, nome: str, engine=None, uid=None) -> bool:
     chave = (os.environ.get("BREVO_API_KEY") or "").strip()
     if not chave:
-        print(f"[boas-vindas] BREVO_API_KEY não configurada: e-mail para {email} não enviado")
+        print(f"[boas-vindas] BREVO_API_KEY não configurada: e-mail para {email} não enviado", flush=True)
+        _resultado(engine, uid, False, "sem chave")
         return False
     assunto, corpo, texto = montar(nome, email)
     try:
@@ -82,10 +94,12 @@ def _enviar(email: str, nome: str) -> bool:
                                 "subject": assunto, "htmlContent": corpo, "textContent": texto,
                                 "tags": ["boas-vindas"]})
         ok = r.status_code in (200, 201, 202)
-        print(f"[boas-vindas] {email}: {'enviado' if ok else f'erro {r.status_code} {r.text[:200]}'}")
+        print(f"[boas-vindas] {email}: {'enviado' if ok else f'erro {r.status_code} {r.text[:300]}'}", flush=True)
+        _resultado(engine, uid, ok, f"HTTP {r.status_code}")
         return ok
     except Exception as e:
-        print(f"[boas-vindas] {email}: erro {e}")
+        print(f"[boas-vindas] {email}: erro {e}", flush=True)
+        _resultado(engine, uid, False, type(e).__name__)
         return False
 
 
@@ -99,7 +113,7 @@ def enviar_se_nova(engine, uid: str, email: str, nome: str = "", data_cadastro=N
     if not funil.registrar(engine, uid, "boas_vindas", ""):  # já enviado (ou erro ao gravar)
         return False
     if em_segundo_plano:
-        threading.Thread(target=_enviar, args=(email.strip(), nome), daemon=True).start()
+        threading.Thread(target=_enviar, args=(email.strip(), nome, engine, uid), daemon=True).start()
     else:
-        _enviar(email.strip(), nome)
+        _enviar(email.strip(), nome, engine, uid)
     return True

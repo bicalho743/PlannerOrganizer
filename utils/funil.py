@@ -15,7 +15,7 @@ from datetime import date, datetime, timedelta
 
 from sqlalchemy import text
 
-EVENTOS = ("conta_criada", "primeiro_pdf", "planos_vistos", "boas_vindas")
+EVENTOS = ("conta_criada", "primeiro_pdf", "planos_vistos", "boas_vindas", "boas_vindas_ok", "boas_vindas_erro")
 
 ETAPAS = [
     ("cadastro", "Criou a conta"),

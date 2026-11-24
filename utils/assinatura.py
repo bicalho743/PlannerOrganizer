@@ -195,7 +195,7 @@ def aplicar_oferta_indicacao(uid: str) -> bool:
         r = requests.post(f"https://api.revenuecat.com/v1/subscribers/{uid}/offerings/{oferta}/override",
                           headers=cab, timeout=15)
         ok = r.status_code in (200, 201)
-        print(f"[revenuecat] oferta da indicada para {uid}: HTTP {r.status_code}" + ("" if ok else f" {r.text[:200]}"))
+        print(f"[revenuecat] oferta da indicada para {uid}: HTTP {r.status_code}" + ("" if ok else f" {r.text[:200]}"), flush=True)
         return ok
     except Exception as e:
         print(f"[revenuecat] oferta da indicada para {uid}: {e}")

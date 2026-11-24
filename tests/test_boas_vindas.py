@@ -15,7 +15,7 @@ pytestmark = pytest.mark.skipif(not os.getenv("DATABASE_URL"), reason="DATABASE_
 def ambiente(monkeypatch):
     from utils.database import engine
     enviados = []
-    monkeypatch.setattr(boas_vindas, "_enviar", lambda email, nome: enviados.append((email, nome)) or True)
+    monkeypatch.setattr(boas_vindas, "_enviar", lambda email, nome, engine=None, uid=None: enviados.append((email, nome)) or True)
     pre = f"bv-{uuid.uuid4().hex[:6]}"
     yield pre, engine, enviados
     with engine.begin() as c:
