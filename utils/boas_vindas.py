@@ -6,6 +6,7 @@ E-mail de boas-vindas da Tâmara para cada conta nova (site ou app), enviado uma
 - Uma vez por conta: o envio grava o evento "boas_vindas" em eventos_funil antes de mandar.
 - Precisa da variável BREVO_API_KEY no serviço (a mesma da landing). Sem ela, só registra no log.
 - O envio roda em segundo plano para não atrasar o login.
+- A conta também entra como contato na lista "Leads Planner Organiza" (LISTA_LEADS) da Brevo.
 """
 import html
 import os
@@ -20,6 +21,7 @@ APP_URL = "https://app.plannerorganiza.com.br"
 PLAY = "https://play.google.com/store/apps/details?id=com.plannerorganiza.app&referrer=utm_source%3Demail%26utm_medium%3Dboas_vindas"
 APP_STORE = "https://apps.apple.com/br/app/planner-organiza/id6832855561"
 DIAS_MAXIMOS = 2
+LISTA_LEADS = 7  # lista "Leads Planner Organiza" na Brevo (a mesma da landing)
 
 
 def primeiro_nome(nome: str, email: str = "") -> str:
@@ -80,8 +82,25 @@ def _resultado(engine, uid, ok, detalhe):
         print(f"[boas-vindas] não gravou o resultado: {e}", flush=True)
 
 
+def _salvar_contato(chave: str, email: str, nome: str) -> bool:
+    """Guarda a conta nova na lista de leads da Brevo (precisa da permissão "contato" na chave)."""
+    atributos = {"FIRSTNAME": primeiro_nome(nome, email)} if primeiro_nome(nome, email) else {}
+    try:
+        r = requests.post("https://api.brevo.com/v3/contacts", timeout=15,
+                          headers={"api-key": chave, "accept": "application/json", "content-type": "application/json"},
+                          json={"email": email, "listIds": [LISTA_LEADS], "updateEnabled": True, "attributes": atributos})
+        ok = r.status_code in (200, 201, 204)
+        print(f"[boas-vindas] contato {email}: {'salvo' if ok else f'erro {r.status_code} {r.text[:200]}'}", flush=True)
+        return ok
+    except Exception as e:
+        print(f"[boas-vindas] contato {email}: erro {e}", flush=True)
+        return False
+
+
 def _enviar(email: str, nome: str, engine=None, uid=None) -> bool:
     chave = (os.environ.get("BREVO_API_KEY") or "").strip()
+    if chave:
+        _salvar_contato(chave, email, nome)
     if not chave:
         print(f"[boas-vindas] BREVO_API_KEY não configurada: e-mail para {email} não enviado", flush=True)
         _resultado(engine, uid, False, "sem chave")

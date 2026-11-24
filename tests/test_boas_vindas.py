@@ -37,3 +37,23 @@ def test_texto_usa_primeiro_nome_real():
     assunto2, _, texto2 = boas_vindas.montar("Usuário", "joana@x.com")
     assert assunto2.startswith("Bem-vinda ao Planner!") and texto2.startswith("Oi!")
     assert boas_vindas.primeiro_nome("joana@x.com") == ""
+
+
+def test_salva_contato_e_envia(monkeypatch):
+    chamadas = []
+
+    class Resp:
+        def __init__(self, c): self.status_code, self.text = c, ""
+
+    def post(url, **kw):
+        chamadas.append((url, kw["json"]))
+        return Resp(201)
+
+    monkeypatch.setenv("BREVO_API_KEY", "x")
+    monkeypatch.setattr(boas_vindas.requests, "post", post)
+    assert boas_vindas._enviar("ana@exemplo.com", "Ana Souza")
+    urls = [u for u, _ in chamadas]
+    assert urls == ["https://api.brevo.com/v3/contacts", "https://api.brevo.com/v3/smtp/email"]
+    contato = chamadas[0][1]
+    assert contato["listIds"] == [boas_vindas.LISTA_LEADS] and contato["updateEnabled"] is True
+    assert contato["attributes"] == {"FIRSTNAME": "Ana"}
