@@ -32,7 +32,7 @@ Responda em português, passo a passo e sem jargão. O README.md tem arquitetura
 - `utils/afiliados.py` + `pages/afiliadas.py` (menu "Indique e ganhe"). 30% do valor líquido de cada pagamento da
   indicada por 12 meses (Stripe, App Store e Google Play), liberado 30 dias depois, Pix mensal manual a partir de R$ 50.
 - Vínculo: link `plannerorganiza.com.br/?ref=CODIGO` (a landing guarda o `ref`, o site liga ao criar a conta) ou o código
-  em "Tenho um convite" (`/convites/resgatar` aceita código de afiliada; dá 30 dias de teste). Sem autoindicação.
+  em "Tenho um convite" (`/convites/resgatar` aceita código de afiliada; o teste continua de 7 dias). Sem autoindicação.
 - Comissão: Stripe `invoice.paid` (estorno em `charge.refunded`); lojas em `utils/assinatura._comissao_loja`
   (INITIAL_PURCHASE/RENEWAL em BRL; CANCELLATION por reembolso estorna).
 - Administração (aprovar, Pix do mês, marcar pago) aparece para os e-mails em `ADMIN_EMAILS` (variável no Render).

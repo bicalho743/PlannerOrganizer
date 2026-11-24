@@ -20,7 +20,7 @@ TERMOS = f"""
 - Você ganha **{int(af.PERCENTUAL * 100)}% de cada pagamento** de quem assinar pelo seu link ou código,
   **durante {af.MESES_COMISSAO} meses** a partir do primeiro pagamento, no site, no iPhone ou no Android.
 - A comissão é calculada sobre o valor que de fato entra (sem a taxa do cartão ou da loja).
-- Quem usa o seu código ganha **{af.DIAS_TESTE_INDICADA} dias grátis** (em vez de 7).
+- Quem usa o seu link ou código testa o Planner grátis por {af.DIAS_TESTE_INDICADA} dias, como todo mundo.
 - A comissão fica liberada **{af.DIAS_LIBERAR} dias depois** do pagamento da indicada (prazo de reembolso).
   Se houver reembolso, a comissão é cancelada.
 - O pagamento é feito **todo mês por Pix**, quando o valor liberado chega a **R$ {af.MINIMO_PAGAMENTO:.0f}**.

@@ -70,11 +70,8 @@ def resgatar(engine, uid: str, codigo: str) -> int:
             except afiliados.AfiliadoInvalido as e:
                 raise ConviteInvalido(str(e) if "próprio" in str(e) or "já foi" in str(e)
                                       else "Convite não encontrado. Confira o código.")
-            dias = afiliados.DIAS_TESTE_INDICADA
-            conn.execute(text(
-                "INSERT INTO convites_resgatados (usuario_id, codigo, dias) VALUES (:u, :c, :d)"),
-                {"u": uid, "c": chave, "d": dias})
-            return dias
+            # o código da afiliada só liga a conta a ela: o teste continua o padrão
+            return afiliados.DIAS_TESTE_INDICADA
         # UPDATE condicional: se outra conta usou o código no mesmo instante, a linha não muda
         marcado = conn.execute(text(
             "UPDATE convites SET usado_por = :u, usado_em = CURRENT_TIMESTAMP "

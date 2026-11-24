@@ -112,7 +112,7 @@ def test_codigo_da_afiliada_no_campo_de_convite(engine):
     codigo = _aprovada(engine)
     assert convites.resgatar(engine, "uid-maria", codigo) == af.DIAS_TESTE_INDICADA
     assert af.codigo_da_indicacao(engine, "uid-maria") == codigo
-    assert convites.dias_do_convite(engine, "uid-maria") == af.DIAS_TESTE_INDICADA
+    assert convites.dias_do_convite(engine, "uid-maria") is None  # teste padrão, sem dias extras
 
 
 def test_evento_da_loja_gera_e_estorna_comissao(engine, monkeypatch):

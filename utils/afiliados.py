@@ -5,7 +5,7 @@ Fluxo
 - A afiliada se inscreve no site (com a conta dela) e fica `pendente` até a dona aprovar.
 - Aprovada, ganha um código (ex.: TAMARA) e o link plannerorganiza.com.br/?ref=TAMARA.
 - A conta nova fica ligada à afiliada quando entra pelo link (o site guarda o `ref` da visita) ou digita o
-  código em "Tenho um convite" (app e site). Ganha 30 dias de teste. Cada conta tem uma afiliada só, e
+  código em "Tenho um convite" (app e site). O teste grátis continua o padrão (7 dias). Cada conta tem uma afiliada só, e
   ninguém indica a si mesma.
 - Cada pagamento da conta indicada (Stripe, App Store ou Google Play) gera uma comissão de 30% do valor
   líquido (sem a taxa da loja ou do cartão), durante 12 meses a partir do 1º pagamento.
@@ -22,7 +22,7 @@ PERCENTUAL = 0.30
 MESES_COMISSAO = 12
 DIAS_LIBERAR = 30
 MINIMO_PAGAMENTO = 50.0
-DIAS_TESTE_INDICADA = 30
+DIAS_TESTE_INDICADA = 7  # igual ao padrão: indicação não estende o teste (evita uso só para não pagar)
 # taxa que a loja ou o cartão ficam (fração do valor e valor fixo em R$); comissão é sobre o que sobra
 TAXAS = {"stripe": (0.0399, 0.39), "apple": (0.15, 0.0), "google": (0.15, 0.0)}
 CANAIS = {"stripe": "Site (cartão)", "apple": "App Store", "google": "Google Play"}
