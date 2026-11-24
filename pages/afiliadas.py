@@ -53,32 +53,26 @@ def show():
 
     st.markdown('<h1 class="page-title">Indique e ganhe</h1>', unsafe_allow_html=True)
     eu = af.afiliada_da_conta(engine, uid)
+    admin = _admin(email)
+
+    if admin:  # administradora: a administração vem primeiro; a inscrição dela mesma fica recolhida
+        _administracao(engine)
+        st.divider()
+        if not eu:
+            with st.expander("Quero ser afiliada também (opcional)"):
+                _inscricao(engine, uid, email)
+        else:
+            _minha_situacao(engine, eu)
+        return
 
     if not eu:
-        st.markdown(f"Indique o Planner Organiza para outras organizers e ganhe **{int(af.PERCENTUAL * 100)}% "
-                    f"de cada pagamento por {af.MESES_COMISSAO} meses**, recebendo por Pix todo mês.")
-        st.markdown(TERMOS)
-        with st.form("form_afiliada"):
-            nome = st.text_input("Nome completo")
-            c1, c2 = st.columns(2)
-            cpf = c1.text_input("CPF")
-            pix = c2.text_input("Chave Pix")
-            instagram = st.text_input("Instagram (opcional)", placeholder="@seuperfil")
-            codigo = st.text_input("Código que você quer usar (opcional)", placeholder="Ex.: TAMARA",
-                                   help="Só letras e números. Se ficar em branco, usamos o seu primeiro nome.")
-            aceite = st.checkbox("Li e aceito as regras do programa")
-            if st.form_submit_button("Quero ser afiliada", type="primary"):
-                if not aceite:
-                    st.error("Para continuar, marque que aceita as regras do programa.")
-                else:
-                    try:
-                        cod = af.inscrever(engine, uid, nome, email, cpf, pix, instagram, codigo)
-                        st.success(f"Inscrição enviada! Seu código reservado é **{cod}**. "
-                                   "Assim que for aprovada, o seu link aparece nesta página.")
-                        st.rerun()
-                    except af.AfiliadoInvalido as e:
-                        st.error(str(e))
-    elif eu["status"] == "pendente":
+        _inscricao(engine, uid, email)
+    else:
+        _minha_situacao(engine, eu)
+
+
+def _minha_situacao(engine, eu):
+    if eu["status"] == "pendente":
         st.info(f"Sua inscrição está em análise. Código reservado: **{eu['codigo']}**. "
                 "Assim que for aprovada, o seu link aparece aqui.")
     elif eu["status"] == "recusada":
@@ -86,9 +80,31 @@ def show():
     else:
         _painel_afiliada(engine, eu)
 
-    if _admin(email):
-        st.divider()
-        _administracao(engine)
+
+def _inscricao(engine, uid, email):
+    st.markdown(f"Indique o Planner Organiza para outras organizers e ganhe **{int(af.PERCENTUAL * 100)}% "
+                f"de cada pagamento por {af.MESES_COMISSAO} meses**, recebendo por Pix todo mês.")
+    st.markdown(TERMOS)
+    with st.form("form_afiliada"):
+        nome = st.text_input("Nome completo")
+        c1, c2 = st.columns(2)
+        cpf = c1.text_input("CPF")
+        pix = c2.text_input("Chave Pix")
+        instagram = st.text_input("Instagram (opcional)", placeholder="@seuperfil")
+        codigo = st.text_input("Código que você quer usar (opcional)", placeholder="Ex.: TAMARA",
+                               help="Só letras e números. Se ficar em branco, usamos o seu primeiro nome.")
+        aceite = st.checkbox("Li e aceito as regras do programa")
+        if st.form_submit_button("Quero ser afiliada", type="primary"):
+            if not aceite:
+                st.error("Para continuar, marque que aceita as regras do programa.")
+            else:
+                try:
+                    cod = af.inscrever(engine, uid, nome, email, cpf, pix, instagram, codigo)
+                    st.success(f"Inscrição enviada! Seu código reservado é **{cod}**. "
+                               "Assim que for aprovada, o seu link aparece nesta página.")
+                    st.rerun()
+                except af.AfiliadoInvalido as e:
+                    st.error(str(e))
 
 
 def _painel_afiliada(engine, eu):
@@ -118,6 +134,7 @@ def _painel_afiliada(engine, eu):
 
 def _administracao(engine):
     st.markdown("### Administração do programa")
+    st.caption("Só administradoras veem esta parte.")
     pend = af.listar_afiliadas(engine, "pendente")
     st.markdown(f"**Inscrições para aprovar ({len(pend)})**")
     for a in pend:
