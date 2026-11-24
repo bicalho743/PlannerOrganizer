@@ -79,7 +79,7 @@ def disparar():
 </script>""", height=0)
 
 
-CAMPOS_ORIGEM = ("tema", "utm_source", "utm_medium", "utm_campaign", "utm_content")
+CAMPOS_ORIGEM = ("tema", "utm_source", "utm_medium", "utm_campaign", "utm_content", "ref")
 
 
 def guardar_origem(query_params):

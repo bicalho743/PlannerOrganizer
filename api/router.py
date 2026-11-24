@@ -1818,6 +1818,27 @@ async def stripe_webhook(request: Request):
                 return r[0]
         return None
 
+    def _comissao_stripe(inv):
+        """Pagamento confirmado no site: se a conta foi indicada por uma afiliada, gera a comissão."""
+        try:
+            valor = float(getattr(inv, "amount_paid", 0) or 0) / 100
+            ref = getattr(inv, "id", None)
+            if valor <= 0 or not ref:
+                return
+            _conn = _pg2.connect(_db_url)
+            _cur = _conn.cursor()
+            uid = _conta_do_stripe(_cur, getattr(inv, "customer", None), getattr(inv, "customer_email", None) or "")
+            _conn.commit(); _cur.close(); _conn.close()
+            from utils import afiliados
+            from utils.database import engine as _eng
+            criado = getattr(inv, "created", None)
+            quando = datetime.utcfromtimestamp(int(criado)).date() if criado else None
+            com = afiliados.registrar_pagamento(_eng, uid, "stripe", str(ref), valor, quando)
+            if com:
+                print(f"[afiliados] comissão {com['codigo']}: R$ {com['comissao']} (conta {uid})")
+        except Exception as e:
+            print(f"[afiliados] erro na comissão do Stripe: {e}")
+
     def _mudar_plano(customer_id, email, plano, origem):
         try:
             _conn = _pg2.connect(_db_url)
@@ -1887,10 +1908,24 @@ async def stripe_webhook(request: Request):
         if novo_plano:
             _mudar_plano(getattr(obj, "customer", None), getattr(obj, "customer_email", None) or "",
                          novo_plano, event["type"])
+        if event["type"] == "invoice.paid":
+            _comissao_stripe(obj)
 
     elif event["type"] == "customer.subscription.deleted":
         sub = event["data"]["object"]
         _mudar_plano(getattr(sub, "customer", None), "", "cancelado", event["type"])
+
+    elif event["type"] == "charge.refunded":
+        # reembolso pelo site: cancela a comissão de afiliada desse pagamento (utils/afiliados.py)
+        ch = event["data"]["object"]
+        ref = getattr(ch, "invoice", None) or getattr(ch, "id", None)
+        try:
+            from utils import afiliados
+            from utils.database import engine as _eng
+            if ref and afiliados.estornar(_eng, str(ref)):
+                print(f"[afiliados] comissão estornada: {ref}")
+        except Exception as e:
+            print(f"[afiliados] erro ao estornar {ref}: {e}")
 
     elif event["type"] == "invoice.payment_failed":
         invoice = event["data"]["object"]

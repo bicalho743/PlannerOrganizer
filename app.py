@@ -767,6 +767,13 @@ try:
         if _origem and not st.session_state.get("_origem_salva"):
             st.session_state["_origem_salva"] = True
             st.session_state.db.salvar_origem_cadastro(_origem)
+            if _origem.get("ref"):  # veio pelo link de uma afiliada: liga a conta e dá 30 dias de teste
+                try:
+                    from utils.convites import resgatar as _resgatar
+                    from utils.database import engine as _eng_ref
+                    _resgatar(_eng_ref, _uid_trial, _origem["ref"])
+                except Exception as _e_ref:
+                    print(f"[afiliados] link {_origem.get('ref')}: {_e_ref}")
     rastreamento.compra_se_assinante(_perfil_trial, _uid_trial)
     # Teste grátis acabou e sem assinatura: a conta continua entrando, em modo consulta
     # (vê tudo, não grava nem gera PDF; utils/somente_leitura.py)
@@ -868,6 +875,7 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
             ("Cadastros", "Cadastros", ":material/inventory_2:"),
             ("Perfil e marca", "Perfil", ":material/palette:"),
             ("Plano e cobrança", "Plano", ":material/credit_card:"),
+            ("Indique e ganhe", "Afiliadas", ":material/handshake:"),
         ]),
     ]
 
@@ -952,6 +960,12 @@ st.markdown("<style>" + "".join(
     + f':root {{ --modulo: {CORES_MODULO.get(st.session_state.get("current_page"), GOLD_DARK)}; }}</style>',
     unsafe_allow_html=True)
 
+# link "Seja afiliada" da landing (app.plannerorganiza.com.br/?afiliada=1): abre a página do programa uma vez
+if st.session_state.get("authenticated") and st.query_params.get("afiliada") == "1" \
+        and not st.session_state.get("_afiliada_aberta"):
+    st.session_state["_afiliada_aberta"] = True
+    st.session_state.current_page = "Afiliadas"
+
 from utils.page_config import apply_page_header, apply_page_footer
 apply_page_header()
 apply_page_footer()
@@ -986,6 +1000,8 @@ try:
         from pages.perfil import show; show()
     elif st.session_state.current_page == "Plano":
         from pages.plano import show; show()
+    elif st.session_state.current_page == "Afiliadas":
+        from pages.afiliadas import show; show()
 except Exception as e:
     st.error(f"Erro ao carregar página: {str(e)}")
 

@@ -63,7 +63,18 @@ def resgatar(engine, uid: str, codigo: str) -> int:
         linha = conn.execute(text("SELECT dias, usado_por FROM convites WHERE codigo = :c"),
                              {"c": chave}).first()
         if not linha:
-            raise ConviteInvalido("Convite não encontrado. Confira o código.")
+            # não é convite: pode ser o código de uma afiliada (utils/afiliados.py)
+            from utils import afiliados
+            try:
+                afiliados.vincular(engine, uid, chave, origem="codigo")
+            except afiliados.AfiliadoInvalido as e:
+                raise ConviteInvalido(str(e) if "próprio" in str(e) or "já foi" in str(e)
+                                      else "Convite não encontrado. Confira o código.")
+            dias = afiliados.DIAS_TESTE_INDICADA
+            conn.execute(text(
+                "INSERT INTO convites_resgatados (usuario_id, codigo, dias) VALUES (:u, :c, :d)"),
+                {"u": uid, "c": chave, "d": dias})
+            return dias
         # UPDATE condicional: se outra conta usou o código no mesmo instante, a linha não muda
         marcado = conn.execute(text(
             "UPDATE convites SET usado_por = :u, usado_em = CURRENT_TIMESTAMP "

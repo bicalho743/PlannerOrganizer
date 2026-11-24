@@ -81,6 +81,34 @@ def _contas_do_evento(ev: dict):
                                         {"ids": ids})]
 
 
+def _comissao_loja(ev, tipo, origem, contas):
+    """Programa de afiliadas (utils/afiliados.py): compra ou renovação gera comissão; reembolso cancela."""
+    try:
+        from utils import afiliados
+        ref = ev.get("transaction_id") or ev.get("id")
+        if not ref:
+            return
+        ref = f"{origem}:{ref}"
+        reembolso = tipo == "CANCELLATION" and (ev.get("cancel_reason") == "CUSTOMER_SUPPORT"
+                                                or float(ev.get("price") or 0) < 0)
+        if reembolso:
+            afiliados.estornar(_engine(), ref)
+            return
+        if tipo not in ("INITIAL_PURCHASE", "RENEWAL") or ev.get("period_type") == "TRIAL":
+            return
+        if (ev.get("currency") or "BRL") != "BRL":
+            return  # comissão só em reais
+        valor = ev.get("price_in_purchased_currency")
+        quando = _ms_para_data(ev.get("purchased_at_ms"))
+        for uid in contas:
+            com = afiliados.registrar_pagamento(_engine(), uid, origem, ref, valor or 0, quando,
+                                                takehome=ev.get("takehome_percentage"))
+            if com:
+                print(f"[afiliados] comissão {com['codigo']}: R$ {com['comissao']} (conta {uid}, {origem})")
+    except Exception as e:
+        print(f"[afiliados] erro na comissão da loja: {e}")
+
+
 def aplicar_evento_revenuecat(ev: dict) -> str:
     tipo = ev.get("type") or ""
     if tipo == "TEST":
@@ -103,6 +131,7 @@ def aplicar_evento_revenuecat(ev: dict) -> str:
     if not contas:
         print(f"[revenuecat] {tipo}: nenhuma conta para {ev.get('app_user_id')}")
         return "conta não encontrada"
+    _comissao_loja(ev, tipo, origem, contas)
     for uid in contas:
         if tipo in EVENTOS_ATIVA:
             ativar_loja(uid, origem, _ms_para_data(ev.get("expiration_at_ms")))
