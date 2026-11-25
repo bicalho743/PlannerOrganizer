@@ -355,7 +355,7 @@ def gerar_pdf_proposta(dados, output_path, perfil=None):
     doc.secao("Investimento")
     doc.caixa_total(linhas, "Total", brl(total))
     cond = dados.get("condicoes") or CONDICOES_PADRAO
-    doc.falta(12 * mm + len(cond) * 5.5 * mm)
+    doc.falta(11 * mm + len(cond) * 5.2 * mm)
     doc.secao("Condições")
     doc.marcadores(cond, junto=True)
     doc.salvar("Aprovar pelo WhatsApp", f"Olá! Quero aprovar a proposta Nº {dados.get('numero', '')}.")

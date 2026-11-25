@@ -158,8 +158,9 @@ def _render_nova_venda_form(clientes_df, produtos_df):
         total_venda = sum(item["total"] for item in st.session_state.produtos_venda)
         custo_venda = sum(item.get("custo_unitario", 0) * item["quantidade"] for item in st.session_state.produtos_venda)
         lucro = total_venda - custo_venda
-        st.markdown(f"**Total: {_fmt_brl(total_venda)}** · lucro estimado {_fmt_brl(lucro)}"
-                    + (f" ({lucro / total_venda:.0%})" if total_venda else ""))
+        # "\$": dois "$" na mesma linha viravam fórmula no markdown e o total aparecia quebrado
+        st.markdown((f"**Total: {_fmt_brl(total_venda)}** · lucro estimado {_fmt_brl(lucro)}"
+                     + (f" ({lucro / total_venda:.0%})" if total_venda else "")).replace("$", "\\$"))
         sem_estoque = [it["produto_nome"] for it in st.session_state.produtos_venda if it["quantidade"] > it.get("estoque", 0)]
         if sem_estoque:
             st.warning("Estoque insuficiente para: " + ", ".join(sem_estoque) +
@@ -354,15 +355,8 @@ def _render_detail_panel(venda_id, venda_row):
             "observacoes": venda_row.get("observacoes", "")
         }
         pdf_bytes = _pdf_venda(proposta_dados, {"nome": nome_raw}, itens_det)
-        st.download_button(
-            label="Baixar PDF da venda",
-            data=pdf_bytes,
-            file_name=f"Relatorio_Venda_{safe_nome}_{numero_exibir}.pdf",
-            mime="application/pdf",
-            key=f"dl_btn_venda_{venda_id}",
-            icon=":material/download:",
-            use_container_width=True,
-        )
+        from utils.ui import baixar_pdf_pronto
+        baixar_pdf_pronto("Baixar PDF da venda", pdf_bytes, f"Venda_{safe_nome}_{numero_exibir}.pdf", f"venda_{venda_id}")
     except Exception as e:
         st.error(f"Erro ao gerar PDF: {str(e)}")
 
@@ -883,8 +877,8 @@ def show():
                         pdf_bytes = _pdf_venda(proposta_dados, {"nome": nome}, itens_tmp)
                         safe = nome.replace(" ", "_").replace("/", "_").lower()
                         st.success("PDF gerado!")
-                        st.download_button("Baixar PDF", data=pdf_bytes, file_name=f"Venda_{vid}_{safe}.pdf",
-                                           mime="application/pdf", key="dl_rel_pos")
+                        from utils.ui import baixar_pdf_pronto
+                        baixar_pdf_pronto("Baixar PDF", pdf_bytes, f"Venda_{vid}_{safe}.pdf", "rel_pos")
                     except Exception as e:
                         st.error(f"Erro: {str(e)}")
             with rc2:

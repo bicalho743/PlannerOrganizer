@@ -24,6 +24,18 @@ except ImportError as e:
     gerar_pdf_fechamento = None
     print("DEBUG: Gerador de PDF indisponível (fallback)!")
 
+
+def _baixar(*args):
+    """Link de download que não expira (utils/ui.baixar_pdf_pronto; o st.download_button dava 404)."""
+    from utils.ui import baixar_pdf_pronto
+    return baixar_pdf_pronto(*args)
+
+
+def _cap(txt):
+    """Só a primeira letra maiúscula ("Caixa organizadora 30x30"); .title() deixava "Caixa Organizadora 30X30"."""
+    t = str(txt or "").strip()
+    return t[:1].upper() + t[1:]
+
 def adicionar_acrescimo(db, proposta_id, tipo, fornecedor, descricao, valor):
     """
     Adiciona um acréscimo a uma proposta de forma segura, com tratamento 
@@ -270,7 +282,7 @@ def gerar_pdf_proposta(db, proposta_id, custom_filename=None):
             itens_tuples = []
             total_calculado = 0
             for it in itens_raw:
-                nome_it = it.get('nome', it.get('produto_nome', it.get('descricao', ''))).title()
+                nome_it = _cap(it.get('nome', it.get('produto_nome', it.get('descricao', ''))))
                 qtd = float(it.get('quantidade', 1))
                 val = float(it.get('valor_unit', it.get('valor', it.get('preco_unitario', 0))))
                 subtotal = qtd * val
@@ -395,13 +407,7 @@ def st_gerar_pdf_proposta(proposta_id, custom_filename=None):
             with open(filename, "rb") as file:
                 pdf_bytes = file.read()
             
-            st.download_button(
-                label="📥 Baixar Proposta cliente",
-                data=pdf_bytes,
-                file_name=os.path.basename(filename),
-                mime="application/pdf",
-                key=f"download_pdf_proposta_{proposta_id}"
-            )
+            _baixar("Baixar Proposta cliente", pdf_bytes, os.path.basename(filename), f"download_pdf_proposta_{proposta_id}")
             
             return True, filename
         else:
@@ -506,7 +512,7 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None, tipo_docum
             pass
 
         for it in produtos:
-            nome_it = it.get('nome', it.get('produto_nome', '')).title()
+            nome_it = _cap(it.get('nome', it.get('produto_nome', '')))
             qtd = float(it.get('quantidade', 1))
             val = float(it.get('valor_unit', it.get('valor', it.get('preco_unitario', 0))))
             subtotal = qtd * val
@@ -518,7 +524,7 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None, tipo_docum
                 tipo_ac = str(ac.get('tipo', '')).lower()
                 if tipo_ac in ('fornecedor', 'assistente'):
                     continue
-                desc = ac.get('descricao', ac.get('fornecedor', 'Acréscimo')).title()
+                desc = _cap(ac.get('descricao', ac.get('fornecedor', 'Acréscimo')))
                 val_ac = float(ac.get('valor', 0))
                 total_adicionais += val_ac
                 itens_tuples.append((desc, val_ac, False))
@@ -977,7 +983,7 @@ def gerar_pdf_fornecedores_proposta(db, proposta_id, custom_filename=None):
         itens_tuples = []
         total_forn = 0
         for it in itens_fornecedores:
-            desc = it.get('descricao', 'Fornecedor').title()
+            desc = _cap(it.get('descricao', 'Fornecedor'))
             val = float(it.get('valor', 0))
             total_forn += val
             itens_tuples.append((desc, val, False))
@@ -1015,13 +1021,7 @@ def st_gerar_pdf_fornecedores(proposta_id, custom_filename=None):
             with open(filename, "rb") as file:
                 pdf_bytes = file.read()
             
-            st.download_button(
-                label="📥 Baixar Relatório de Fornecedores",
-                data=pdf_bytes,
-                file_name=os.path.basename(filename),
-                mime="application/pdf",
-                key=f"download_pdf_fornecedores_{proposta_id}"
-            )
+            _baixar("Baixar Relatório de Fornecedores", pdf_bytes, os.path.basename(filename), f"download_pdf_fornecedores_{proposta_id}")
             
             return True, filename
         else:
@@ -1048,13 +1048,7 @@ def st_gerar_pdf_cliente(proposta_id, custom_filename=None):
             with open(filename, "rb") as file:
                 pdf_bytes = file.read()
             
-            st.download_button(
-                label="📥 Baixar Relatório do Cliente",
-                data=pdf_bytes,
-                file_name=os.path.basename(filename),
-                mime="application/pdf",
-                key=f"download_pdf_cliente_{proposta_id}"
-            )
+            _baixar("Baixar Relatório do Cliente", pdf_bytes, os.path.basename(filename), f"download_pdf_cliente_{proposta_id}")
             
             return True, filename
         else:
@@ -1081,13 +1075,7 @@ def st_gerar_pdf_interno(proposta_id, custom_filename=None):
             with open(filename, "rb") as file:
                 pdf_bytes = file.read()
             
-            st.download_button(
-                label="📥 Baixar Relatório interno",
-                data=pdf_bytes,
-                file_name=os.path.basename(filename),
-                mime="application/pdf",
-                key=f"download_pdf_interno_{proposta_id}"
-            )
+            _baixar("Baixar Relatório interno", pdf_bytes, os.path.basename(filename), f"download_pdf_interno_{proposta_id}")
             
             return True, filename
         else:

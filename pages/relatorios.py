@@ -17,6 +17,7 @@ gráficos e exportação para Excel. Os cálculos ficam em utils/relatorios_calc
 """
 import html as html_module
 import io
+import os
 import re
 from datetime import timedelta
 
@@ -687,9 +688,16 @@ def show():
         print(f"[relatorios] exportacao: {e}")
     titulo = f"Relatório {rot} (comparado com {rot_comp})"
     try:
-        lugar_pdf.download_button("Baixar PDF", data=_pdf(exp, "Relatório do negócio", f"{rot} · comparado com {rot_comp}"),
-                                  file_name=f"relatorio_{ini:%Y-%m-%d}_{fim:%Y-%m-%d}.pdf", mime="application/pdf",
-                                  type="primary", key="rel_pdf", use_container_width=True)
+        # gerado só no clique (antes montava o PDF a cada atualização da tela) e com link que não expira (utils/ui.py)
+        def _gerar_rel(exp=exp, rot=rot, rot_comp=rot_comp, ini=ini, fim=fim):
+            import tempfile
+            caminho = os.path.join(tempfile.mkdtemp(), "relatorio.pdf")
+            with open(caminho, "wb") as f:
+                f.write(_pdf(exp, "Relatório do negócio", f"{rot} · comparado com {rot_comp}"))
+            return caminho, f"Relatorio_{ini:%Y-%m-%d}_{fim:%Y-%m-%d}.pdf", None
+        from utils.ui import baixar_pdf
+        with lugar_pdf.container():
+            baixar_pdf("Baixar PDF", f"relpdf_{ini:%Y%m%d}_{fim:%Y%m%d}_{cini:%Y%m%d}", _gerar_rel)
     except Exception as e:
         print(f"[relatorios] pdf: {e}")
         lugar_pdf.caption("Não foi possível gerar o PDF agora.")

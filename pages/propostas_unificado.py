@@ -260,6 +260,18 @@ def _iniciar_execucao(proposta_id, proposta):
         st.error(str(e))
 
 
+@st.dialog("Concluir o serviço?")
+def _confirmar_finalizar(proposta_id):
+    """Finalizar mexe no financeiro e abre a pós-organização: pede confirmação antes (um clique sem querer concluía)."""
+    st.write("O serviço passa para **Concluída**. O saldo, os produtos, os fornecedores e a equipe entram no "
+             "financeiro, e começam as mensagens da pós-organização.")
+    c1, c2 = st.columns(2)
+    if c1.button("Sim, concluir", key=f"fim_sim_{proposta_id}", type="primary", use_container_width=True):
+        _finalizar(proposta_id)
+    if c2.button("Cancelar", key=f"fim_nao_{proposta_id}", use_container_width=True):
+        st.rerun()
+
+
 def _finalizar(proposta_id):
     """Em execução → Concluída: finalizar_proposta_v2 grava o financeiro (produtos, extras, fornecedores,
     assistentes) e a pós-organização, como o antigo "FINALIZAR PROJETO"."""
@@ -349,14 +361,27 @@ def _det_proximo(proposta_id, proposta, status, marcas):
                     f'<span class="l">{esc(sub)}</span></div>', unsafe_allow_html=True)
         with c2, st.container(key=f"{'cta' if tipo_b == 'gold' else 'pdlin'}_pd_acao"):
             clicou = st.button(rot, key=f"pd_acao_{proposta_id}", icon=icone_, use_container_width=True)
+    # concluir pede confirmação aqui mesmo (o detalhe já é uma janela; não dá para abrir outra por cima)
+    conf = f"_conf_fim_{proposta_id}"
+    if clicou and status == 'em_execucao':
+        st.session_state[conf] = True
+    if st.session_state.get(conf) and status == 'em_execucao':
+        st.warning("Concluir o serviço? O saldo, os produtos, os fornecedores e a equipe entram no financeiro, e "
+                   "começam as mensagens da pós-organização.")
+        s1, s2 = st.columns(2)
+        if s1.button("Sim, concluir", key=f"pd_fim_sim_{proposta_id}", type="primary", use_container_width=True):
+            st.session_state.pop(conf, None)
+            _finalizar(proposta_id)
+        if s2.button("Cancelar", key=f"pd_fim_nao_{proposta_id}", use_container_width=True):
+            st.session_state.pop(conf, None)
+            st.rerun(scope="fragment")
+        return
     if not clicou:
         return
     if status == 'em_aberto':
         _aprovar(proposta_id, proposta)
     elif status == 'aprovada':
         _iniciar_execucao(proposta_id, proposta)
-    elif status == 'em_execucao':
-        _finalizar(proposta_id)
     else:
         _reabrir(proposta_id)
 
@@ -707,6 +732,9 @@ def _det_mais_acoes(proposta_id, proposta, status):
                         gerar_transacoes_automaticas=False)
                     if novo:
                         st.session_state.db.update_proposta(novo, data_proposta=hoje())
+                        # cópia nasce como rascunho (antes aparecia "enviada hoje" sem ter sido enviada)
+                        from utils import propostas_dados as _pd
+                        _pd.marcar(st.session_state.db, int(novo), "Rascunho", f"Cópia da proposta nº {_num_proposta(proposta, proposta_id)}")
                         st.session_state.db.invalidar_cache()
                         st.session_state['kanban_selected_proposta'] = int(novo)
                         st.rerun()
@@ -1184,35 +1212,29 @@ def _tab_produtos(proposta_id):
 
             # PDF dos produtos
             st.markdown("---")
-            if botao_documento("Gerar relatório de venda dos produtos", use_container_width=True, key=f"btn_pdf_produtos_proposta_{proposta_id}"):
+            def _gerar_pdf_produtos(proposta_id=proposta_id, produtos_proposta=produtos_proposta,
+                                    valor_total_produtos=valor_total_produtos):
+                # baixar_pdf: o download não fecha a janela da proposta e o link não expira (antes não baixava nada)
+                import tempfile
+                from utils.pdf_generator_v2 import gerar_pdf_venda_v2
+                from sqlalchemy import text as _text
                 try:
-                    from utils.pdf_generator_v2 import gerar_pdf_venda_v2
-                    from sqlalchemy import text as _text
-                    import time as _t
                     _prop_row = st.session_state.db.session.execute(
                         _text("SELECT p.numero, c.nome FROM propostas p LEFT JOIN clientes c ON p.cliente_id = c.id WHERE p.id = :pid"),
-                        {"pid": proposta_id}
-                    ).fetchone()
+                        {"pid": proposta_id}).fetchone()
                     _num_prop = _prop_row[0] if _prop_row else proposta_id
                     _nome_cl = _prop_row[1] if _prop_row and _prop_row[1] else "Cliente"
                     venda_dados = {'id': _num_prop, 'status': 'Proposta', 'forma_pagamento': 'N/A',
                                    'valor_total': round(float(valor_total_produtos), 2),
-                                   'data_venda': datetime.now().strftime('%d/%m/%Y'), 'observacoes': f"Produtos Proposta #{_num_prop} - {_nome_cl}"}
-                    itens_pdf = produtos_proposta.rename(columns={'nome': 'produto_nome', 'valor_unit': 'preco_unitario'})[['produto_nome', 'quantidade', 'preco_unitario']].copy()
-                    _nome_cl_arq = _nome_cl.replace(' ', '_').lower()
-                    filename = f"pdfs/Relatorio_Produtos_{_nome_cl_arq}_{_num_prop}.pdf"
-                    os.makedirs("pdfs", exist_ok=True)
-                    pdf_path = gerar_pdf_venda_v2(venda_dados, {'nome': _nome_cl}, itens_pdf, filename)
-                    if pdf_path and os.path.exists(pdf_path):
-                        with open(pdf_path, "rb") as f:
-                            st.success("PDF gerado!")
-                            st.download_button("Baixar PDF", f.read(), f"Relatorio_Produtos_{_nome_cl_arq}_{_num_prop}.pdf",
-                                               "application/pdf", use_container_width=True,
-                                               key=f"dl_pdf_venda_proposta_{proposta_id}")
-                    else:
-                        st.error("Erro ao gerar PDF.")
+                                   'data_venda': datetime.now().strftime('%d/%m/%Y')}
+                    itens_pdf = produtos_proposta.rename(columns={'nome': 'produto_nome', 'valor_unit': 'preco_unitario'})[
+                        ['produto_nome', 'quantidade', 'preco_unitario']].copy()
+                    caminho = os.path.join(tempfile.mkdtemp(), "produtos.pdf")
+                    gerar_pdf_venda_v2(venda_dados, {'nome': _nome_cl}, itens_pdf, caminho)
+                    return caminho, f"Produtos_{_nome_cl.replace(' ', '_')}_{_num_prop}.pdf", None
                 except Exception as e:
-                    st.error(str(e))
+                    return None, None, str(e)
+            baixar_pdf("Baixar relatório dos produtos", f"pdf_produtos_proposta_{proposta_id}", _gerar_pdf_produtos)
         else:
             st.markdown("""
             <div class="itens-empty-state">
@@ -1999,8 +2021,8 @@ def _tab_acoes(proposta_id, proposta):
             if sucesso and arquivo:
                 with open(arquivo, "rb") as f:
                     st.success("PDF gerado!")
-                    st.download_button("Baixar Proposta", f.read(), os.path.basename(arquivo),
-                                       "application/pdf", key=f"dl_proposta_{proposta_id}", use_container_width=True)
+                    from utils.ui import baixar_pdf_pronto
+                    baixar_pdf_pronto("Baixar Proposta", f.read(), os.path.basename(arquivo), f"proposta_{proposta_id}")
             else:
                 st.error(f"Erro: {mensagem}")
         except Exception as e:
@@ -2226,7 +2248,7 @@ def _cartao(p, situacao, marcas, telefones):
                     with st.container(key=f"pqa_f_{pid}"):
                         if st.button("Finalizar", key=f"pq_fim_{pid}", icon=":material/arrow_forward:",
                                      icon_position="right", help="Conclui o serviço e lança o financeiro e a pós-organização"):
-                            _finalizar(pid)
+                            _confirmar_finalizar(pid)
                 elif str(p.get('status_pagamento_base') or '') == 'Pago':
                     st.markdown('<div class="pq-pago">pago</div>', unsafe_allow_html=True)
 

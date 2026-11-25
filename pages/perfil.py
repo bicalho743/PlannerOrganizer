@@ -374,9 +374,9 @@ def show():
                 except Exception as e:
                     st.error(f"Não foi possível gerar o exemplo: {e}")
             if st.session_state.get("pm_pdf_bytes"):
-                st.download_button("Baixar PDF de exemplo", st.session_state["pm_pdf_bytes"],
-                                   file_name="proposta-exemplo.pdf", mime="application/pdf", icon=":material/download:",
-                                   key="pm_pdf_baixar", use_container_width=True)
+                from utils.ui import baixar_pdf_pronto
+                baixar_pdf_pronto("Baixar PDF de exemplo", st.session_state["pm_pdf_bytes"], "proposta-exemplo.pdf",
+                                  "pm_pdf_baixar")
             st.caption("O PDF de exemplo usa o que está salvo. Depois de mudar, clique em Salvar.")
         with st.container(border=True, key="pfc_info"):
             st.markdown('<div class="pf-nota">A marca vale para propostas, recibos de venda e relatórios em PDF. '

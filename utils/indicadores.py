@@ -99,7 +99,20 @@ def movimentos(fin):
     for c in ("categoria", "descricao"):
         if c not in df:
             df[c] = ""
+    df["descricao"] = df["descricao"].apply(descricao_legivel)
     return df[cols]
+
+
+def descricao_legivel(txt):
+    """Texto do lançamento para a tela. O saldo da proposta é gravado como "Proposta #N - <descrição>... - <cliente>
+    (Aprovação)" (o "(Aprovação)" marca o lançamento para reabrir_proposta.py); na tela parecia o sinal. Vira
+    "Saldo · Proposta nº N · <cliente>"."""
+    import re
+    t = str(txt or "")
+    m = re.match(r"^Proposta #(\d+) - .*? - (.+?) \(Aprovação\)\s*$", t)
+    if m:
+        return f"Saldo · Proposta nº {m.group(1)} · {m.group(2)}"
+    return t.replace(" (Aprovação)", " · saldo")
 
 
 def _no_mes(serie, ano, mes):

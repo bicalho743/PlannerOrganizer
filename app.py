@@ -264,11 +264,12 @@ _components.html("""
 </script>
 """, height=0)
 
+# Login guardado no navegador (cookie assinado): recarregar a página ou uma publicação nova não desconecta mais
 try:
-    from utils.session_persistence import setup_session_persistence
-    setup_session_persistence()
+    from utils import sessao_cookie
+    sessao_cookie.restaurar()
 except Exception as e:
-    logger.warning(f"Erro ao configurar persistência de sessão: {str(e)}")
+    logger.warning(f"Erro ao restaurar a sessão: {str(e)}")
 
 # App Android na Google Play (o referrer mostra no Play Console de onde veio a instalação)
 _PLAY = "https://play.google.com/store/apps/details?id=com.plannerorganiza.app"
@@ -310,6 +311,11 @@ if not st.session_state.authenticated and not st.session_state.get("_onb_aberto"
 # BLOCO DE LOGIN — visual novo, lógica original preservada
 # ══════════════════════════════════════════════════════════
 if not st.session_state.authenticated:
+    if st.session_state.get("_sessao_saiu"):   # saiu da conta: apaga o cookie de login deste navegador
+        try:
+            sessao_cookie.apagar()
+        except Exception:
+            pass
 
     st.markdown("""
     <style>
@@ -601,6 +607,16 @@ if not st.session_state.authenticated:
 # RESTANTE DO APP (autenticado) — código original inalterado
 # ══════════════════════════════════════════════════════════
 
+# grava (uma vez por sessão) o cookie de login, qualquer que tenha sido o jeito de entrar
+if not st.session_state.get("_cookie_sessao"):
+    try:
+        _uid_ck = st.session_state.get("usuario_id") or (st.session_state.get("user") or {}).get("localId")
+        if _uid_ck:
+            sessao_cookie.gravar(_uid_ck, (st.session_state.get("usuario") or {}).get("email", ""))
+            st.session_state["_cookie_sessao"] = True
+    except Exception as e:
+        logger.warning(f"Erro ao gravar o cookie de sessão: {e}")
+
 if 'db' not in st.session_state:
     try:
         usuario_id = None
@@ -759,6 +775,7 @@ def _render_bloqueio_trial(perfil=None, uid=None):
     with _meio:
         if st.button("Sair da conta", key="btn_sair_trial", use_container_width=True):
             st.session_state.authenticated = False
+            sessao_cookie.sair()
             st.session_state.pop('_confirmar_logout', None)
             st.rerun()
 
@@ -973,6 +990,7 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
         _c1, _c2 = st.sidebar.columns(2)
         if _c1.button("Sim, sair", key="btn_logout_sim", type="secondary", use_container_width=True):
             st.session_state.authenticated = False
+            sessao_cookie.sair()
             st.session_state.current_page = "Dashboard"
             st.session_state.pop('_confirmar_logout', None)
             st.rerun()

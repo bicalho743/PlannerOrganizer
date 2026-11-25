@@ -86,8 +86,20 @@ def _ir(pagina):
 
 
 def _primeiro_nome():
-    u = st.session_state.get("usuario") or {}
-    nome = u.get("nome") if isinstance(u, dict) else getattr(u, "nome", "")
+    """Primeiro nome do Perfil; o da sessão só se o Perfil não tiver (no login por Google/e-mail sem nome a sessão
+    guardava o começo do e-mail, e a saudação dizia "Boa tarde, Solanobicalho")."""
+    nome = ""
+    try:
+        perfil = st.session_state.db.get_perfil_usuario() or {}
+        nome = (perfil.get("nome") or "").strip()
+    except Exception:
+        pass
+    if not nome:
+        u = st.session_state.get("usuario") or {}
+        nome = u.get("nome") if isinstance(u, dict) else getattr(u, "nome", "")
+        email = (u.get("email") if isinstance(u, dict) else "") or ""
+        if nome and email and nome.replace(" ", "").lower() == email.split("@")[0].replace(".", "").lower():
+            nome = ""   # era só o começo do e-mail: melhor sem nome do que um nome errado
     return (nome or "").split(" ")[0]
 
 

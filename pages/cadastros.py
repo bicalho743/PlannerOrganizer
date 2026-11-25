@@ -943,7 +943,7 @@ def show(modo="todos"):
                             observacoes=observacoes,
                             percentual_comissao=percentual_comissao
                         )
-                        st.success("Fornecedor cadastrado com sucesso!")
+                        st.success(f"Fornecedor {nome} cadastrado: {categoria}, comissão de {percentual_comissao:g}%.")
                         st.session_state['update_fornecedores'] = True
                     except Exception as e:
                         st.error(f"Erro ao cadastrar fornecedor: {str(e)}")
@@ -970,7 +970,8 @@ def show(modo="todos"):
 
                 if not registros.empty:
                     # Definir colunas para exibição
-                    colunas = ['id', 'descricao', 'contato', 'categoria', 'endereco', 'pix', 'recorrente', 'percentual_comissao', 'observacoes']
+                    # nome, categoria e comissão primeiro (a comissão ficava escondida no fim da tabela larga)
+                    colunas = ['descricao', 'categoria', 'percentual_comissao', 'contato', 'pix', 'endereco', 'observacoes', 'recorrente', 'id']
                     rename = {
                         'id': 'ID',
                         'descricao': 'Nome/Razão Social',
@@ -1537,7 +1538,7 @@ def show(modo="todos"):
 
                     if submitted and nome_produto:
                         try:
-                            nome_produto = nome_produto.strip().title()
+                            nome_produto = nome_produto.strip()[:1].upper() + nome_produto.strip()[1:]  # só a 1ª letra (".title()" estragava "Caixa organizadora 30x30")
                             produto_id = st.session_state.db.add_produto(
                                 nome=nome_produto,
                                 preco_custo=preco_custo,
@@ -1634,7 +1635,7 @@ def show(modo="todos"):
 
                                     if submitted_edit and nome_edit:
                                         try:
-                                            nome_edit = nome_edit.strip().title()
+                                            nome_edit = nome_edit.strip()[:1].upper() + nome_edit.strip()[1:]
                                             if hasattr(st.session_state.db, 'update_produto'):
                                                 st.session_state.db.update_produto(
                                                     produto_id=produto_id,

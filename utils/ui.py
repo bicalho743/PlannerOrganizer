@@ -5,6 +5,8 @@ botao_excluir(): botão destrutivo (contorno vermelho discreto). Uma ação
 irreversível (excluir/remover) nunca deve ter o mesmo peso visual das ações
 seguras — evita clique acidental. Fonte única para todas as páginas.
 """
+import os
+
 import streamlit as st
 
 # Botão destrutivo (vermelho) e link de fechar (cinza): o estilo fica em .streamlit/style.css,
@@ -117,32 +119,97 @@ def _somente_leitura():
     return False
 
 
-def baixar_pdf(rotulo, key, gerar, legenda=None):
-    """Botão "Baixar ..." de um clique para um PDF gerado só quando a pessoa pede.
+_PASTA_PDF = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static", "_pdf")
 
-    gerar() devolve (caminho, nome_arquivo, erro). No primeiro clique o PDF é gerado e a tela
-    volta com o botão de download no mesmo lugar, que um script aciona sozinho; os cliques
-    seguintes na mesma sessão baixam direto. (O st.download_button aceita gerar no clique, mas
-    roda fora da sessão: o PDF ficaria sem o banco e o perfil da conta.)"""
-    import os
+
+def publicar_pdf(caminho_ou_bytes, nome):
+    """Copia o PDF para static/_pdf/<código aleatório>/<nome> e devolve o endereço (app/static/...).
+
+    Antes o download usava o arquivo temporário do Streamlit, que some quando a tela se atualiza: o botão dava
+    404 e o arquivo baixava com nome em código. O endereço aqui não expira com a tela (o arquivo é apagado depois
+    de 2 horas) e o código aleatório de 32 letras não dá para adivinhar."""
+    import re
+    import secrets
+    import shutil
+    import time
+    os.makedirs(_PASTA_PDF, exist_ok=True)
+    agora = time.time()
+    for d in os.listdir(_PASTA_PDF):   # limpeza: PDFs com mais de 2 horas
+        cam = os.path.join(_PASTA_PDF, d)
+        try:
+            if agora - os.path.getmtime(cam) > 7200:
+                shutil.rmtree(cam, ignore_errors=True)
+        except OSError:
+            pass
+    nome = re.sub(r"[^\w.\-]+", "_", str(nome or "documento.pdf"), flags=re.ASCII).strip("_") or "documento.pdf"
+    if not nome.lower().endswith(".pdf"):
+        nome += ".pdf"
+    token = secrets.token_hex(16)
+    pasta = os.path.join(_PASTA_PDF, token)
+    os.makedirs(pasta)
+    destino = os.path.join(pasta, nome)
+    if isinstance(caminho_ou_bytes, (bytes, bytearray)):
+        with open(destino, "wb") as f:
+            f.write(caminho_ou_bytes)
+    else:
+        shutil.copyfile(caminho_ou_bytes, destino)
+    return f"app/static/_pdf/{token}/{nome}", nome
+
+
+def link_pdf(rotulo, url, nome, key, auto=False):
+    """Botão (link) de download para um PDF publicado com publicar_pdf. auto=True baixa sozinho na hora."""
+    import html as _h
     import streamlit.components.v1 as components
-    estado, auto, dl_key = f"_pdf_{key}", f"_pdf_{key}_auto", f"dl_{key}"
-    salvo = st.session_state.get(estado)
-    if isinstance(salvo, dict) and salvo.get("path") and os.path.exists(salvo["path"]):
-        with open(salvo["path"], "rb") as f:
-            st.download_button(rotulo, data=f.read(), file_name=salvo["name"], mime="application/pdf",
-                               key=dl_key, icon=":material/download:", use_container_width=True)
-        if legenda:
-            st.caption(legenda)
-        if st.session_state.pop(auto, False):
-            components.html(f"""<script>
+    st.markdown(f'<a class="po-baixar-pdf" id="lnk_{_h.escape(key)}" href="{_h.escape(url)}" download="{_h.escape(nome)}" '
+                f'target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+                f'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12"/>'
+                f'<path d="m6 11 6 6 6-6"/><path d="M5 20h14"/></svg>{_h.escape(rotulo)}</a>', unsafe_allow_html=True)
+    if auto:
+        components.html(f"""<script>
 (function(){{
   var n = 0, t = setInterval(function(){{
-    var b = window.parent.document.querySelector('.st-key-{dl_key} button');
-    if (b) {{ clearInterval(t); b.click(); }} else if (++n > 40) clearInterval(t);
+    var a = window.parent.document.getElementById('lnk_{key}');
+    if (a) {{ clearInterval(t); a.click(); }} else if (++n > 40) clearInterval(t);
   }}, 100);
 }})();
 </script>""", height=0)
+
+
+CSS_BAIXAR_PDF = """<style>
+a.po-baixar-pdf { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 40px;
+  padding: 8px 14px; border-radius: 10px; border: 1px solid #E7E2D6; background: #F6EDD3; color: #0D1B2A !important;
+  font-weight: 600; text-decoration: none !important; box-sizing: border-box; }
+a.po-baixar-pdf:hover { border-color: #C9A84C; }
+</style>"""
+
+
+def baixar_pdf_pronto(rotulo, dados, nome, key):
+    """Link de download para um PDF já gerado (bytes), no lugar do st.download_button (que dava 404 e nome em código
+    depois que a tela se atualizava). Publica uma vez por conteúdo: redesenhar a tela não cria outra cópia."""
+    import hashlib
+    h = hashlib.md5(dados).hexdigest()
+    salvo = st.session_state.get(f"_pdfb_{key}")
+    if not (salvo and salvo[0] == h and os.path.exists(os.path.join(_PASTA_PDF, salvo[1].split("/_pdf/", 1)[1]))):
+        url, nome_pub = publicar_pdf(dados, nome)
+        salvo = (h, url, nome_pub)
+        st.session_state[f"_pdfb_{key}"] = salvo
+    st.markdown(CSS_BAIXAR_PDF, unsafe_allow_html=True)
+    link_pdf(rotulo, salvo[1], salvo[2], f"dlb_{key}")
+
+
+def baixar_pdf(rotulo, key, gerar, legenda=None):
+    """Botão "Baixar ..." de um clique para um PDF gerado só quando a pessoa pede.
+
+    gerar() devolve (caminho, nome_arquivo, erro). No primeiro clique o PDF é gerado, publicado num endereço que
+    não expira com a tela (publicar_pdf) e baixado na hora; depois o botão vira um link direto para ele."""
+    estado, auto = f"_pdf_{key}", f"_pdf_{key}_auto"
+    salvo = st.session_state.get(estado)
+    st.markdown(CSS_BAIXAR_PDF, unsafe_allow_html=True)
+    if isinstance(salvo, dict) and salvo.get("url") and os.path.exists(
+            os.path.join(_PASTA_PDF, salvo["url"].split("/_pdf/", 1)[1])):
+        link_pdf(rotulo, salvo["url"], salvo["name"], f"dl_{key}", auto=st.session_state.pop(auto, False))
+        if legenda:
+            st.caption(legenda)
         return
     with st.container(key=f"btndoc_{key}"):
         clicou = st.button(rotulo, key=f"gen_{key}", icon=":material/download:", use_container_width=True)
@@ -154,7 +221,12 @@ def baixar_pdf(rotulo, key, gerar, legenda=None):
         with st.spinner("Preparando o PDF…"):
             caminho, nome, erro = gerar()
         if caminho:
-            st.session_state[estado] = {"path": caminho, "name": nome}
+            try:
+                url, nome_pub = publicar_pdf(caminho, nome or os.path.basename(caminho))
+            except Exception as e:
+                st.error(f"Não foi possível preparar o download: {e}")
+                return
+            st.session_state[estado] = {"url": url, "name": nome_pub}
             st.session_state[auto] = True
             try:  # funil de conversão: primeiro PDF gerado pela conta (utils/funil.py)
                 from utils import funil

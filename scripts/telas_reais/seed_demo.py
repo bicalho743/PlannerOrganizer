@@ -50,6 +50,25 @@ def limpar():
             print("  (pulado)", sql.split(" WHERE")[0], "-", str(e).splitlines()[0][:80])
 
 
+def _logo_demo():
+    """Monograma "AR" dourado sobre creme, em data URL (como o Perfil grava o logotipo)."""
+    import base64
+    import io
+    from PIL import Image, ImageDraw, ImageFont
+    img = Image.new("RGB", (240, 240), "#F6EDD3")
+    dr = ImageDraw.Draw(img)
+    dr.ellipse((14, 14, 226, 226), outline="#B8943D", width=6)
+    fonte = None
+    for f in ("/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf", "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf"):
+        if os.path.exists(f):
+            fonte = ImageFont.truetype(f, 92)
+            break
+    dr.text((120, 122), "AR", fill="#8A6A1C", font=fonte or ImageFont.load_default(), anchor="mm")
+    buf = io.BytesIO()
+    img.save(buf, "PNG")
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
 def main():
     limpar()
     db = Database(usuario_id=UID)
@@ -88,6 +107,13 @@ def main():
                                                ("Renata Dias", "Organização", "Organização de Cozinha, Área de serviço.", 1650, 2)]:
         pid = prop(cli, tipo, desc, valor, "finalizada", d(-dias_atras - 10), inicio=d(-dias_atras), fim=d(-dias_atras), dias=1)
         db.create_post_organization(pid, clientes[cli], d(-dias_atras))
+    # retornos que já passaram foram feitos (uma conta real não fica com mensagens atrasadas há semanas)
+    with engine.begin() as c:
+        c.execute(text("UPDATE post_organization_actions SET status = 'FEITO', completed_at = due_date "
+                       "WHERE usuario_id = :u AND due_date < :lim"), {"u": UID, "lim": d(-1)})
+    # logotipo (monograma) e cor da marca: as telas e os PDFs saem como os de uma organizer que já configurou tudo
+    with engine.begin() as c:
+        c.execute(text("UPDATE perfis SET logo = :l WHERE usuario_id = :u"), {"l": _logo_demo(), "u": UID})
 
     db.salvar_compromisso(None, data=H, titulo="Visita técnica", hora="16:00", cliente_id=clientes["Paula Nunes"],
                           local="", valor=0, observacoes="Lavanderia")
@@ -110,11 +136,29 @@ def main():
     lanc("despesa", "Assistente Júlia", 360, "Pagamento Equipe/Assistentes", d(-7), True, "contas_a_pagar")
     lanc("despesa", "Caixas e fitas", 180, "Custos Operacionais", d(-9), True, "contas_a_pagar")
     lanc("despesa", "DAS do MEI", 86.05, "Impostos (DAS)", d(5), False, "contas_a_pagar")
+    # DAS dos meses anteriores pagos em dia (senão o Financeiro mostra guias "vencidas" desde o começo do ano)
+    from datetime import date as _date
+    for ano, mes in [(H.year - 1, 12)] + [(H.year, m) for m in range(1, H.month)]:
+        venc = _date(ano + (mes == 12), mes % 12 + 1, 20)
+        if venc < H:
+            lanc("despesa", f"DAS do MEI · competência {mes:02d}/{ano}", 86.05, "Impostos (DAS)", venc, True, "contas_a_pagar")
 
-    for nome, custo, venda, est, minimo in [("Colmeia 30x30", 18, 30, 2, 6), ("Cabide de veludo", 4.5, 9, 40, 20),
+    prods = {}
+    for nome, custo, venda, est, minimo in [("Colmeia 30x30", 18, 30, 14, 6), ("Cabide de veludo", 4.5, 9, 60, 20),
                                             ("Cesto de palha", 35, 70, 3, 4), ("Caixa organizadora", 22, 42, 12, None)]:
-        db.add_produto(nome=nome, preco_custo=custo, preco_venda=venda, estoque=est, estoque_minimo=minimo,
-                       categoria="Organização")
+        prods[nome] = db.add_produto(nome=nome, preco_custo=custo, preco_venda=venda, estoque=est, estoque_minimo=minimo,
+                                     categoria="Organização")
+    # vendas de produtos junto com os serviços (a tela de Vendas não fica vazia)
+    for cli, itens, quando, recebido in [
+            ("Clara Mendes", [("Colmeia 30x30", 6), ("Caixa organizadora", 3)], d(-11), True),
+            ("Luana Prado", [("Cabide de veludo", 30)], d(-7), True),
+            ("Mariana Lopes", [("Cesto de palha", 2), ("Colmeia 30x30", 4)], d(-2), False)]:
+        try:
+            db.add_venda(clientes[cli], [{"produto_id": prods[n], "quantidade": q} for n, q in itens],
+                         forma_pagamento="Pix", data_venda=quando, recebido=recebido,
+                         **({} if recebido else {"parcelas": 1, "primeiro_vencimento": d(5)}))
+        except Exception as e:
+            print("  venda não criada:", e)
     print("Conta demo_landing pronta:", len(clientes), "clientes.")
 
 

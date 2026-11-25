@@ -15,7 +15,7 @@ import pandas as pd
 import streamlit as st
 
 from utils.currency_formatter import fmt_brl
-from utils.indicadores import (CATEGORIA_IMPOSTO, CATEGORIA_RETIRADA, DAS_MEI, LIMITE_MEI, REALIZADO, das_do_ano,
+from utils.indicadores import (descricao_legivel, CATEGORIA_IMPOSTO, CATEGORIA_RETIRADA, DAS_MEI, LIMITE_MEI, REALIZADO, das_do_ano,
                                eh_retirada, entrou_gastou, faturamento_ano, impostos_pagos_no_mes, movimentos,
                                prazo_dasn, recebido_no_mes, retirado, simples_do_ano)
 from utils.ui import botao_editar, botao_excluir, cartao_clicavel, input_moeda
@@ -377,7 +377,7 @@ def _itens(financeiro_df, props):
             cli_id = r.get("origem_id")
         itens.append({"id": r["id"], "lado": lado, "d": d, "quando": quando, "realizado": realizado,
                       "cancelado": str(r.get("status") or "").lower() == "cancelado",
-                      "valor": _safe_float(r.get("valor")), "descricao": str(r.get("descricao") or ""),
+                      "valor": _safe_float(r.get("valor")), "descricao": descricao_legivel(r.get("descricao")),
                       "categoria": str(r.get("categoria") or ""), "numero": numero,
                       "cliente_id": int(cli_id) if cli_id is not None and not pd.isna(cli_id) else None})
     return itens

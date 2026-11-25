@@ -135,11 +135,11 @@ def _inscricao(engine, uid, email):
     st.markdown(f"Indique o Planner Organiza para outras organizers e ganhe **{int(af.PERCENTUAL * 100)}% "
                 f"de cada pagamento por {af.MESES_COMISSAO} meses**, recebendo por Pix todo mês.")
     st.markdown(TERMOS)
-    with st.form("form_afiliada"):
-        nome = st.text_input("Nome completo")
+    with st.form("form_afiliada", clear_on_submit=False):
+        nome = st.text_input("Nome completo", key="af_nome")
         c1, c2 = st.columns(2)
-        cpf = c1.text_input("CPF")
-        pix = c2.text_input("Chave Pix")
+        cpf = c1.text_input("CPF", key="af_cpf", placeholder="000.000.000-00")
+        pix = c2.text_input("Chave Pix", key="af_pix")
         instagram = st.text_input("Instagram (opcional)", placeholder="@seuperfil")
         codigo = st.text_input("Código que você quer usar (opcional)", placeholder="Ex.: TAMARA",
                                help="Só letras e números. Se ficar em branco, usamos o seu primeiro nome.")

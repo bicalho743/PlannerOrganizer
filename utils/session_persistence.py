@@ -32,6 +32,11 @@ def save_session_to_storage(user_data: dict, usuario_data: dict, usuario_id: str
         'timestamp': datetime.now().isoformat()
     }
     
+    # O login agora fica num cookie assinado (utils/sessao_cookie.py, gravado em app.py). Não guarda mais os dados
+    # da conta sem assinatura no localStorage; só limpa o que versões antigas deixaram.
+    st.session_state.pop("_sessao_saiu", None)
+    st.components.v1.html("<script>try{localStorage.removeItem('planner_session');localStorage.removeItem('planner_last_save')}catch(e){}</script>", height=0)
+    return
     encoded_data = encode_session_data(session_data)
     
     # JavaScript para salvar no localStorage
@@ -117,7 +122,13 @@ def restore_session_from_storage():
     st.components.v1.html(js_restore, height=0)
 
 def clear_stored_session():
-    """Limpa sessão armazenada no logout"""
+    """Limpa sessão armazenada no logout (apaga também o cookie de login, utils/sessao_cookie.py)"""
+    try:
+        from utils import sessao_cookie
+        sessao_cookie.apagar()
+        st.session_state.pop("_cookie_sessao", None)
+    except Exception:
+        pass
     js_code = """
     <script>
     localStorage.removeItem('planner_session');

@@ -17,13 +17,13 @@ def engine():
 
 
 def _aprovada(engine, uid="uid-tamara", nome="Tâmara Cavalcante", email="tamara@x.com"):
-    codigo = af.inscrever(engine, uid, nome, email, "123.456.789-00", "tamara@pix")
+    codigo = af.inscrever(engine, uid, nome, email, "123.456.789-09", "tamara@pix")
     af.mudar_status(engine, codigo, "aprovada")
     return codigo
 
 
 def test_inscricao_gera_codigo_pelo_nome_e_fica_pendente(engine):
-    codigo = af.inscrever(engine, "uid-1", "Tâmara Cavalcante", "t@x.com", "12345678900", "pix")
+    codigo = af.inscrever(engine, "uid-1", "Tâmara Cavalcante", "t@x.com", "12345678909", "pix")
     assert codigo == "TAMARA"
     assert af.afiliada_da_conta(engine, "uid-1")["status"] == "pendente"
     with pytest.raises(af.AfiliadoInvalido):
@@ -31,8 +31,8 @@ def test_inscricao_gera_codigo_pelo_nome_e_fica_pendente(engine):
 
 
 def test_codigo_repetido_ganha_numero(engine):
-    c1 = af.inscrever(engine, "uid-1", "Ana", "a@x.com", "12345678900", "pix", codigo_desejado="ANA")
-    c2 = af.inscrever(engine, "uid-2", "Ana", "b@x.com", "12345678901", "pix2", codigo_desejado="ANA")
+    c1 = af.inscrever(engine, "uid-1", "Ana", "a@x.com", "12345678909", "pix", codigo_desejado="ANA")
+    c2 = af.inscrever(engine, "uid-2", "Ana", "b@x.com", "11144477735", "pix2", codigo_desejado="ANA")
     assert (c1, c2) == ("ANA", "ANA2")
 
 
@@ -40,7 +40,7 @@ def test_cpf_e_pix_obrigatorios(engine):
     with pytest.raises(af.AfiliadoInvalido):
         af.inscrever(engine, "uid-1", "Ana", "a@x.com", "123", "pix")
     with pytest.raises(af.AfiliadoInvalido):
-        af.inscrever(engine, "uid-1", "Ana", "a@x.com", "12345678900", "")
+        af.inscrever(engine, "uid-1", "Ana", "a@x.com", "12345678909", "")
 
 
 def test_vinculo_uma_vez_e_sem_autoindicacao(engine):
@@ -137,9 +137,9 @@ def test_evento_da_loja_gera_e_estorna_comissao(engine, monkeypatch):
 def test_cpf_e_pix_unicos_e_desconto_da_indicada(engine):
     codigo = _aprovada(engine)
     with pytest.raises(af.AfiliadoInvalido):  # mesmo CPF
-        af.inscrever(engine, "uid-x", "Outra", "o@x.com", "123.456.789-00", "outro@pix")
+        af.inscrever(engine, "uid-x", "Outra", "o@x.com", "123.456.789-09", "outro@pix")
     with pytest.raises(af.AfiliadoInvalido):  # mesma chave Pix
-        af.inscrever(engine, "uid-y", "Outra", "o@x.com", "98765432100", "TAMARA@pix")
+        af.inscrever(engine, "uid-y", "Outra", "o@x.com", "11144477735", "TAMARA@pix")
     assert af.tem_desconto_indicada(engine, "uid-maria") is False
     af.vincular(engine, "uid-maria", codigo)
     assert af.tem_desconto_indicada(engine, "uid-maria") is True

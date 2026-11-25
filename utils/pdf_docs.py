@@ -123,7 +123,7 @@ class Doc:
         self.y = linha - 14 * mm
 
     def falta(self, h):
-        if self.y - h < RODAPE_H + 8 * mm:
+        if self.y - h < RODAPE_H + 4 * mm:
             self.rodape()
             self.c.showPage()
             self.pagina += 1
@@ -197,7 +197,7 @@ class Doc:
             self.c.setFillColor(self.claro); self.c.roundRect(x, self.y - h + 2 * mm, w, h, 3.5 * mm, fill=1, stroke=0)
             self.c.setFillColor(TX); self.c.setFont("Helvetica-Bold", 9); self.c.drawString(x + 4 * mm, self.y - 2.6 * mm, n)
             x += w + 2.5 * mm
-        self.y -= h + 1 * mm
+        self.y -= h + 4 * mm
 
     def marcadores(self, linhas, tam=9.5, junto=False):
         if junto:
@@ -281,7 +281,7 @@ class Doc:
         self.c.setFillColor(cor); self.c.setFont("Helvetica-Bold", 19); self.c.drawRightString(W - M - 6 * mm, y - 5.5 * mm, valor)
         if nota:
             self.c.setFillColor(MU); self.c.setFont("Helvetica", 8.5); self.c.drawString(M + 6 * mm, y - 11.5 * mm, _seguro(nota)[:110])
-        self.y = top - h
+        self.y = top - h - 4 * mm
 
     def nota(self, txt):
         partes = simpleSplit(_seguro(txt), "Helvetica", 9, CW - 10 * mm)

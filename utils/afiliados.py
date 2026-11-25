@@ -78,6 +78,18 @@ def afiliada_da_conta(engine, uid):
     return dict(r) if r else None
 
 
+def cpf_valido(cpf) -> bool:
+    """Confere os dois dígitos verificadores do CPF (aceita com ou sem pontos e traço)."""
+    d = [int(x) for x in re.sub(r"\D", "", str(cpf or ""))]
+    if len(d) != 11 or len(set(d)) == 1:
+        return False
+    for n in (9, 10):
+        soma = sum(d[i] * (n + 1 - i) for i in range(n))
+        if (soma * 10 % 11) % 10 != d[n]:
+            return False
+    return True
+
+
 def inscrever(engine, uid, nome, email, cpf, pix, instagram="", codigo_desejado="") -> str:
     """Cria a inscrição (pendente). Devolve o código reservado."""
     criar_tabelas(engine)
@@ -86,6 +98,8 @@ def inscrever(engine, uid, nome, email, cpf, pix, instagram="", codigo_desejado=
         raise AfiliadoInvalido("Preencha o nome e a chave Pix.")
     if len(cpf) != 11:
         raise AfiliadoInvalido("Digite um CPF com 11 números.")
+    if not cpf_valido(cpf):
+        raise AfiliadoInvalido("Este CPF não é válido: confira os números.")
     if afiliada_da_conta(engine, uid):
         raise AfiliadoInvalido("Esta conta já tem uma inscrição no programa.")
     with engine.connect() as c:  # um CPF e uma chave Pix por afiliada (contra contas duplicadas)
