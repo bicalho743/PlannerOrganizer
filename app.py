@@ -291,6 +291,9 @@ if (not st.session_state.authenticated and st.query_params.get("cadastro") == "1
     st.session_state._email_cadastro = st.query_params.get("email", "")
     from utils import onboarding_novo
     onboarding_novo.abrir(st.session_state._email_cadastro)  # onboarding antes da conta (o cadastro vem no fim)
+    # ela já viu as boas-vindas na landing: começa na primeira pergunta
+    if onboarding_novo.estado().get("passo") == "inicio":
+        onboarding_novo.estado()["passo"] = "voce"
 # ?comecar=1 (anúncios, links) e ?onb= (rascunho que voltou depois de atualizar a página) também abrem o onboarding
 if not st.session_state.authenticated and not st.session_state.get("_onb_aberto") and (
         st.query_params.get("comecar") == "1" or st.query_params.get("onb")):
