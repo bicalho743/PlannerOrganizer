@@ -221,22 +221,82 @@ def _voltar(anterior, chave):
         _ir(anterior)
 
 
+BORDAO_SITE = 'A casa delas em <em>ordem</em>. O seu negócio <em>também</em>.'
+
+# Celular animado da tela de boas-vindas: ela "toca" nos ambientes, o preço sobe e a proposta sai pronta (8 s, em loop).
+CELULAR = """<style>
+.bv-cel { width:250px; max-width:72vw; margin:6px auto 0; background:#0D1B2A; border-radius:34px; padding:10px;
+          box-shadow:0 18px 40px rgba(13,27,42,.18); position:relative; }
+.bv-tela { background:#F7F5F0; border-radius:26px; padding:16px 13px 14px; height:330px; overflow:hidden; position:relative;
+           font-family:'Source Sans 3',system-ui,sans-serif; }
+.bv-notch { position:absolute; top:10px; left:50%; transform:translateX(-50%); width:70px; height:16px; background:#0D1B2A;
+            border-radius:0 0 12px 12px; }
+.bv-ey { font-size:.55rem; font-weight:700; letter-spacing:.14em; color:#9C7A22; text-transform:uppercase; margin-top:10px; }
+.bv-tt { font-family:'Cormorant Garamond',Georgia,serif; font-size:1.15rem; font-weight:600; color:#0D1B2A; margin:2px 0 8px; }
+.bv-preco { background:#0D1B2A; border-radius:14px; padding:10px 12px; color:#fff; position:relative; height:54px; }
+.bv-preco small { font-size:.55rem; color:#C8D1DC; display:block; }
+.bv-preco span { position:absolute; left:12px; top:22px; font-family:'Cormorant Garamond',Georgia,serif; font-size:1.55rem;
+                 color:#C9A84C; opacity:0; animation:bvp 8s infinite; }
+.bv-preco .p0 { animation-name:bvp0; } .bv-preco .p1 { animation-name:bvp1; } .bv-preco .p2 { animation-name:bvp2; }
+.bv-amb { display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid #E7E2D6;
+          border-radius:10px; padding:7px 10px; margin-top:7px; font-size:.7rem; font-weight:600; color:#0D1B2A; }
+.bv-amb i { font-style:normal; font-size:.58rem; color:#6B7C94; background:#F2EFE7; border-radius:999px; padding:1px 7px; }
+.bv-amb.a1 { animation:bva1 8s infinite; } .bv-amb.a2 { animation:bva2 8s infinite; }
+.bv-pdf { position:absolute; left:13px; right:13px; bottom:14px; background:#E3F1E8; color:#2F6B4F; border-radius:12px;
+          padding:9px 10px; font-size:.68rem; font-weight:700; opacity:0; transform:translateY(10px); animation:bvpdf 8s infinite; }
+.bv-mao { position:absolute; width:34px; height:34px; left:150px; top:200px; animation:bvmao 8s infinite; filter:drop-shadow(0 3px 4px rgba(0,0,0,.2)); }
+@keyframes bvp0 { 0%,14% { opacity:1 } 18%,100% { opacity:0 } }
+@keyframes bvp1 { 0%,15% { opacity:0 } 19%,40% { opacity:1 } 44%,100% { opacity:0 } }
+@keyframes bvp2 { 0%,41% { opacity:0 } 45%,96% { opacity:1 } 100% { opacity:0 } }
+@keyframes bva1 { 0%,14% { border-color:#E7E2D6; background:#fff } 17%,96% { border-color:#C9A84C; background:#FFFBEF } 100% { border-color:#E7E2D6; background:#fff } }
+@keyframes bva2 { 0%,40% { border-color:#E7E2D6; background:#fff } 43%,96% { border-color:#C9A84C; background:#FFFBEF } 100% { border-color:#E7E2D6; background:#fff } }
+@keyframes bvpdf { 0%,60% { opacity:0; transform:translateY(10px) } 66%,94% { opacity:1; transform:none } 100% { opacity:0 } }
+@keyframes bvmao { 0% { left:150px; top:240px } 12% { left:150px; top:168px } 16% { transform:scale(.85) } 20% { transform:none; left:150px; top:168px }
+                   36% { left:150px; top:205px } 41% { transform:scale(.85) } 46% { transform:none; left:150px; top:205px }
+                   70%,100% { left:170px; top:300px; opacity:.0 } }
+@media (prefers-reduced-motion: reduce) { .bv-cel * { animation:none !important; } .bv-preco .p2, .bv-pdf { opacity:1; transform:none; } .bv-mao { display:none; } }
+.bv-bem { text-align:center; font-size:.78rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#9C7A22; margin:22px 0 6px; }
+.bv-bordao { text-align:center; font-family:'Cormorant Garamond',Georgia,serif; font-size:2.35rem; line-height:1.12; font-weight:600;
+             color:#0D1B2A; margin:0 0 10px; text-wrap:balance; }
+.bv-bordao em { font-style:normal; color:#B8943D; }
+.bv-prova { text-align:center; font-size:.9rem; color:#5B6B80; margin:0 0 18px; }
+.bv-prova b { color:#0D1B2A; }
+.st-key-bv_continuar button { min-height:54px !important; border-radius:999px !important; font-size:1.05rem !important; }
+.st-key-bv_entrar, .st-key-bv_entrar [data-testid="stElementContainer"], .st-key-bv_entrar .stButton {
+  display:flex !important; justify-content:center !important; width:100% !important; }
+.st-key-bv_entrar button, .st-key-bv_entrar button p { color:#5B6B80 !important; font-size:.98rem !important; }
+.st-key-bv_entrar button p strong, .st-key-bv_entrar button p b { color:#9C7A22 !important; }
+.st-key-bv_continuar button, .st-key-bv_continuar button[kind] { border-radius:999px !important; min-height:54px !important; }
+@media (max-width: 640px) { .bv-bordao { font-size:1.95rem; } }
+</style>
+<div class="bv-cel"><div class="bv-notch"></div><div class="bv-tela">
+  <div class="bv-ey">Preço de um projeto</div><div class="bv-tt">Quais ambientes?</div>
+  <div class="bv-preco"><small>Preço sugerido</small><span class="p0">R$ 0</span><span class="p1">R$ 820</span><span class="p2">R$ 1.480</span></div>
+  <div class="bv-amb a1">Cozinha <i>6 h</i></div>
+  <div class="bv-amb a2">Closet <i>5 h</i></div>
+  <div class="bv-amb">Quarto de casal <i>4 h</i></div>
+  <div class="bv-pdf">✓ Proposta pronta em PDF, com a sua marca</div>
+</div>
+<svg class="bv-mao" viewBox="0 0 24 24" fill="#fff" stroke="#0D1B2A" stroke-width="1.3" stroke-linejoin="round">
+  <path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10m0-.5V8.5a1.5 1.5 0 0 1 3 0V11m0-1a1.5 1.5 0 0 1 3 0v4.5a6 6 0 0 1-6 6h-1.2a6 6 0 0 1-4.6-2.2L4.6 16a1.5 1.5 0 0 1 2.3-1.9L9 16.5V11"/></svg>
+</div>"""
+
+
 def _tela_inicio(o):
-    _topo()
-    st.markdown('<div class="ob-ey" style="margin-top:14px">Para personal organizer</div>'
-                '<div class="ob-t" style="font-size:2.2rem">Monte seu primeiro orçamento <em>em 3 minutos</em></div>'
-                '<p class="ob-p">Descubra quanto vale a sua hora, calcule o preço do projeto e veja a proposta com a '
-                'sua marca. Sem cadastro para começar.</p>'
-                '<div class="ob-lista"><div><b>✓</b>Sua hora e diária ideais</div>'
-                '<div><b>✓</b>Preço sugerido por ambiente ou por mudança</div>'
-                '<div><b>✓</b>Proposta em PDF com a sua marca</div></div>', unsafe_allow_html=True)
-    if st.button("Começar agora →", key="ob_comecar", type="primary", use_container_width=True):
-        _evento("onboarding_inicio")
-        _ir("voce")
-    st.markdown('<div class="ob-pequeno">Grátis · 7 dias com tudo liberado · sem cartão</div>', unsafe_allow_html=True)
-    if st.button("Já tenho conta · Entrar", key="ob_ja_tenho", use_container_width=True):
-        st.session_state.login_page = "login"
-        st.rerun()
+    """Boas-vindas (como a do app): celular mostrando o Planner, bordão, Continuar e "Já tem conta? Entrar"."""
+    st.markdown(CARTAO + CSS, unsafe_allow_html=True)
+    st.markdown(CELULAR, unsafe_allow_html=True)
+    st.markdown(f'<div class="bv-bem">Bem-vinda ao Planner Organiza</div><div class="bv-bordao">{BORDAO_SITE}</div>'
+                '<div class="bv-prova">Preço, proposta e clientes num lugar só · <b>7 dias grátis, sem cartão</b></div>',
+                unsafe_allow_html=True)
+    with st.container(key="bv_continuar"):
+        if st.button("Continuar", key="ob_comecar", type="primary", use_container_width=True):
+            _evento("onboarding_inicio")
+            _ir("voce")
+    with st.container(key="bv_entrar"):
+        if st.button("Já tem conta? **Entrar**", key="ob_ja_tenho", type="tertiary"):
+            st.session_state.login_page = "login"
+            st.rerun()
 
 
 def _tela_voce(o):

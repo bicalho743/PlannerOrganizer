@@ -32,7 +32,8 @@ except ImportError:
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if 'login_page' not in st.session_state:
-    st.session_state.login_page = "login"
+    # quem chega sem login vê as boas-vindas (onboarding); ?entrar=1 (botão "Entrar" da landing) vai direto ao login
+    st.session_state.login_page = "login" if st.query_params.get("entrar") == "1" else "onboarding"
 if "show_termos" not in st.session_state:
     st.session_state.show_termos = False
 if "show_politica" not in st.session_state:
@@ -526,54 +527,52 @@ if not st.session_state.authenticated:
     # Título do card
     st.markdown("""
       <p class="login-card-title">Bem-vinda de volta ✦</p>
-      <p class="login-card-sub">Acesse sua conta para continuar</p>
+      <p class="login-card-sub">Escolha como entrar na sua conta</p>
     """, unsafe_allow_html=True)
 
-    # Formulário
-    with st.form("login_form"):
-        email = st.text_input("E-mail", placeholder="seu@email.com")
-        password = st.text_input("Senha", type="password", placeholder="••••••••")
-        st.markdown('<div style="height:22px"></div>', unsafe_allow_html=True)
-        submit = st.form_submit_button("Entrar na minha conta", use_container_width=True)
-
-        if submit:
-            if firebase_auth is not None:
-                with st.spinner("Autenticando..."):
-                    result = firebase_auth.login(email, password)
-                    if result['success']:
-                        if 'user' in result and 'localId' in result['user']:
-                            st.session_state.usuario_id = result['user']['localId']
-                            from utils.database import Database
-                            st.session_state.db = Database(usuario_id=result['user']['localId'])
-                        st.session_state.authenticated = True
-                        st.session_state.current_page = "Dashboard"
-                        st.success("Login realizado com sucesso!")
-                        st.rerun()
-                    else:
-                        st.error("E-mail ou senha incorretos.")
-            else:
-                st.error("Sistema de autenticação indisponível.")
-
-    # Botão Google
-    st.markdown("""
-    <div style="display:flex;align-items:center;gap:10px;margin:6px 0 2px;">
-      <div style="flex:1;height:1px;background:#E0DACB"></div>
-      <span style="font-size:0.72rem;color:#6B7C94;letter-spacing:0.1em">ou</span>
-      <div style="flex:1;height:1px;background:#E0DACB"></div>
-    </div>
-    """, unsafe_allow_html=True)
-
+    # Opções de entrada: Google ou e-mail (o formulário abre ao escolher e-mail)
     try:
         from utils.google_auth_component import google_login_button
         google_login_button()
     except Exception:
         pass
+    _com_email = st.session_state.get("_login_email") or st.query_params.get("email")
+    if not _com_email:
+        if st.button("Entrar com e-mail", key="btn_login_email", icon=":material/mail:", use_container_width=True):
+            st.session_state["_login_email"] = True
+            st.rerun()
+
+    # Formulário
+    if _com_email:
+        with st.form("login_form"):
+            email = st.text_input("E-mail", placeholder="seu@email.com")
+            password = st.text_input("Senha", type="password", placeholder="••••••••")
+            st.markdown('<div style="height:22px"></div>', unsafe_allow_html=True)
+            submit = st.form_submit_button("Entrar na minha conta", use_container_width=True)
+
+            if submit:
+                if firebase_auth is not None:
+                    with st.spinner("Autenticando..."):
+                        result = firebase_auth.login(email, password)
+                        if result['success']:
+                            if 'user' in result and 'localId' in result['user']:
+                                st.session_state.usuario_id = result['user']['localId']
+                                from utils.database import Database
+                                st.session_state.db = Database(usuario_id=result['user']['localId'])
+                            st.session_state.authenticated = True
+                            st.session_state.current_page = "Dashboard"
+                            st.success("Login realizado com sucesso!")
+                            st.rerun()
+                        else:
+                            st.error("E-mail ou senha incorretos.")
+                else:
+                    st.error("Sistema de autenticação indisponível.")
 
     # Botões secundários
     st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Esqueci a senha", key="btn_recuperar_senha", use_container_width=True):
+        if _com_email and st.button("Esqueci a senha", key="btn_recuperar_senha", use_container_width=True):
             st.session_state.login_page = "recuperar_senha"
             st.rerun()
     with col2:

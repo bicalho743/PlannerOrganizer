@@ -15,4 +15,14 @@ def test_app_sem_login_mostra_tela_de_entrada(params):
     at.run()
     assert not at.session_state["authenticated"]
     assert "usuario_id" not in at.session_state
-    assert any("Entrar na minha conta" in b.label for b in at.button)
+    # sem login: boas-vindas (Continuar / Já tem conta? Entrar), nunca o sistema
+    assert any(b.label == "Continuar" for b in at.button)
+    assert any("Já tem conta" in b.label for b in at.button)
+
+
+def test_entrar_da_landing_abre_as_opcoes_de_login():
+    at = AppTest.from_file("../app.py", default_timeout=60)
+    at.query_params["entrar"] = "1"
+    at.run()
+    assert not at.session_state["authenticated"]
+    assert any("Entrar com e-mail" in b.label for b in at.button)
