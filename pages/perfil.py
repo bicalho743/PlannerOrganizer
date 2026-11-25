@@ -117,18 +117,20 @@ def preparar_logo(arquivo):
 
 
 def _pdf_exemplo(perfil):
-    """PDF de proposta fictícia com a marca atual, para conferir antes de mandar para clientes."""
+    """PDF de proposta fictícia no modelo novo (o mesmo que a cliente recebe), com a marca atual."""
     import tempfile
-    from utils.pdf_generator_v2 import gerar_pdf_cliente
+    from utils.pdf_proposta import gerar_pdf_proposta, condicoes
+    from utils.visual import hoje
     dados = {
-        "proposta_id": 1, "cliente": "Cliente exemplo", "tipo": "Organização residencial", "status": "Em Aberto",
-        "periodo": datetime.now().strftime("%d/%m/%Y"), "descricao": "Organização de closet e cozinha",
-        "itens": [{"nome": "Organização de closet", "quantidade": 1, "valor_unit": 1800.0, "valor": 1800.0},
-                  {"nome": "Caixas organizadoras", "quantidade": 6, "valor_unit": 45.0, "valor": 270.0}],
-        "total": 2070.0, "observacoes": perfil.get("observacoes_relatorio") or OBSERVACOES_PADRAO,
+        "numero": 1, "cliente": "Juliana (exemplo)", "tipo": "Organização",
+        "subtitulo": "Organização dos ambientes da casa", "prazo": "2 dias", "inicio": "", "data": hoje(),
+        "descricao": "Organização de Cozinha, Closet / guarda-roupa (2). Prazo estimado: 2 dia(s), com 1 assistente.",
+        "itens": [], "total": 2500.0, "sinal": 500.0, "sinal_pago": False,
+        "condicoes": condicoes(perfil.get("observacoes_relatorio") or OBSERVACOES_PADRAO),
+        "equipe": "você + 1 assistente",
     }
     with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
-        gerar_pdf_cliente(dados, tmp.name, perfil=perfil, titulo="Proposta Comercial")
+        gerar_pdf_proposta(dados, tmp.name, perfil=perfil)
         return open(tmp.name, "rb").read()
 
 
