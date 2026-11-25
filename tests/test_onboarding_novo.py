@@ -77,3 +77,25 @@ def test_conta_que_ja_tem_proposta_nao_recebe_rascunho():
     st.session_state["_ob_token"] = ob.salvar_rascunho(_rascunho())
     assert ob.concluir(db) is None
     assert len(db.get_propostas()) == 1
+
+
+def test_numero_de_assistentes():
+    o = _rascunho(assist=3)
+    assert ob.orcamento(o)["pessoas"] == 4
+    assert "com 3 assistentes" in ob.descricao(o)
+    assert "atendimento individual" in ob.descricao(_rascunho(assist=0))
+
+
+def test_numero_da_proposta_comeca_em_1_em_cada_conta():
+    from utils.database import Database
+    nums = []
+    for nome in ("Ana", "Bia"):
+        uid = "num-" + uuid.uuid4().hex[:10]
+        db = Database(usuario_id=uid)
+        db.create_perfil(uid, f"{uid}@teste.com", nome)
+        cli = db.add_cliente(nome="Cliente")
+        for _ in range(2):
+            db.add_proposta(cliente_id=cli, descricao="x", valor=100, status="em_aberto",
+                            gerar_transacoes_automaticas=False)
+        nums.append(sorted(int(n) for n in db.get_propostas()["numero"]))
+    assert nums == [[1, 2], [1, 2]]

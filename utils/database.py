@@ -303,6 +303,10 @@ class Database:
                 conn.execute(_sa_text(
                     "ALTER TABLE propostas ADD COLUMN IF NOT EXISTS sinal DOUBLE PRECISION DEFAULT 0"
                 ))
+                # número da proposta é por conta: único por (conta, número), não no banco todo
+                conn.execute(_sa_text("DROP INDEX IF EXISTS idx_proposta_numero"))
+                conn.execute(_sa_text("CREATE UNIQUE INDEX IF NOT EXISTS idx_proposta_usuario_numero "
+                                      "ON propostas (usuario_id, numero)"))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS logo TEXT"))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS cnpj VARCHAR"))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS precificacao TEXT"))
@@ -1365,9 +1369,16 @@ class Database:
             ultimo_id = self.session.query(func.max(Proposta.id)).execution_options(todas_as_contas=True).scalar()
             proximo_id = 1 if ultimo_id is None else int(ultimo_id) + 1
 
+            # Número que a cliente vê: sequência de cada conta (1, 2, 3...). O id continua global.
+            # Contas antigas seguem do maior número que já têm.
+            ultimo_numero = (self.session.query(func.max(Proposta.numero))
+                             .filter(Proposta.usuario_id == self.usuario_id)
+                             .execution_options(todas_as_contas=True).scalar())
+            proximo_numero = 1 if ultimo_numero is None else int(ultimo_numero) + 1
+
             # Criar dicionário com valores para a proposta
             proposta_data = {
-                'numero': proximo_id,  # Usar o mesmo valor do ID como número
+                'numero': proximo_numero,
                 'cliente_id': cliente_id_local,
                 'descricao': descricao_local,
                 'valor': valor_local,

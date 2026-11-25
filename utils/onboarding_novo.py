@@ -133,7 +133,8 @@ def descricao(o):
     itens = ", ".join(f"{a} ({q})" if q > 1 else a for a, q in o["amb"].items() if q)
     r = orcamento(o) or {}
     dias = r.get("dias_no_local") or 0
-    equipe = "com 1 assistente" if o["assist"] else "atendimento individual"
+    n = int(o["assist"] or 0)
+    equipe = f"com {n} assistente{'s' if n > 1 else ''}" if n else "atendimento individual"
     base = TIPOS[o["tipo"]] + (" de " + itens if o["tipo"] == "organizacao" and itens else
                                (": " + itens if itens else ""))
     return f"{base}. Prazo estimado: {max(1, math.ceil(dias))} dia(s), {equipe}."
@@ -294,9 +295,8 @@ def _tela_orcamento(o):
     for i, a in enumerate(lista):
         rot = a.replace("Closet / guarda-roupa", "Closet").replace("Sala / estante", "Sala")
         o["amb"][a] = cols[i % 2].number_input(rot, 0, 9, int(o["amb"].get(a, 0)), key=f"ob_amb_{o['tipo']}_{i}")
-    assist = st.radio("Equipe", ["Vou sozinha", "Com 1 assistente"], index=o["assist"], horizontal=True,
-                      key="ob_assist")
-    o["assist"] = 1 if assist == "Com 1 assistente" else 0
+    o["assist"] = int(st.number_input("Quantas assistentes vão com você? (0 se for sozinha)", 0, 10, int(o["assist"]),
+                                      key="ob_assist"))
     r = orcamento(o)
     if r:
         o["valor"] = None
@@ -352,6 +352,19 @@ def _tela_marca(o):
     _topo(5)
     st.markdown('<div class="ob-ey">Com a sua cara</div><div class="ob-t">Escolha a <em>sua cor</em></div>',
                 unsafe_allow_html=True)
+    # as opções do rádio viram bolinhas na cor (o nome fica só para leitores de tela)
+    bolas = "".join(
+        f'.st-key-ob_cor [role="radiogroup"] > div:nth-child({i}) label > div > div:first-child {{ background:{c} !important; }}'
+        for i, c in enumerate(CORES.values(), 1))
+    st.markdown('<style>.st-key-ob_cor [role="radiogroup"] { gap:12px !important; flex-wrap:wrap; margin:6px 0 4px; }'
+                '.st-key-ob_cor [role="radiogroup"] label > div > div:first-child { width:36px !important; '
+                'height:36px !important; border:none !important; border-radius:50% !important; margin:0 !important; '
+                'cursor:pointer; box-shadow:0 0 0 1px rgba(13,27,42,.12); }'
+                '.st-key-ob_cor [role="radiogroup"] label > div > div:first-child > div { display:none !important; }'
+                '.st-key-ob_cor [role="radiogroup"] > div[data-selected="true"] label > div > div:first-child '
+                '{ box-shadow:0 0 0 3px #FFFFFF, 0 0 0 5px #C9A84C !important; }'
+                '.st-key-ob_cor [data-testid="stMarkdownContainer"] { position:absolute; width:1px; height:1px; '
+                'overflow:hidden; clip:rect(0 0 0 0); }' + bolas + '</style>', unsafe_allow_html=True)
     o["cor"] = st.radio("Cor da proposta", list(CORES), index=list(CORES).index(o["cor"]), horizontal=True,
                         key="ob_cor", label_visibility="collapsed")
     o["whatsapp"] = st.text_input("Seu WhatsApp · sai na proposta para a cliente responder", value=o["whatsapp"],

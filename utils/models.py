@@ -240,7 +240,7 @@ class Proposta(Base):
     vendas = relationship("Venda", back_populates="proposta") # Relacionamento com vendas
 
     __table_args__ = (
-        Index('idx_proposta_numero', 'numero', unique=True),
+        Index('idx_proposta_usuario_numero', 'usuario_id', 'numero', unique=True),  # número por conta
         Index('idx_proposta_usuario_id', 'usuario_id'),  # Índice para otimizar filtro por usuário
     )
 
