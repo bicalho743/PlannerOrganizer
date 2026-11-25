@@ -5,11 +5,11 @@ Consultas de apoio da tela Vendas (pages/vendas.py), só leitura.
   (mesmos filtros de Database.get_vendas: origem 'venda', categoria Vendas, receitas Recebido/Pendente);
 - itens_resumo: "12 Colmeia 30x30 + 4 Cesto" de cada venda;
 - mais_vendidos: produtos com mais receita num conjunto de vendas;
-- estoque_baixo: produtos com estoque até o limite.
+- estoque_baixo: produtos com estoque até o mínimo de cada um (o que a organizer definiu no produto, ou 5).
 """
 import pandas as pd
 
-ESTOQUE_BAIXO = 5   # não há estoque mínimo por produto no cadastro: até 5 unidades conta como "repor"
+ESTOQUE_BAIXO = 5   # mínimo usado quando a organizer não definiu o estoque mínimo do produto
 
 
 def _uid(db):
@@ -91,9 +91,12 @@ def mais_vendidos(db, ids, n=3):
 
 
 def estoque_baixo(produtos_df, limite=ESTOQUE_BAIXO):
-    """Produtos com estoque até o limite, do menor para o maior."""
+    """Produtos com estoque até o mínimo de cada um (estoque_minimo do produto, ou `limite` se vazio),
+    do menor para o maior. A coluna "minimo" diz qual mínimo valeu."""
     if produtos_df is None or produtos_df.empty or "estoque" not in produtos_df:
-        return pd.DataFrame(columns=["id", "nome", "estoque"])
+        return pd.DataFrame(columns=["id", "nome", "estoque", "minimo"])
     df = produtos_df.copy()
     df["estoque"] = pd.to_numeric(df["estoque"], errors="coerce").fillna(0).astype(int)
-    return df[df["estoque"] <= limite].sort_values(["estoque", "nome"])
+    minimo = pd.to_numeric(df["estoque_minimo"], errors="coerce") if "estoque_minimo" in df else pd.Series(index=df.index, dtype=float)
+    df["minimo"] = minimo.fillna(limite).astype(int)
+    return df[df["estoque"] <= df["minimo"]].sort_values(["estoque", "nome"])

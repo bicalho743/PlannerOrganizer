@@ -1526,7 +1526,11 @@ def show(modo="todos"):
                     with col_preco2:
                         preco_venda = input_moeda("Preço de Venda (R$)", "preco_venda_novo", value=0.0, step=1.0)
 
-                    estoque = st.number_input("Estoque Inicial", min_value=0, value=0)
+                    c_est, c_min = st.columns(2)
+                    estoque = c_est.number_input("Estoque Inicial", min_value=0, value=0)
+                    minimo_novo = c_min.number_input("Estoque mínimo", min_value=0, value=None, step=1,
+                                                     placeholder="5 se deixar vazio",
+                                                     help="Com essa quantidade ou menos, o produto aparece em Repor estoque, em Vendas.")
                     margem = st.number_input("Margem (%)", min_value=0.0, max_value=100.0, value=50.0, format="%.1f")
 
                     submitted = st.form_submit_button("Cadastrar Produto", type="primary")
@@ -1540,7 +1544,8 @@ def show(modo="todos"):
                                 preco_venda=preco_venda,
                                 descricao=descricao,
                                 categoria=categoria,
-                                estoque=estoque
+                                estoque=estoque,
+                                estoque_minimo=minimo_novo
                             )
                             st.success(f"Produto '{nome_produto}' cadastrado com sucesso!")
                             st.rerun()
@@ -1614,7 +1619,16 @@ def show(modo="todos"):
                                     with col_edit2:
                                         preco_venda_edit = input_moeda("Preço de Venda (R$)", f"preco_venda_edit_{produto_dados.get('id')}", value=float(produto_dados.get('preco_venda', 0)), step=1.0)
 
-                                    estoque_edit = st.number_input("Estoque", value=int(produto_dados.get('estoque', 0)), min_value=0)
+                                    c_ee, c_em = st.columns(2)
+                                    estoque_edit = c_ee.number_input("Estoque", value=int(produto_dados.get('estoque', 0)), min_value=0)
+                                    _min_atual = produto_dados.get('estoque_minimo')
+                                    try:
+                                        _min_atual = None if _min_atual is None or _min_atual != _min_atual else int(_min_atual)
+                                    except (TypeError, ValueError):
+                                        _min_atual = None
+                                    minimo_edit = c_em.number_input("Estoque mínimo", min_value=0, value=_min_atual, step=1,
+                                                                    placeholder="5 se deixar vazio",
+                                                                    help="Com essa quantidade ou menos, o produto aparece em Repor estoque, em Vendas.")
 
                                     submitted_edit = st.form_submit_button("Salvar Alterações", type="primary")
 
@@ -1629,7 +1643,8 @@ def show(modo="todos"):
                                                     preco_venda=preco_venda_edit,
                                                     descricao=descricao_edit,
                                                     categoria=categoria_edit,
-                                                    estoque=estoque_edit
+                                                    estoque=estoque_edit,
+                                                    estoque_minimo=minimo_edit
                                                 )
                                             else:
                                                 st.session_state.db.delete_produto(produto_id)

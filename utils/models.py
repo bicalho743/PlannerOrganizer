@@ -91,6 +91,7 @@ class Perfil(Base):
     logo = Column(Text)  # logotipo da organizadora em data URL (PNG/JPEG), usado nos PDFs
     cnpj = Column(String)
     precificacao = Column(Text)  # parâmetros da aba Precificação (JSON)
+    modelos_pos = Column(Text)  # JSON {etapa: texto}: mensagens de pós-organização personalizadas pela conta
     regime_tributario = Column(Text)
     tutorial_visto = Column(Text)
     onboarding = Column(Text)  # JSON: respostas do onboarding (nome do negócio, dores, regime) e "passos": ativo|fechado
@@ -409,6 +410,7 @@ class Produto(Base):
     preco_venda = Column(Float, nullable=False)
     categoria = Column(String)
     estoque = Column(Integer, default=0)
+    estoque_minimo = Column(Integer, nullable=True)  # a própria organizer define; vazio = 5 (utils/vendas_dados)
     data_cadastro = Column(Date, default=datetime.now().date())
     usuario_id = Column(String, nullable=True)  # ID do usuário proprietário do registro (multi-tenant)
     

@@ -581,13 +581,33 @@ def _pergunta_retorno(hoje):
 
 
 def _modelos(templates):
-    html_ = ""
+    """Mensagens-modelo: o padrão é o mesmo para todas as contas; cada conta pode personalizar a sua
+    (Database.salvar_modelo_pos) e voltar ao padrão quando quiser."""
+    db = st.session_state.db
+    st.caption("Estas são as mensagens que vêm prontas em cada etapa. Ajuste do seu jeito: a mudança vale só para "
+               "a sua conta e para as próximas mensagens. Use {nome} onde entra o primeiro nome da cliente.")
     for etapa in ETAPAS_OBRIGATORIAS + ['retorno_tecnico']:
         _, nome, texto, dias, objetivo, _, _ = get_template(templates, etapa)
-        html_ += (f'<div class="po-modelo"><b>{_ic(etapa, 14)}{esc(nome)}</b><span>{esc(_dias_rotulo(etapa, dias))}'
-                  f'{" · " + esc(objetivo.lower()) if objetivo else ""}</span><p>{esc(texto.replace("{nome}", "Ana"))}</p></div>')
-    st.markdown(html_, unsafe_allow_html=True)
-    st.caption("Para ajustar uma mensagem antes de enviar, use Editar texto no cartão da cliente.")
+        t = templates.get(etapa) or {}
+        proprio = bool(t.get("personalizado"))
+        with st.container(key=f"po_modelo_{etapa}"):
+            st.markdown(f'<div class="po-modelo"><b>{_ic(etapa, 14)}{esc(nome)}</b><span>{esc(_dias_rotulo(etapa, dias))}'
+                        f'{" · " + esc(objetivo.lower()) if objetivo else ""}'
+                        f'{" · <em>personalizada por você</em>" if proprio else ""}</span></div>', unsafe_allow_html=True)
+            novo = st.text_area(f"Mensagem de {nome}", value=texto, height=110, key=f"po_mod_txt_{etapa}",
+                                label_visibility="collapsed")
+            c1, c2, _ = st.columns([1, 1.3, 2])
+            if c1.button("Salvar", key=f"po_mod_salvar_{etapa}", type="primary", use_container_width=True,
+                         disabled=(novo.strip() == (texto or "").strip())):
+                if db.salvar_modelo_pos(etapa, novo):
+                    st.toast(f"Mensagem de {nome} salva.")
+                    st.rerun()
+                else:
+                    st.error("Não consegui salvar agora. Tente de novo.")
+            if proprio and c2.button("Voltar ao padrão", key=f"po_mod_padrao_{etapa}", use_container_width=True):
+                db.salvar_modelo_pos(etapa, None)
+                st.session_state.pop(f"po_mod_txt_{etapa}", None)
+                st.rerun()
 
 
 def _voltaram(df, propostas):
@@ -636,7 +656,7 @@ def show():
                    'e trazer a cliente de volta.</div>', unsafe_allow_html=True)
     with c_lnk, st.container(key="po_links_modelos"):
         ver = st.session_state.get("po_ver_modelos", False)
-        if st.button("Fechar mensagens-modelo" if ver else "Ver mensagens-modelo", key="po_btn_modelos", type="tertiary"):
+        if st.button("Fechar mensagens-modelo" if ver else "Editar mensagens-modelo", key="po_btn_modelos", type="tertiary"):
             st.session_state["po_ver_modelos"] = not ver
             st.rerun()
 

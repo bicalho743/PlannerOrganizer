@@ -329,6 +329,8 @@ class Database:
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS origem_cadastro TEXT"))
                 # respostas do onboarding (app e web) e o estado do cartão Primeiros passos (JSON)
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS onboarding TEXT"))
+                conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS modelos_pos TEXT"))
+                conn.execute(_sa_text("ALTER TABLE produtos ADD COLUMN IF NOT EXISTS estoque_minimo INTEGER"))
                 # código do cliente no Stripe: liga renovações e cancelamentos à conta certa mesmo
                 # quando a pessoa pagou com um e-mail diferente do login
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT"))
@@ -647,6 +649,38 @@ class Database:
             if not perfil:
                 return False
             perfil.precificacao = json.dumps(parametros)
+            self.session.flush()
+            return True
+        return self._safe_query(query)
+
+    def get_modelos_pos(self):
+        """Mensagens de pós-organização que a conta personalizou ({etapa: texto}); o resto vem do padrão de todas."""
+        import json
+        def query():
+            perfil = self.session.query(Perfil).filter_by(usuario_id=self.usuario_id).first()
+            try:
+                dados = json.loads(perfil.modelos_pos) if perfil and perfil.modelos_pos else {}
+                return dados if isinstance(dados, dict) else {}
+            except (TypeError, ValueError):
+                return {}
+        return self._safe_query(query) or {}
+
+    def salvar_modelo_pos(self, etapa, texto):
+        """Grava a mensagem da conta para uma etapa; texto vazio ou None volta ao padrão."""
+        import json
+        def query():
+            perfil = self.session.query(Perfil).filter_by(usuario_id=self.usuario_id).first()
+            if not perfil:
+                return False
+            try:
+                dados = json.loads(perfil.modelos_pos) if perfil.modelos_pos else {}
+            except (TypeError, ValueError):
+                dados = {}
+            if texto and str(texto).strip():
+                dados[str(etapa)] = str(texto).strip()
+            else:
+                dados.pop(str(etapa), None)
+            perfil.modelos_pos = json.dumps(dados, ensure_ascii=False)
             self.session.flush()
             return True
         return self._safe_query(query)
@@ -1630,6 +1664,7 @@ class Database:
                 usuario_id=self.usuario_id  # Adicionar o ID do usuário atual
             )
             self.session.add(transacao)
+            self.session.flush()   # sem flush o id ainda é None
             return transacao.id
         return self._safe_query(query)
 
@@ -4643,7 +4678,7 @@ class Database:
 
 
     # Métodos para gerenciamento de produtos
-    def add_produto(self, nome, preco_custo, preco_venda, descricao=None, categoria=None, estoque=0):
+    def add_produto(self, nome, preco_custo, preco_venda, descricao=None, categoria=None, estoque=0, estoque_minimo=None):
         """Adiciona um novo produto ao catálogo"""
         def query():
             produto = Produto(
@@ -4653,6 +4688,7 @@ class Database:
                 preco_venda=float(preco_venda),
                 categoria=categoria,
                 estoque=int(estoque),
+                estoque_minimo=int(estoque_minimo) if estoque_minimo is not None else None,
                 usuario_id=self.usuario_id  # Adicionar o ID do usuário atual
             )
             self.session.add(produto)
@@ -4681,6 +4717,7 @@ class Database:
                 'preco_venda': p.preco_venda,
                 'categoria': p.categoria,
                 'estoque': p.estoque,
+                'estoque_minimo': p.estoque_minimo,
                 'data_cadastro': p.data_cadastro,
                 'usuario_id': p.usuario_id
             } for p in produtos])
@@ -4698,7 +4735,7 @@ class Database:
         return self._safe_query(query)
 
     def update_produto(self, produto_id, nome=None, preco_custo=None, preco_venda=None, 
-                      descricao=None, categoria=None, estoque=None):
+                      descricao=None, categoria=None, estoque=None, estoque_minimo="manter"):
         """Atualiza os dados de um produto"""
         def query():
             produto = self.session.query(Produto).filter_by(id=produto_id).first()
@@ -4717,6 +4754,8 @@ class Database:
                 produto.categoria = categoria
             if estoque is not None:
                 produto.estoque = int(estoque)
+            if estoque_minimo != "manter":   # None apaga (volta ao padrão de 5)
+                produto.estoque_minimo = int(estoque_minimo) if estoque_minimo is not None else None
 
             return True
         return self._safe_query(query)
@@ -6919,7 +6958,10 @@ class Database:
         def query():
             try:
                 templates = self.session.query(PostOrgTemplate).order_by(PostOrgTemplate.dias_apos).all()
-                return {t.etapa: {'nome': t.nome, 'dias_apos': t.dias_apos, 'emoji': t.emoji or '', 'texto': t.texto} for t in templates}
+                proprios = self.get_modelos_pos() if self.usuario_id else {}
+                return {t.etapa: {'nome': t.nome, 'dias_apos': t.dias_apos, 'emoji': t.emoji or '',
+                                  'texto': proprios.get(t.etapa) or t.texto, 'padrao': t.texto,
+                                  'personalizado': bool(proprios.get(t.etapa))} for t in templates}
             except Exception as e:
                 print(f"Erro ao buscar templates: {str(e)}")
                 return {}

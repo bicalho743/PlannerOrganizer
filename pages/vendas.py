@@ -677,11 +677,12 @@ def _linha_venda(v, resumo, parcelas):
 
 
 def _dialogo_compra(produtos_df):
-    """Lançar compra de estoque: soma a quantidade comprada ao estoque do produto (o valor pago vai pelo Financeiro)."""
+    """Lançar compra de estoque: soma a quantidade ao estoque do produto e lança a despesa no Financeiro
+    (Pagamento Parceiros/Fornecedores), já paga ou a pagar."""
     @st.dialog("Lançar compra de estoque", on_dismiss=_fechar_compra)
     def _d():
         if produtos_df.empty:
-            st.info("Cadastre seus produtos primeiro em Cadastros › Produtos.")
+            st.info("Cadastre seus produtos primeiro em Meus produtos e estoque.")
             return
         df = produtos_df.sort_values("nome")
         pid = st.selectbox("Produto", df["id"].tolist(), index=None, placeholder="Escolha o produto",
@@ -689,19 +690,39 @@ def _dialogo_compra(produtos_df):
                                                  f'{int(_safe_float(df[df["id"] == x]["estoque"].iloc[0]))}',
                            key="vd_compra_prod")
         qtd = st.number_input("Quantidade comprada", min_value=1, value=1, step=1, key="vd_compra_qtd")
-        st.caption("Soma ao estoque do produto. O valor pago você lança no Financeiro, como despesa.")
+        custo = _safe_float(df[df["id"] == pid]["preco_custo"].iloc[0]) if pid is not None else 0.0
+        sugerido = round(custo * int(qtd), 2)
+        # o valor acompanha produto e quantidade até ela digitar outro
+        chave = f"vd_compra_valor_{pid}_{int(qtd)}"
+        valor = st.number_input("Valor pago (R$)", min_value=0.0, value=float(sugerido), step=10.0, format="%.2f",
+                                key=chave, help="Começa com quantidade × preço de custo do produto.")
+        pago = st.radio("Pagamento", ["Já paguei", "Vou pagar"], horizontal=True, key="vd_compra_pago")
+        st.caption("Soma ao estoque e lança a despesa no Financeiro, em Pagamento Parceiros/Fornecedores.")
         c1, c2 = st.columns(2)
-        if c1.button("Lançar no estoque", type="primary", use_container_width=True, key="vd_compra_ok"):
+        if c1.button("Lançar compra", type="primary", use_container_width=True, key="vd_compra_ok"):
             if pid is None:
                 st.error("Escolha o produto.")
                 return
-            novo = st.session_state.db.atualizar_estoque(int(pid), int(qtd))
+            db = st.session_state.db
+            novo = db.atualizar_estoque(int(pid), int(qtd))
             if novo is None:
                 st.error("Não foi possível atualizar o estoque agora.")
                 return
             nome = df[df["id"] == pid]["nome"].iloc[0]
+            despesa_ok = True
+            if valor > 0:
+                tid = db.add_transacao(tipo="despesa", descricao=f"Compra de estoque: {int(qtd)} × {nome}",
+                                       valor=float(valor), categoria="Pagamento Parceiros/Fornecedores",
+                                       origem_id=int(pid), origem_tipo="compra_estoque",
+                                       classificacao="contas_a_pagar", status="Pendente")
+                if tid and pago == "Já paguei":
+                    from utils.visual import hoje
+                    db.atualizar_status_transacao(int(tid), "Pago", hoje())
+                despesa_ok = bool(tid)
             st.session_state["vd_compra_open"] = False
-            st.session_state["vd_msg"] = f"Estoque de {nome} atualizado: {int(novo)} unidade{'s' if novo != 1 else ''}."
+            st.session_state["vd_msg"] = (f"Estoque de {nome} atualizado: {int(novo)} unidade{'s' if novo != 1 else ''}."
+                                          + (f" Despesa de {_fmt_brl(valor)} lançada no Financeiro." if valor > 0 and despesa_ok
+                                             else " Não consegui lançar a despesa: lance no Financeiro." if valor > 0 else ""))
             st.rerun()
         if c2.button("Cancelar", use_container_width=True, key="vd_compra_canc"):
             st.session_state["vd_compra_open"] = False
@@ -933,7 +954,8 @@ def show():
                                     for _, r in baixo.head(6).iterrows()), unsafe_allow_html=True)
                 if len(baixo) > 6:
                     st.markdown(f'<div class="vd-nota">e mais {len(baixo) - 6}.</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="vd-nota">Entram aqui os produtos com até {vendas_dados.ESTOQUE_BAIXO} unidades.</div>',
+            st.markdown(f'<div class="vd-nota">Entram aqui os produtos no estoque mínimo ou abaixo dele. O mínimo de cada '
+                        f'produto você define em Meus produtos e estoque (sem mínimo, vale {vendas_dados.ESTOQUE_BAIXO}).</div>',
                         unsafe_allow_html=True)
             with st.container(key="vd_compra_btn"):
                 if st.button("Lançar compra de estoque", use_container_width=True, key="vd_compra"):
