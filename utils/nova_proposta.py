@@ -594,23 +594,22 @@ def _passo_cliente(o, p):
                                key="np_cli_sel")
         if escolha != o.get("cliente_id") and escolha is not None:
             o["cliente_id"] = int(escolha)
-    sec2 = _secao(2, "Cliente nova?", "Só o nome já basta. O WhatsApp serve para enviar a proposta.", "clinova")
+    sec2 = _secao(2, "Cliente nova?", "Os mesmos dados do cadastro de Clientes. Só o nome é obrigatório; o WhatsApp serve "
+                     "para enviar a proposta.", "clinova")
     with sec2:
+        # mesmos campos e conferências do módulo Clientes (pages/cadastros.py): antes aqui só havia nome, WhatsApp,
+        # bairro e cidade
+        from pages.cadastros import _cli_form_campos, _cli_validar
         with st.form("np_cli_form", border=False, clear_on_submit=True):
-            c1, c2 = st.columns(2)
-            nome = c1.text_input("Nome", placeholder="Ex.: Juliana Ferraz")
-            tel = c2.text_input("WhatsApp", placeholder="(11) 98765-4321")
-            c3, c4 = st.columns(2)
-            bairro = c3.text_input("Bairro (opcional)")
-            cidade = c4.text_input("Cidade (opcional)")
+            v = _cli_form_campos(sufixo="np")
             ok = st.form_submit_button("Cadastrar e continuar", type="primary", icon=":material/person_add:")
         if ok:
-            if not nome.strip():
-                st.error("Escreva o nome da cliente.")
+            dados_cli, erro = _cli_validar(v)
+            if erro:
+                st.error(erro)
             else:
                 try:
-                    cid = db.add_cliente(nome=nome.strip(), telefone=tel.strip() or None, bairro=bairro.strip() or None,
-                                         cidade=cidade.strip() or None)
+                    cid = db.add_cliente(**dados_cli)
                     db.invalidar_cache()
                     o["cliente_id"] = int(cid)
                     st.session_state.pop("np_cli_sel", None)
@@ -618,16 +617,6 @@ def _passo_cliente(o, p):
                 except Exception as e:
                     st.error(f"Não foi possível cadastrar: {e}")
     _nav(fechar_e_voltar, lambda: _ir(o, 2), "Serviço", "cli", desabilitado=not o.get("cliente_id"))
-    with st.expander("Cadastrar um serviço antigo (retroativo)"):
-        st.caption("Para registrar um trabalho que já aconteceu, com a situação, as datas e o financeiro.")
-        try:
-            from pages.propostas_unificado import _render_nova_proposta_form
-            if clientes is not None and not clientes.empty:
-                _render_nova_proposta_form(clientes)
-            else:
-                st.info("Cadastre uma cliente primeiro.")
-        except Exception as e:
-            st.error(str(e))
 
 
 def fechar_e_voltar():

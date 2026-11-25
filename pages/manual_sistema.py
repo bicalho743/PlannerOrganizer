@@ -369,7 +369,6 @@ def gerar_manual_sistema(verificar_auth=True):
     secao("Criar")
     bullet("<b>Nova proposta</b>: cliente, descrição do serviço (ambientes e itens), valor, prazo e data de início. "
            "Se a cliente já pagou um sinal, informe-o.")
-    bullet("<b>Cadastro retroativo</b>: registra trabalhos antigos já aprovados, em execução ou finalizados.")
     secao("Aprovar")
     texto("Na proposta em aberto, confira o <b>sinal / entrada</b> e clique em <b>Aprovar proposta</b>. O sistema "
           "lança no Financeiro a receita a receber com o saldo (valor menos sinal) e o sinal como receita já "
