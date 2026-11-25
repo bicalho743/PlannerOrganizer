@@ -381,11 +381,11 @@ h1.np-tit::after { content:""; display:block; width:40px; height:3px; border-rad
 .st-key-np_nav [data-testid="stColumn"]:last-child [data-testid="stVerticalBlock"] { align-items:flex-end; }
 /* prévia da proposta */
 .np-pdf { background:#fff; border:1px solid #E7E2D6; border-radius:14px; overflow:hidden; box-shadow:0 10px 30px rgba(13,27,42,.08); }
-.np-pdf .cab { background:var(--c); color:var(--s); padding:22px 26px; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.np-pdf .cab { background:#fff; color:#1F2A37; border-bottom:3px solid var(--c); padding:22px 26px; display:flex; justify-content:space-between; align-items:center; gap:12px; }
 .np-pdf .cab .em { display:flex; align-items:center; gap:12px; min-width:0; }
-.np-pdf .cab img { width:44px; height:44px; object-fit:contain; background:#fff; border-radius:8px; padding:3px; flex:none; }
+.np-pdf .cab img { width:44px; height:44px; object-fit:contain; background:#fff; border-radius:8px; flex:none; }
 .np-pdf .cab b { font-size:1.3rem; font-family:'Cormorant Garamond',Georgia,serif; font-weight:600; display:block; line-height:1.2; }
-.np-pdf .cab span { font-size:.8rem; opacity:.85; }
+.np-pdf .cab span { font-size:.8rem; color:#6B7280; }
 .np-pdf .cp { padding:20px 26px 22px; font-size:.9rem; color:#1F2A37; }
 .np-pdf h4 { color:var(--t); font-size:.76rem; letter-spacing:.12em; margin:18px 0 6px; font-weight:700; text-transform:uppercase; }
 .np-pdf table { width:100%; border-collapse:collapse; border:none !important; margin:0 !important; }

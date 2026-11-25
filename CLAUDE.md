@@ -52,9 +52,15 @@ Responda em português, passo a passo e sem jargão. O README.md tem arquitetura
   Início mostra os 5 Primeiros passos do app (o 3º é "Receba os avisos no celular", feito quando há push_tokens).
 - Tutorial rápido não abre sozinho para conta que já tem proposta (`utils/tour.py`).
 
-## PDFs de proposta
+## PDFs (desenho novo, 25/11/2026)
 - Proposta Comercial sai como "Proposta de Serviço"; todos os PDFs mostram `propostas.numero` (não o id interno) e
   o status legível (`utils/proposta_status.label_for`).
+- Um só desenho, na cor da marca de cada conta (versão legível por `utils.pdf_proposta.cores_legiveis`): classe `Doc` em
+  `utils/pdf_docs.py` (fechamento, interno, fornecedores, venda/produtos) e `utils/pdf_proposta.gerar_pdf_proposta`.
+  `utils/pdf_generator_v2.py` só repassa (site e API usam as mesmas funções, então o app recebe o desenho novo sem build).
+  Descrições antigas passam por `pdf_docs.limpar_texto` / `itens_da_descricao` (lista vira etiquetas de ambientes).
+- Relatório do negócio: contas em `utils/relatorio_negocio.py` (tela Relatórios do site e API `GET /pdf/relatorio?periodo=`,
+  usado pelo app desde a 1.0.20); PDF em `utils/relatorio_pdf.py`.
 
 ## Desenho novo do site (25/11/2026)
 - Todas as telas seguem os protótipos aprovados (página: https://claude.ai/artifact/NeXx2Tpw2XXYVqY9CkwkUt). Peças comuns em

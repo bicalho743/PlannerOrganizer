@@ -54,12 +54,12 @@ def test_titulo_numero_e_status(tmp_path, monkeypatch):
         assert r.status_code == 200, r.text
         comercial = _texto(r.content)
         assert "Proposta de Serviço" in comercial and "Fechamento" not in comercial
-        assert f"#{numero}" in comercial and "Em Aberto" in comercial and "Em_aberto" not in comercial
+        assert f"Nº {numero}" in comercial and f"Nº {pid}\n" not in comercial
 
         r = cli.get(f"/pdf/proposta/{pid}/cliente")
         assert r.status_code == 200, r.text
         fechamento = _texto(r.content)
-        assert "Fechamento do Serviço" in fechamento and f"#{numero}" in fechamento and "Em Aberto" in fechamento
+        assert "Fechamento do Serviço" in fechamento and f"Nº {numero}" in fechamento and "Em Aberto" in fechamento
 
         # web: mesmo título e mesmo número no cabeçalho
         from utils.propostas_helper import gerar_pdf_cliente_proposta

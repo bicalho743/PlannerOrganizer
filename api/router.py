@@ -1280,6 +1280,33 @@ async def pdf_proposta_produtos(proposta_id: int, uid: str = Depends(verify_fire
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@api.get("/pdf/relatorio")
+async def pdf_relatorio_negocio(periodo: str = "Últimos 6 meses", comparar: str = "Período anterior",
+                                uid: str = Depends(verify_firebase_token)):
+    """Relatório do negócio em PDF, igual ao "Baixar PDF" da tela Relatórios do site (utils/relatorio_negocio).
+    periodo: Este mês | Mês passado | Últimos 3 meses | Últimos 6 meses | Últimos 12 meses | Este ano | Ano passado;
+    comparar: Período anterior | Mesmo período do ano passado."""
+    try:
+        from fastapi.responses import Response
+        from utils import relatorio_negocio as rn
+        from utils.visual import hoje as _hoje
+        if periodo == "Personalizado":
+            periodo = "Últimos 6 meses"
+        db = get_db(uid)
+        hoje = _hoje()
+        p = rn.periodo(periodo, comparar, hoje)
+        mov, propostas, clientes = rn.carregar(db)
+        conteudo = rn.pdf(rn.exportacao(mov, propostas, clientes, p, hoje), p, get_perfil_dados(uid))
+        nome = f"relatorio_{p['ini']:%Y-%m-%d}_{p['fim']:%Y-%m-%d}.pdf"
+        return Response(content=conteudo, media_type="application/pdf",
+                        headers={"Content-Disposition": f'attachment; filename="{nome}"'})
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erro ao gerar o relatório: {e}")
+
+
 @api.get("/pdf/venda/{venda_id}")
 async def pdf_venda(venda_id: int, uid: str = Depends(verify_firebase_token)):
     """Gera PDF de venda avulsa."""
@@ -1408,6 +1435,8 @@ async def pdf_proposta_comercial(proposta_id: int, uid: str = Depends(verify_fir
             'total': total,
             'valor_base': valor_proposta,
             'valor_adicionais': total - valor_proposta,
+            'sinal': float(prop.get('sinal', 0) or 0),
+            'data': prop.get('data_proposta') or prop.get('data_criacao') or prop.get('data_inicio'),
         }
 
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False, dir='/tmp') as tmp:

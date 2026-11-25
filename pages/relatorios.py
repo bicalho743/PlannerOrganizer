@@ -531,26 +531,8 @@ def _aba_futuro(mov, propostas, hoje, exp):
 
 # Excel já formatado: cabeçalho nas cores da marca, R$ e % nas colunas certas, larguras ajustadas,
 # cabeçalho fixo e filtro em cada aba. As colunas são reconhecidas pelo nome.
-_XL_NOMES = {"valor": "Valor", "valor_fechado": "Valor fechado", "ticket": "Ticket médio", "conversao": "Conversão",
-             "margem": "Margem", "custos": "Custos", "lucro": "Lucro", "recebido": "Recebido", "dias": "Dias parada",
-             "numero": "Proposta", "cliente": "Cliente", "tipo": "Tipo", "mes": "Mês", "enviadas": "Enviadas",
-             "fechadas": "Fechadas", "recusadas": "Recusadas", "em_aberto": "Em aberto", "categoria": "Categoria"}
-_XL_PCT = ("conversão", "margem", "taxa", "%")
-_XL_INTEIRO = ("trabalhos", "clientes", "enviadas", "fechadas", "recusadas", "em aberto", "dias", "qtd")
-
-
-def _xl_formato(coluna, serie):
-    """Formato numérico do Excel pela coluna: %, inteiro ou R$ (o resto dos números é dinheiro)."""
-    if not pd.api.types.is_numeric_dtype(serie) or pd.api.types.is_bool_dtype(serie):
-        return None
-    nome = str(coluna).lower()
-    if any(k in nome for k in _XL_PCT):
-        return "0.0%"
-    if "proposta" in nome:
-        return "0"
-    if any(k in nome for k in _XL_INTEIRO):
-        return "#,##0"
-    return '"R$" #,##0.00;[Red]-"R$" #,##0.00'
+from utils.relatorio_negocio import XL_INTEIRO as _XL_INTEIRO, XL_NOMES as _XL_NOMES, XL_PCT as _XL_PCT  # noqa: E402
+from utils.relatorio_negocio import xl_formato as _xl_formato  # noqa: E402
 
 
 def _agora_txt():
@@ -626,30 +608,8 @@ def _excel(exp, titulo):
 
 
 def _df_texto(df):
-    """Tabela pronta para o PDF: mesmos nomes de coluna e formatos (R$, %, inteiro, data) do Excel, como texto."""
-    d = df.rename(columns=lambda c: _XL_NOMES.get(c, str(c).replace("_", " ").capitalize() if "_" in str(c) else c))
-    out = pd.DataFrame(index=d.index)
-    for col in d.columns:
-        serie = d[col]
-        if pd.api.types.is_bool_dtype(serie):
-            out[col] = serie.map({True: "Sim", False: "Não"})
-            continue
-        fmt = _xl_formato(col, serie)
-
-        def f(v, fmt=fmt):
-            if v is None or (isinstance(v, float) and pd.isna(v)):
-                return ""
-            if hasattr(v, "strftime"):
-                return v.strftime("%d/%m/%Y")
-            if fmt == "0.0%":
-                return _pct(v, 1)
-            if fmt in ("0", "#,##0"):
-                return f"{v:,.0f}".replace(",", ".")
-            if fmt:
-                return fmt_brl(v)
-            return str(v)
-        out[col] = serie.apply(f)
-    return out
+    from utils.relatorio_negocio import df_texto
+    return df_texto(df)
 
 
 def _pdf(exp, titulo, periodo):
@@ -661,7 +621,7 @@ def _pdf(exp, titulo, periodo):
         perfil = {}
     conta = perfil.get("empresa") or perfil.get("nome") or ""
     tabelas = {n: _df_texto(df) for n, df in exp.items() if isinstance(df, pd.DataFrame) and not df.empty}
-    return gerar_pdf(titulo, periodo, conta, exp.get("_resumo", []), tabelas)
+    return gerar_pdf(titulo, periodo, conta, exp.get("_resumo", []), tabelas, perfil=perfil)
 
 
 def show():
@@ -718,6 +678,13 @@ def show():
     with abas[4]:
         _aba_futuro(mov, propostas, hoje, exp)
 
+    # PDF e Excel pelas mesmas contas do PDF do app (utils/relatorio_negocio)
+    from utils import relatorio_negocio as rn
+    try:
+        exp = rn.exportacao(mov, propostas, clientes, {"ini": ini, "fim": fim, "cini": cini, "cfim": cfim, "rot": rot,
+                                                       "rot_comp": rot_comp, "curto": _COMP["curto"]}, hoje)
+    except Exception as e:
+        print(f"[relatorios] exportacao: {e}")
     titulo = f"Relatório {rot} (comparado com {rot_comp})"
     try:
         lugar_pdf.download_button("Baixar PDF", data=_pdf(exp, "Relatório do negócio", f"{rot} · comparado com {rot_comp}"),

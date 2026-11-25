@@ -7,7 +7,7 @@ topo com logo (ou iniciais), nome do negócio, Nº da proposta, data e validade;
 restante; condições; rodapé com contatos e o botão "Aprovar pelo WhatsApp" (link para o WhatsApp
 da organizer, com a mensagem pronta).
 
-Os outros documentos (fechamento, relatórios, venda) continuam em utils/pdf_generator_v2.py.
+Fechamento, relatórios e venda: utils/pdf_docs.py (mesmo desenho; utils/pdf_generator_v2.py só repassa).
 """
 import re
 import urllib.parse
@@ -293,20 +293,70 @@ def _rodape(pg, dados, perfil):
         c.linkURL(link, (x, y, x + bw, y + bh), relative=0)
 
 
+def _qtd(detalhe):
+    m = re.match(r"\s*(\d+)\s*(un|x|unid)", str(detalhe or ""), re.I)
+    return int(m.group(1)) if m else None
+
+
 @com_marca
 def gerar_pdf_proposta(dados, output_path, perfil=None):
     """dados: numero, cliente, tipo, subtitulo, prazo, inicio, data, descricao, itens [(nome, detalhe, valor)],
-    total, sinal, sinal_pago, condicoes."""
+    total, sinal, sinal_pago, condicoes, equipe. Desenho de utils/pdf_docs.Doc (o mesmo dos outros documentos)."""
+    from utils.pdf_docs import Doc, itens_da_descricao, limpar_texto
     perfil = perfil or {}
-    cor = colors.HexColor(_hex(perfil.get("cor_principal"), "#0D1B2A"))
-    c = canvas.Canvas(output_path, pagesize=A4)
-    c.setTitle(f"Proposta Nº {dados.get('numero', '')} - {dados.get('cliente', '')}")
-    pg = _Pagina(c, cor, perfil, dados.get("numero", ""))
-    _topo(pg, dados, perfil)
-    _cabecalho_cliente(pg, dados)
-    _incluido(pg, dados)
-    _investimento(pg, dados)
-    _condicoes(pg, dados)
-    _rodape(pg, dados, perfil)
-    c.save()
+    emitida = _data(dados.get("data")) or date.today()
+    validade = emitida + timedelta(days=VALIDADE_DIAS)
+    cli = str(dados.get("cliente") or "").strip()
+    doc = Doc(output_path, perfil, "Proposta de Serviço", dados.get("numero", ""),
+              f"{emitida:%d/%m/%Y} · válida até {validade:%d/%m/%Y}",
+              titulo_arquivo=f"Proposta Nº {dados.get('numero', '')} - {cli}")
+    doc.titulo("Proposta para ", cli[:40] or "você")
+    if dados.get("subtitulo"):
+        doc.linha_fina(dados["subtitulo"])
+    else:
+        doc.y -= 2 * mm
+    doc.cartoes([("Serviço", dados.get("tipo") or "Organização", ""), ("Prazo", dados.get("prazo") or "a combinar", ""),
+                 ("Início", dados.get("inicio") or "a combinar", "")])
+    amb = [n for n, _ in ambientes_da_descricao(dados.get("descricao"))] or itens_da_descricao(dados.get("descricao"))[1]
+    if amb:
+        doc.secao("Ambientes")
+        doc.etiquetas(amb)
+        if dados.get("equipe"):
+            doc.linha_fina("Equipe: " + dados["equipe"])
+    else:
+        linhas = limpar_texto(dados.get("descricao"))
+        if linhas:
+            doc.secao("Descrição do serviço")
+            doc.marcadores(linhas, 10)
+    itens = dados.get("itens") or []
+    tabela, servico, produtos = [], 0.0, 0.0
+    for i, (nome, detalhe, valor) in enumerate(itens):
+        valor = float(valor or 0)
+        q = _qtd(detalhe)
+        if i == 0 and q is None:
+            servico += valor
+        else:
+            produtos += valor
+        unit = valor / q if q else valor
+        tabela.append((str(nome), str(q or 1), brl(unit), brl(valor)) + (("b",) if i == 0 and q is None else ()))
+    total = float(dados.get("total") or 0) or (servico + produtos)
+    if tabela:
+        doc.secao("O que está incluído")
+        doc.tabela([("Item", .55, "e"), ("Qtd", .1, "d"), ("Unitário", .15, "d"), ("Valor", .2, "d")], tabela)
+    sinal = float(dados.get("sinal") or 0)
+    pago = bool(dados.get("sinal_pago"))
+    linhas = [("Serviço", brl(servico or total))]
+    if produtos:
+        linhas.append(("Produtos e adicionais", brl(produtos)))
+    if sinal > 0:
+        pct = f" ({sinal / total * 100:.0f}%)" if total else ""
+        linhas.append(("Sinal já pago" + pct if pago else "Sinal na aprovação" + pct, brl(sinal)))
+        linhas.append(("Saldo a pagar" if pago else "Restante, no último dia", brl(max(total - sinal, 0))))
+    doc.secao("Investimento")
+    doc.caixa_total(linhas, "Total", brl(total))
+    cond = dados.get("condicoes") or CONDICOES_PADRAO
+    doc.falta(12 * mm + len(cond) * 5.5 * mm)
+    doc.secao("Condições")
+    doc.marcadores(cond, junto=True)
+    doc.salvar("Aprovar pelo WhatsApp", f"Olá! Quero aprovar a proposta Nº {dados.get('numero', '')}.")
     return output_path

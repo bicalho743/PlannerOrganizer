@@ -329,6 +329,11 @@ def _instagram(valor):
 
 @com_marca
 def gerar_pdf_interno(dados, output_path, perfil=None):
+    from utils import pdf_docs
+    return pdf_docs.interno(dados, output_path, perfil)
+
+
+def _gerar_pdf_interno_antigo(dados, output_path, perfil=None):
     c = canvas.Canvas(output_path, pagesize=A4)
     margin = 18*mm
     cw = W - 2*margin
@@ -386,6 +391,13 @@ def _desc_box(c, margin, cw, y, desc):
 
 @com_marca
 def gerar_pdf_cliente(dados, output_path, perfil=None, titulo="Fechamento do Serviço"):
+    from utils import pdf_docs
+    if str(titulo).lower().startswith("proposta"):
+        return pdf_docs.proposta_de_dados_antigos(dados, output_path, perfil)
+    return pdf_docs.fechamento(dados, output_path, perfil)
+
+
+def _gerar_pdf_cliente_antigo(dados, output_path, perfil=None, titulo="Fechamento do Serviço"):
     c = canvas.Canvas(output_path, pagesize=A4)
     margin = 18*mm
     cw = W - 2*margin
@@ -443,6 +455,11 @@ def gerar_pdf_cliente(dados, output_path, perfil=None, titulo="Fechamento do Ser
 
 @com_marca
 def gerar_pdf_fornecedores(dados, output_path, perfil=None):
+    from utils import pdf_docs
+    return pdf_docs.fornecedores(dados, output_path, perfil)
+
+
+def _gerar_pdf_fornecedores_antigo(dados, output_path, perfil=None):
     c = canvas.Canvas(output_path, pagesize=A4)
     margin = 18*mm
     cw = W - 2*margin
@@ -464,6 +481,12 @@ def gerar_pdf_fornecedores(dados, output_path, perfil=None):
 
 @com_marca
 def gerar_pdf_venda_v2(venda_dados, cliente_dados, itens_df, filename, perfil=None):
+    from utils import pdf_docs
+    os.makedirs(os.path.dirname(filename) if os.path.dirname(filename) else '.', exist_ok=True)
+    return pdf_docs.venda(venda_dados, cliente_dados, itens_df, filename, perfil)
+
+
+def _gerar_pdf_venda_antigo(venda_dados, cliente_dados, itens_df, filename, perfil=None):
     os.makedirs(os.path.dirname(filename) if os.path.dirname(filename) else '.', exist_ok=True)
     c = canvas.Canvas(filename, pagesize=A4)
     margin = 18*mm
@@ -523,6 +546,11 @@ def gerar_pdf_venda_v2(venda_dados, cliente_dados, itens_df, filename, perfil=No
 
 @com_marca
 def gerar_pdf_proposta_comercial(dados, output_path, perfil=None):
+    from utils import pdf_docs
+    return pdf_docs.proposta_de_dados_antigos(dados, output_path, perfil)
+
+
+def _gerar_pdf_proposta_comercial_antigo(dados, output_path, perfil=None):
     """Proposta comercial — igual ao fechamento cliente mas com título diferente."""
     dados_copia = dict(dados)
     c = canvas.Canvas(output_path, pagesize=A4)
