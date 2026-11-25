@@ -39,7 +39,7 @@ MODOS = {"total": ("Total de caixas", "Você já sabe o volume"), "comodo": ("Po
 # ---------------------------------------------------------------- estado
 
 def _novo():
-    return {"passo": 1, "cliente_id": None, "tipo": "organizacao", "amb": {}, "amb_extra": {}, "complexidade": "Média",
+    return {"passo": 1, "cliente_id": None, "tipo": "organizacao", "amb": {}, "amb_extra": {}, "amb_horas": {}, "complexidade": "Média",
             "modo": "comodo", "caixas_total": 0, "comodos": {}, "com_extra": {}, "m2": 0.0, "mats": {}, "obs": "",
             "assist": 0, "km": 0.0, "outros": 0.0, "sinal_pct": None, "valor_final": None, "data_inicio": None,
             "mostrar_obs": True, "pid": None, "numero": None, "enviada": False}
@@ -113,6 +113,7 @@ def aplicar_prefill(pf):
     o["tipo"] = tipo
     amb = {str(k): int(v or 0) for k, v in (pf.get("ambientes") or {}).items() if int(v or 0) > 0}
     caixas = int(pf.get("caixas") or 0)
+    o["amb_horas"] = {str(k): float(v) for k, v in (pf.get("horas_ambientes") or {}).items() if v}
     if tipo == "organizacao":
         for nome, q in amb.items():
             if nome in AMBIENTES:
@@ -155,7 +156,7 @@ def _p():
 
 
 def horas_ambiente(o, nome):
-    return float(o["amb_extra"].get(nome) or AMBIENTES.get(nome, 3.0))
+    return float(o.setdefault("amb_horas", {}).get(nome) or o["amb_extra"].get(nome) or AMBIENTES.get(nome, 3.0))
 
 
 def caixas(o):
@@ -671,6 +672,9 @@ def _passo_servico(o, p, r):
                      "(ajuste em Precificação).", "amb")
         with sec:
             nomes = list(AMBIENTES) + list(o["amb_extra"])
+            for i_, a_ in enumerate(nomes):   # horas mudadas no cartão valem já para o chip
+                if f"np_hamb_{i_}" in st.session_state and o["amb"].get(a_):
+                    o.setdefault("amb_horas", {})[a_] = float(st.session_state[f"np_hamb_{i_}"])
 
             def amb(nome):
                 i = nomes.index(nome)
@@ -680,6 +684,10 @@ def _passo_servico(o, p, r):
                                 f'{horas_ambiente(o, nome):g} h</span></div>', unsafe_allow_html=True)
                     v = st.number_input(f"Quantidade de {nome}", 0, 20, q, 1, key=f"np_amb_{i}",
                                         label_visibility="collapsed")
+                    if v:   # tempo neste ambiente: ela muda ali mesmo
+                        o["amb_horas"][nome] = float(st.number_input(
+                            "Horas neste ambiente", 0.5, 80.0, horas_ambiente(o, nome), 0.5, format="%g",
+                            key=f"np_hamb_{i}", help="Tempo que você gasta neste ambiente, nesta proposta."))
                 if v:
                     css_on.append(f".st-key-npamb_{i}")
                 o["amb"][nome] = int(v or 0)

@@ -474,8 +474,8 @@ def _cartao_opcao(chave, titulo, sub, chip="", on=False, cls=""):
     return cartao_clicavel(html, key=f"pc{chave}", rotulo=titulo)
 
 
-def _cartao_incluido(chave, titulo, chip, dic, nome, singular, plural):
-    """Cartão já no projeto: − quantidade +."""
+def _cartao_incluido(chave, titulo, chip, dic, nome, singular, plural, horas=None):
+    """Cartão já no projeto: − quantidade +. horas: dict onde fica o tempo por ambiente (ela muda ali mesmo)."""
     with st.container(key=f"pcon_{chave}"):
         _md(f'<div class="pc-amb-t"><b>{titulo}</b><span class="pc-chip on">{chip}</span></div>')
         q = int(dic.get(nome, 0))
@@ -485,9 +485,14 @@ def _cartao_incluido(chave, titulo, chip, dic, nome, singular, plural):
             c2.markdown(f'<span class="pc-q">{q}</span>', unsafe_allow_html=True)
             c3.button("+", key=f"pc_mais_{chave}", on_click=_mudar, args=(dic, nome, 1))
             c4.markdown(f'<span class="pc-qr">{singular if q == 1 else plural}</span>', unsafe_allow_html=True)
+        if horas is not None:
+            atual = float(horas.get(nome, pr.AMBIENTES_PADRAO.get(nome, 3.0)))
+            horas[nome] = float(st.number_input("Horas neste ambiente", 0.5, 80.0, atual, 0.5, format="%g",
+                                                key=f"pc_hcard_{chave}", help="Tempo que você gasta neste ambiente. "
+                                                "Vale para este projeto."))
 
 
-def _grade_cartoes(prefixo, itens, dic, singular, plural, extra=None):
+def _grade_cartoes(prefixo, itens, dic, singular, plural, extra=None, horas=None):
     """itens: [(nome, chip)]. extra: (titulo, sub) do cartão tracejado do fim, ou None. Devolve True se o extra
     foi tocado."""
     total = len(itens) + (1 if extra else 0)
@@ -497,7 +502,7 @@ def _grade_cartoes(prefixo, itens, dic, singular, plural, extra=None):
     for i, (nome, chip) in enumerate(itens):
         with cols[i]:
             if int(dic.get(nome, 0)) > 0:
-                _cartao_incluido(f"{prefixo}{i}", esc(nome), chip, dic, nome, singular, plural)
+                _cartao_incluido(f"{prefixo}{i}", esc(nome), chip, dic, nome, singular, plural, horas)
             elif _cartao_opcao(f"{prefixo}{i}", esc(nome), "Toque para incluir", chip):
                 dic[nome] = 1
                 st.rerun()
@@ -513,8 +518,12 @@ def _secao_ambientes(proj, n):
                                         "experiência."))
         nomes = AMBIENTES + [e for e in proj["extras"] if e not in AMBIENTES]
         itens = [(a, _h(proj["horas"].get(a, pr.AMBIENTES_PADRAO.get(a, 0)))) for a in nomes]
+        for i, a in enumerate(nomes):   # horas mudadas no cartão valem já para o chip
+            if f"pc_hcard_amb{i}" in st.session_state and int(proj["qtd"].get(a, 0)):
+                proj["horas"][a] = float(st.session_state[f"pc_hcard_amb{i}"])
+        itens = [(a, _h(proj["horas"].get(a, pr.AMBIENTES_PADRAO.get(a, 0)))) for a in nomes]
         if _grade_cartoes("amb", itens, proj["qtd"], "ambiente", "ambientes",
-                          extra=("+ Outro ambiente", "Garagem, área gourmet…")):
+                          extra=("+ Outro ambiente", "Garagem, área gourmet…"), horas=proj["horas"]):
             proj["novo_amb"] = not proj["novo_amb"]
             st.rerun()
 
