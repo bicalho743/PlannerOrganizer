@@ -207,6 +207,23 @@ def funil(propostas, hoje, dias=90):
     }
 
 
+def funil_situacao(propostas, hoje, dias=90):
+    """Propostas feitas nos últimos `dias`, contadas pela situação de agora (barra do Início do site):
+    em_aberto, aprovada, em_execucao, finalizada e recusada."""
+    from utils.proposta_status import normalize
+    cont = {"em_aberto": 0, "aprovada": 0, "em_execucao": 0, "finalizada": 0, "recusada": 0}
+    if propostas is None or propostas.empty:
+        return cont
+    for _, p in propostas.iterrows():
+        quando = _data(p.get("data_proposta")) or _data(p.get("data_inicio"))
+        if not quando or quando < hoje - timedelta(days=dias):
+            continue
+        st_ = normalize(p.get("status") or "")
+        if st_ in cont:
+            cont[st_] += 1
+    return cont
+
+
 def _eh_das(categoria, descricao):
     return bool(re.search(r"\bdas\b|imposto|simples nacional", _chave(f"{categoria} {descricao}")))
 

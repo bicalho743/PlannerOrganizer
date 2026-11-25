@@ -11,6 +11,8 @@ from datetime import datetime, timedelta, timezone
 import pandas as pd
 from utils.currency_formatter import fmt_brl
 from utils.whatsapp_helper import whatsapp_link
+from utils.visual import CSS_PILULA, esc, pilula, saudacao
+from utils import visual
 
 MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto",
          "setembro", "outubro", "novembro", "dezembro"]
@@ -30,7 +32,7 @@ DIAS_FOLLOWUP = 7  # proposta em aberto sem resposta há mais que isso pede foll
 
 
 def _hoje():
-    return datetime.now(timezone(timedelta(hours=-3))).date()
+    return visual.hoje()
 
 
 def _data(v):
@@ -96,67 +98,83 @@ def _kpi(rotulo, valor, sub, destaque=False, tom=""):
 
 CSS = """
 <style>
-h1.ini-titulo { margin: 0 0 2px !important; padding: 0 !important; font-family: 'Cormorant Garamond', Georgia, serif !important; font-size: 2.3rem !important; font-weight: 600 !important; color: var(--navy) !important; line-height: 1.2 !important; }
-.ini-data { color: #667085; font-size: 0.92rem; margin-bottom: 18px; }
-.ini-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
-.ini-kpi { background: #fff; border: 1px solid #E4E7EC; border-radius: 12px; padding: 16px 18px; }
-.ini-kpi .rot { font-size: 0.72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #667085; }
-.ini-kpi .val { font-size: 1.55rem; font-weight: 700; color: #101828; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
-.ini-kpi .sub { font-size: 0.8rem; color: #667085; line-height: 1.4; display: block; }
-.ini-kpi.rec { border-top: 3px solid #2F855A; }
-.ini-kpi.pag { border-top: 3px solid #D9653B; }
-.ini-kpi.conv { border-top: 3px solid #3D6BB3; }
-.ini-kpi.rec .rot { color: #2F855A; }
-.ini-kpi.pag .rot { color: #C2552E; }
-.ini-kpi.conv .rot { color: #3D6BB3; }
-.ini-kpi.destaque { background: var(--navy); border-color: var(--navy); border-top: 3px solid var(--gold); }
+.ini-eyebrow { font-size: .74rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #9C7A22; margin: 0 0 4px; }
+h1.ini-titulo { margin: 0 !important; padding: 0 !important; font-family: 'Cormorant Garamond', Georgia, serif !important;
+                font-size: 2.6rem !important; font-weight: 600 !important; color: var(--navy) !important; line-height: 1.15 !important; }
+h1.ini-titulo::after { content: ""; display: block; width: 40px; height: 3px; border-radius: 2px; background: var(--gold); margin-top: 8px; }
+.ini-sub { color: #5B6B80; font-size: .98rem; margin: 10px 0 4px; }
+.st-key-cta_ini_nova { padding-top: 34px; }
+.ini-kpis { display: grid; grid-template-columns: 1.15fr 1fr 1fr 1fr; gap: 14px; margin: 14px 0 26px; }
+.ini-kpi { background: #fff; border: 1px solid #E7E2D6; border-radius: 16px; padding: 18px 20px; min-width: 0; }
+.ini-kpi .rot { font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #5B6B80; }
+.ini-kpi .val { font-size: 1.75rem; font-weight: 700; color: var(--navy); margin: 8px 0 4px; font-variant-numeric: tabular-nums;
+                white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ini-kpi .val.verde { color: #2F6B4F; }
+.ini-kpi .sub { font-size: .8rem; color: #5B6B80; line-height: 1.4; display: block; }
+.ini-kpi.destaque { background: var(--navy); border-color: var(--navy); }
 .ini-kpi.destaque .rot { color: var(--gold); }
-.ini-kpi.destaque .sub { color: #C8D1DC; }
 .ini-kpi.destaque .val { color: #fff; }
-.ini-secao { font-size: 0.78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #667085; margin: 6px 0 8px; }
-.ini-secao::before { content: ""; display: inline-block; width: 14px; height: 2px; background: var(--gold); margin-right: 8px; vertical-align: 3px; }
-.ini-item { display: flex; gap: 12px; align-items: flex-start; }
-.ini-tag { flex: none; font-size: 0.7rem; font-weight: 600; padding: 3px 8px; border-radius: 999px; margin-top: 2px; white-space: nowrap; }
-.ini-tag.pos { background: #EEF1F6; color: var(--navy); }
-.ini-tag.rec { background: #ECFDF3; color: #067647; }
-.ini-tag.pag { background: #FEF3F2; color: #B42318; }
-.ini-tag.prop { background: #FFF6E5; color: #8A5A00; }
-.ini-tag.niver { background: #FDF2FA; color: #A3195B; }
-.ini-txt b { color: #101828; }
-.ini-txt .det { display: block; font-size: 0.82rem; color: #667085; margin-top: 2px; }
+.ini-kpi.destaque .sub { color: #C8D1DC; }
+.ini-secao { display: flex; justify-content: space-between; align-items: baseline; font-size: .74rem; font-weight: 700;
+             letter-spacing: .14em; text-transform: uppercase; color: #4A5B73; margin: 4px 0 10px; }
+.ini-secao span { letter-spacing: 0; text-transform: none; font-size: .86rem; color: #9C7A22; }
+[class*="st-key-inifz_"] { background: #fff; border-radius: 14px !important; border-color: #E7E2D6 !important; }
+.ini-item { display: flex; gap: 14px; align-items: center; min-width: 0; }
+.ini-ic { flex: none; width: 40px; height: 40px; border-radius: 10px; background: #F6EDD3; color: #7A5F0B;
+          display: flex; align-items: center; justify-content: center; font-size: 1.05rem; font-weight: 700; }
+.ini-ic.pag { background: #FBE9E7; color: #9B2C2C; }
+.ini-ic.rec { background: #E3F1E8; color: #2F6B4F; }
+.ini-txt { min-width: 0; }
+.ini-txt b { color: var(--navy); font-size: .98rem; overflow-wrap: anywhere; }
+.ini-txt .det { display: block; font-size: .84rem; color: #5B6B80; margin-top: 2px; overflow-wrap: anywhere; }
 .ini-atraso { color: #B42318 !important; font-weight: 600; }
-.ini-ok { background: #F6FEF9; border: 1px solid #D1FADF; color: #067647; border-radius: 12px; padding: 14px 16px; font-weight: 500; }
-.ini-wa { display: inline-flex; align-items: center; justify-content: center; height: 38px; padding: 0 14px; width: 100%;
-          border-radius: 8px; background: #25D366; color: #fff !important; font-weight: 600; font-size: 0.85rem;
-          text-decoration: none !important; box-sizing: border-box; }
-.ini-wa:hover { background: #1EBE5A; }
-.ini-wa.off { background: #E4E7EC; color: #98A2B3 !important; pointer-events: none; }
-.ini-lin { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid #F2F4F7; font-size: 0.9rem; }
-.ini-lin:last-child { border-bottom: 0; }
-.ini-lin span { color: #475467; }
-.ini-lin b { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.ini-st { font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
-.ini-st.em_aberto { background: #FFF6E5; color: #8A5A00; }
-.ini-st.aprovada { background: #ECFDF3; color: #067647; }
-.ini-st.em_execucao { background: #EEF4FF; color: #3538CD; }
+.ini-ok { background: #fff; border: 1px solid #E7E2D6; color: #2F6B4F; border-radius: 14px; padding: 16px 18px; font-weight: 600; }
+.ini-wa { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 4px 12px; width: 100%;
+          border-radius: 8px; background: #fff; border: 1px solid #D5DBE3; color: var(--navy) !important; font-weight: 600;
+          font-size: .84rem; text-decoration: none !important; box-sizing: border-box; text-align: center; line-height: 1.2; }
+.ini-wa:hover { border-color: var(--gold); color: #7A5F0B !important; }
+.ini-wa.off { color: #98A2B3 !important; pointer-events: none; }
+.ini-cartao { background: #fff; border: 1px solid #E7E2D6; border-radius: 16px; padding: 6px 18px; }
+.ini-ag { display: flex; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid #F0ECE2; }
+.ini-ag:last-child { border-bottom: 0; }
+.ini-ag .h { flex: none; width: 48px; font-weight: 700; color: var(--navy); font-variant-numeric: tabular-nums; }
+.ini-ag .barra { flex: none; width: 3px; align-self: stretch; border-radius: 2px; background: var(--c); }
+.ini-ag .t { flex: 1; min-width: 0; }
+.ini-ag .t b { color: var(--navy); overflow-wrap: anywhere; }
+.ini-ag .t span { display: block; font-size: .82rem; color: #5B6B80; overflow-wrap: anywhere; }
+.ini-vazio { color: #5B6B80; font-size: .9rem; padding: 14px 0; }
+.ini-funil { background: #fff; border: 1px solid #E7E2D6; border-radius: 16px; padding: 18px 20px; }
+.ini-funil .bar { display: flex; height: 10px; border-radius: 999px; overflow: hidden; background: #F0ECE2; }
+.ini-funil .bar i { display: block; height: 100%; }
+.ini-funil .leg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+.ini-funil .leg b { display: block; font-size: 1.1rem; color: var(--navy); font-variant-numeric: tabular-nums; }
+.ini-funil .leg span { font-size: .8rem; color: #5B6B80; }
+.ini-funil .rod { margin-top: 10px; font-size: .78rem; color: #5B6B80; }
+.ini-prop { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #fff;
+            border: 1px solid #E7E2D6; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
+.ini-prop b { color: var(--navy); overflow-wrap: anywhere; }
+.ini-prop .d { display: block; font-size: .82rem; color: #5B6B80; }
 .ini-passo { display: flex; gap: 12px; align-items: center; }
 .ini-passo .n { flex: none; width: 28px; height: 28px; border-radius: 50%; background: #EEF1F6; color: var(--navy);
                 font-weight: 700; display: flex; align-items: center; justify-content: center; }
-.ini-passo .n.ok { background: #ECFDF3; color: #067647; }
+.ini-passo .n.ok { background: #E3F1E8; color: #2F6B4F; }
 .ini-passo .n.prox { background: var(--gold); color: var(--navy); }
-.ini-fu { display: grid; grid-template-columns: 84px 1fr 28px auto; gap: 10px; align-items: center; padding: 6px 0; font-size: .88rem; }
-.ini-fu .nm { color: #475467; }
-.ini-fu .bar { height: 10px; background: #F2F4F7; border-radius: 999px; overflow: hidden; }
-.ini-fu .bar i { display: block; height: 100%; background: var(--navy); border-radius: 999px; }
-.ini-fu.e1 .bar i { background: #3D6BB3; }
-.ini-fu.e2 .bar i { background: var(--gold); }
-.ini-fu.e3 .bar i { background: #2F855A; }
-.ini-fu b { text-align: right; font-variant-numeric: tabular-nums; }
-.ini-fu .ex { color: #067647; font-size: .8rem; font-weight: 600; white-space: nowrap; min-width: 0; }
-.ini-fu-rod { margin-top: 8px; padding-top: 8px; border-top: 1px solid #F2F4F7; font-size: .8rem; color: #667085; }
-@media (max-width: 900px) { .ini-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.st-key-ini_links .stButton, .st-key-ini_links3 .stButton > button { border: 0 !important; background: transparent !important; color: #9C7A22 !important;
+     font-weight: 700 !important; padding: 0 !important; min-height: 0 !important; box-shadow: none !important; }
+@media (max-width: 1100px) { .ini-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  h1.ini-titulo { font-size: 2.1rem !important; }
+  .st-key-cta_ini_nova { padding-top: 0; }
+  .ini-kpi .val { font-size: 1.4rem; }
+  .ini-funil .leg { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+""" + CSS_PILULA + """
 </style>
 """
+
+# cor da barrinha de cada tipo de item da agenda (o mesmo código de cores da tela Agenda)
+COR_AGENDA = {"servico": "#0D1B2A", "compromisso": "#C9A84C", "pos": "#C9A84C", "aniversario": "#E8D5A3",
+              "receber": "#2F6B4F", "pagar": "#C0533A"}
 
 
 def _botao_wa(url, rotulo="WhatsApp"):
@@ -165,34 +183,40 @@ def _botao_wa(url, rotulo="WhatsApp"):
     return f'<a class="ini-wa" href="{url}" target="_blank" rel="noopener">{rotulo}</a>'
 
 
-def _item(tag_cls, tag, titulo, detalhe, acao):
-    """Uma linha de "Para fazer": etiqueta, texto e a ação ao lado (função que desenha o botão)."""
-    with st.container(border=True):
+def _item(n, icone, titulo, detalhe, acao, cls=""):
+    """Um cartão de "Para fazer": ícone, texto e a ação ao lado (função que desenha o botão)."""
+    with st.container(border=True, key=f"inifz_{n}"):
         c_txt, c_acao = st.columns([5, 2], vertical_alignment="center")
         with c_txt:
-            st.markdown(f'<div class="ini-item"><span class="ini-tag {tag_cls}">{tag}</span>'
+            st.markdown(f'<div class="ini-item"><span class="ini-ic {cls}">{icone}</span>'
                         f'<div class="ini-txt"><b>{titulo}</b><span class="det">{detalhe}</span></div></div>',
                         unsafe_allow_html=True)
         with c_acao:
             acao()
 
 
-def _funil_html(fn):
-    """Etapas do funil com barra proporcional ao número de propostas enviadas."""
-    if not fn["enviadas"]:
-        return '<span style="color:#667085">Nenhuma proposta nos últimos 90 dias.</span>'
-    base = fn["enviadas"]
-    etapas = [("Enviadas", fn["enviadas"], ""),
-              ("Fechadas", fn["fechadas"], fmt_brl(fn["valor_fechado"])),
-              ("Concluídas", fn["concluidas"], "")]
-    html = ""
-    for i, (nome, n, extra) in enumerate(etapas, 1):
-        html += (f'<div class="ini-fu e{i}"><span class="nm">{nome}</span>'
-                 f'<span class="bar"><i style="width:{max(n / base * 100, 2 if n else 0):.0f}%"></i></span>'
-                 f'<b>{n}</b><span class="ex">{extra}</span></div>')
-    html += (f'<div class="ini-fu-rod">{fn["aguardando"]} aguardando resposta ({fmt_brl(fn["valor_aguardando"])})'
-             f' · {fn["recusadas"]} recusada(s)</div>')
-    return html
+def _funil_html(sit, dias):
+    """Barra única com as propostas dos últimos `dias` pela situação de agora (escala de cores das pílulas)."""
+    partes = [("em_aberto", "em aberto", "#EFE4C4"), ("aprovada", "aprovada(s)", "#C9A84C"),
+              ("em_execucao", "em execução", "#0D1B2A"), ("finalizada", "concluída(s)", "#2F6B4F")]
+    total = sum(sit[k] for k, _, _ in partes)
+    if not total and not sit["recusada"]:
+        return f'<div class="ini-funil"><span class="ini-vazio">Nenhuma proposta nos últimos {dias} dias.</span></div>'
+    barra = "".join(f'<i style="width:{sit[k] / total * 100:.1f}%;background:{cor}"></i>'
+                    for k, _, cor in partes if total and sit[k])
+    leg = "".join(f'<div><b>{sit[k]}</b><span>{rot}</span></div>' for k, rot, _ in partes)
+    rod = f'<div class="rod">{sit["recusada"]} recusada(s) no período</div>' if sit["recusada"] else ""
+    return f'<div class="ini-funil"><div class="bar">{barra}</div><div class="leg">{leg}</div>{rod}</div>'
+
+
+def _linha_agenda(i):
+    hora = esc(i["hora"]) if i["hora"] else "—"
+    extra = pilula(i.get("status")) if i["tipo"] == "servico" and i.get("status") else ""
+    if i["valor"]:
+        extra = f'<b style="white-space:nowrap">{fmt_brl(i["valor"])}</b>'
+    return (f'<div class="ini-ag" style="--c:{COR_AGENDA.get(i["tipo"], "#C9A84C")}"><span class="h">{hora}</span>'
+            f'<span class="barra"></span><div class="t"><b>{esc(i["titulo"])}</b><span>{esc(i["detalhe"])}</span></div>'
+            f'{extra}</div>')
 
 
 def _aniversario(cli, hoje):
@@ -217,6 +241,22 @@ def _perfil():
         return {}
 
 
+def _cabecalho(hoje, sub=""):
+    nome = _primeiro_nome()
+    c_tit, c_btn = st.columns([4, 1.3], vertical_alignment="top")
+    c_tit.markdown(f'<div class="ini-eyebrow">{SEMANA[hoje.weekday()]}, {hoje.day} de {MESES[hoje.month - 1]}</div>'
+                   f'<h1 class="ini-titulo">{saudacao()}{", " + esc(nome) if nome else ""}</h1>'
+                   + (f'<div class="ini-sub">{sub}</div>' if sub else ""), unsafe_allow_html=True)
+    with c_btn, st.container(key="cta_ini_nova"):
+        if st.button("Nova proposta", icon=":material/add:", key="ini_nova_proposta", use_container_width=True):
+            st.session_state["kanban_nova_proposta_open"] = True
+            _ir("Propostas")
+
+
+def _plural(n, um, varios):
+    return f"{n} {um if n == 1 else varios}"
+
+
 def show():
     from utils.auth_guard import require_auth
     require_auth()
@@ -226,11 +266,6 @@ def show():
     db = st.session_state.db
     hoje = _hoje()
     st.markdown(CSS, unsafe_allow_html=True)
-
-    nome = _primeiro_nome()
-    st.markdown(f'<h1 class="ini-titulo">{"Olá, " + nome if nome else "Início"}</h1>'
-                f'<div class="ini-data">{SEMANA[hoje.weekday()].capitalize()}, {hoje.day} de {MESES[hoje.month - 1]}</div>',
-                unsafe_allow_html=True)
 
     # ---------- dados ----------
     try:
@@ -251,10 +286,10 @@ def show():
         acoes_pos = pd.DataFrame()
 
     perfil = _perfil()
-    # Primeiros passos (iguais aos do app): conta sem dados ou que respondeu o onboarding, até fechar/terminar
-    from utils import onboarding_web
-    onboarding_web.mostrar_passos(perfil, clientes, propostas)
     if clientes.empty and propostas.empty:
+        _cabecalho(hoje, "Vamos montar o seu Planner: siga os primeiros passos abaixo.")
+        from utils import onboarding_web
+        onboarding_web.mostrar_passos(perfil, clientes, propostas)
         # dados de exemplo só em ambiente de demonstração (nunca para quem assina)
         if os.environ.get("MODO_DEMO") == "1" and st.button("Adicionar dados de exemplo", key="btn_add_test_data_dashboard"):
             db.add_test_data()
@@ -286,163 +321,166 @@ def show():
         rec_pend = rec[rec["status"] == "Pendente"]
         desp_pend = desp[desp["status"] == "Pendente"]
     else:
-        rec_pend = desp_pend = pd.DataFrame(columns=["valor", "d", "descricao"])
+        rec_pend = desp_pend = pd.DataFrame(columns=["id", "valor", "d", "descricao"])
 
     atras_rec = rec_pend[rec_pend["d"].apply(lambda d: bool(d) and d < hoje)] if not rec_pend.empty else rec_pend
+    vence_hoje_rec = rec_pend[rec_pend["d"].apply(lambda d: d == hoje)] if not rec_pend.empty else rec_pend
     prox7_pag = desp_pend[desp_pend["d"].apply(lambda d: bool(d) and d <= hoje + timedelta(days=7))] if not desp_pend.empty else desp_pend
 
+    # agenda de hoje (mesma regra da tela Agenda)
+    try:
+        from utils.agenda import montar_agenda
+        agenda_hoje = montar_agenda(hoje, hoje, compromissos=db.get_compromissos(), propostas=db.get_propostas(),
+                                    acoes_pos=db.get_acoes_pos_periodo(hoje, hoje), clientes=clientes, detalhado=True)
+        agenda_hoje = [i for i in agenda_hoje if i["tipo"] in ("servico", "compromisso")]
+    except Exception as e:
+        print(f"[inicio] agenda: {e}")
+        agenda_hoje = []
+
+    # ---------- "para fazer": monta a lista antes, para o cabeçalho saber quantas são ----------
+    fazer = []   # (icone, cls, titulo, detalhe, acao)
+    if not acoes_pos.empty:
+        try:
+            templates = db.get_post_org_templates() or {}
+        except Exception:
+            templates = {}
+        for _, a in acoes_pos.iterrows():
+            at = str(a.get("action_type") or "").lower()
+            nome_etapa, dmais, objetivo = ETAPAS_POS.get(at, (at.replace("_", " ").title(), "", ""))
+            venc = _data(a.get("due_date")) or hoje
+            cliente = a.get("cliente_nome") or "cliente"
+            txt = (templates.get(at, {}) or {}).get("texto", "")
+            url = whatsapp_link(a.get("cliente_telefone"), txt.replace("{nome}", str(cliente).split(" ")[0]) if txt else "")
+            aid = a.get("action_id")
+
+            def _acao(url=url, aid=aid, venc=venc):
+                st.markdown(_botao_wa(url, "Mandar mensagem"), unsafe_allow_html=True)
+                b1, b2 = st.columns(2)
+                if b1.button("Feito", key=f"ini_feito_{aid}", type="tertiary", use_container_width=True):
+                    db.update_post_organization_action(action_id=aid, status='FEITO')
+                    st.rerun()
+                if b2.button("Adiar", key=f"ini_adiar_{aid}", type="tertiary", use_container_width=True,
+                             help="Adiar 3 dias"):
+                    db.update_post_organization_action(action_id=aid, status='PENDENTE', due_date=venc + timedelta(days=3))
+                    st.rerun()
+            quando = (f'<span class="ini-atraso">venceu {_quando(venc, hoje)}</span>' if venc < hoje
+                      else _quando(venc, hoje))
+            fazer.append(("↻", "", f"{esc(nome_etapa)} · {esc(cliente)}",
+                          f"{esc(objetivo)} {('(' + dmais + ')') if dmais else ''} · proposta Nº {esc(a.get('proposta_numero', ''))} · {quando}",
+                          _acao))
+
+    for df_, lado, rotulo in ((rec_pend, "rec", "Receber"), (desp_pend, "pag", "Pagar")):
+        if df_.empty:
+            continue
+        for _, r in df_[df_["d"].apply(lambda d: bool(d) and d <= hoje + timedelta(days=3))].sort_values("d").iterrows():
+            atrasado = r["d"] < hoje
+            det = ((f'<span class="ini-atraso">venceu {_quando(r["d"], hoje)}</span>' if atrasado
+                    else f"vence {_quando(r['d'], hoje)}") + f" ({_dm(r['d'])})")
+            fazer.append(("R$", lado, f"{rotulo} {fmt_brl(r['valor'])} · {esc(r.get('descricao') or '')}".strip(" ·"), det,
+                          lambda k=r['id'], lado=lado: st.button("Abrir", key=f"ini_{lado}_{k}",
+                                                                 use_container_width=True, on_click=st.session_state.__setitem__,
+                                                                 args=("current_page", "Financeiro"))))
+
+    if not propostas.empty:
+        for _, p in propostas[propostas["st"] == "em_aberto"].iterrows():
+            enviada = _data(p.get("data_proposta")) or _data(p.get("data_inicio"))
+            if not enviada or (hoje - enviada).days < DIAS_FOLLOWUP:
+                continue
+            cliente = p.get("cliente_nome") or "cliente"
+            msg = (f"Oi, {str(cliente).split(' ')[0]}! Tudo bem? Passando para saber se ficou alguma dúvida "
+                   f"sobre a proposta de organização que te enviei. Fico à disposição!")
+            url = whatsapp_link(tel.get(p.get("cliente_id")), msg)
+            servico = str(p.get("tipo_proposta") or "").strip()
+            fazer.append(("✉", "", f"{esc(cliente)} não respondeu a proposta",
+                          f"{esc(servico) + ' · ' if servico else ''}{fmt_brl(p['valor'])} · enviada {_quando(enviada, hoje)}",
+                          lambda url=url: st.markdown(_botao_wa(url, "Lembrar no WhatsApp"), unsafe_allow_html=True)))
+
+    if not clientes.empty and "data_aniversario" in clientes.columns:
+        for _, c in clientes.iterrows():
+            d = _aniversario(c, hoje)
+            if not d or (d - hoje).days > 7:
+                continue
+            primeiro = str(c["nome"]).split(" ")[0]
+            url = whatsapp_link(c.get("telefone"), f"Feliz aniversário, {primeiro}! Desejo um novo ciclo leve e cheio de alegria. 💛")
+            fazer.append(("🎂", "", f"Aniversário de {esc(c['nome'])}", f"{_quando(d, hoje).capitalize()} ({_dm(d)})",
+                          lambda url=url: st.markdown(_botao_wa(url, "Dar parabéns"), unsafe_allow_html=True)))
+
+    n_serv = len(agenda_hoje)
+    partes = []
+    if n_serv:
+        partes.append(_plural(n_serv, "compromisso hoje", "compromissos hoje"))
+    if fazer:
+        partes.append(_plural(len(fazer), "coisa para resolver", "coisas para resolver"))
+    sub = ("Você tem " + " e ".join(partes) + ".") if partes else "Nada pendente para hoje. Bom trabalho!"
+    _cabecalho(hoje, sub)
+
+    from utils import onboarding_web
+    onboarding_web.mostrar_passos(perfil, clientes, propostas)
+
     # ---------- números do mês ----------
-    from utils.indicadores import movimentos, entrou_gastou, funil
+    from utils.indicadores import movimentos, entrou_gastou, funil, funil_situacao
     entrou, gastou = entrou_gastou(movimentos(fin), hoje.year, hoje.month)
-    lucro = entrou - gastou
     fn = funil(propostas, hoje)
     conv = fn["conversao"]
-    st.markdown('<div class="ini-kpis">' +
-        _kpi(f"Lucro de {MESES[hoje.month - 1]}", fmt_brl(lucro),
-             f"entrou {fmt_brl(entrou)} · gastou {fmt_brl(gastou)}", destaque=True) +
-        _kpi("A receber", fmt_brl(rec_pend["valor"].sum()),
-             f'<span class="ini-atraso">{len(atras_rec)} em atraso</span>' if len(atras_rec) else f"{len(rec_pend)} lançamento(s) pendente(s)", tom="rec") +
-        _kpi("A pagar", fmt_brl(desp_pend["valor"].sum()),
-             f"{len(prox7_pag)} vence(m) em até 7 dias" if len(prox7_pag) else f"{len(desp_pend)} conta(s) em aberto", tom="pag") +
-        _kpi("Conversão", f"{conv:.0%}" if conv is not None else "—",
-             f"fechou {fn['fechadas']} de {fn['fechadas'] + fn['recusadas']} respondidas · {fn['dias']} dias"
-             if conv is not None else "nenhuma proposta respondida em 90 dias", tom="conv") +
+    if len(atras_rec):
+        sub_rec = f'<span class="ini-atraso">{len(atras_rec)} em atraso</span>'
+    else:
+        sub_rec = _plural(len(rec_pend), "lançamento", "lançamentos") + (f" · {len(vence_hoje_rec)} vence hoje" if len(vence_hoje_rec) else "")
+    st.markdown(
+        '<div class="ini-kpis">'
+        f'<div class="ini-kpi destaque"><span class="rot">Lucro de {MESES[hoje.month - 1]}</span>'
+        f'<div class="val">{fmt_brl(entrou - gastou)}</div><span class="sub">entrou {fmt_brl(entrou)} · gastou {fmt_brl(gastou)}</span></div>'
+        f'<div class="ini-kpi"><span class="rot">A receber</span><div class="val verde">{fmt_brl(rec_pend["valor"].sum())}</div>'
+        f'<span class="sub">{sub_rec}</span></div>'
+        f'<div class="ini-kpi"><span class="rot">A pagar</span><div class="val">{fmt_brl(desp_pend["valor"].sum())}</div>'
+        f'<span class="sub">{_plural(len(desp_pend), "conta", "contas")}'
+        f'{" · " + str(len(prox7_pag)) + " vence(m) em 7 dias" if len(prox7_pag) else ""}</span></div>'
+        f'<div class="ini-kpi"><span class="rot">Conversão · {fn["dias"]} dias</span>'
+        f'<div class="val">{f"{conv:.0%}" if conv is not None else "—"}</div>'
+        f'<span class="sub">{(str(fn["fechadas"]) + " de " + str(fn["fechadas"] + fn["recusadas"]) + " propostas aprovadas") if conv is not None else "nenhuma proposta respondida ainda"}</span></div>'
         '</div>', unsafe_allow_html=True)
 
-    if not perfil.get("logo") and not st.session_state.get("ini_sem_logo_ok"):
-        with st.container(border=True):
-            c1, c2, c3 = st.columns([6, 2, 1], vertical_alignment="center")
-            c1.markdown('<div class="ini-txt"><b>Suas propostas ainda saem sem o seu logotipo</b>'
-                        '<span class="det">Envie o logo e escolha as cores em Perfil e marca.</span></div>',
-                        unsafe_allow_html=True)
-            with c2.container(key="cta_ir_marca"):
-                if st.button("Colocar minha marca", key="ini_ir_marca", use_container_width=True):
-                    _ir("Perfil")
-            if c3.button("", icon=":material/close:", key="ini_sem_logo_fechar", type="tertiary", help="Agora não"):
-                st.session_state["ini_sem_logo_ok"] = True
-                st.rerun()
+    col_fazer, col_lado = st.columns([1.2, 1], gap="large")
 
-    col_fazer, col_lado = st.columns([3, 2], gap="large")
-
-    # ---------- para fazer ----------
     with col_fazer:
-        st.markdown('<div class="ini-secao">Para fazer</div>', unsafe_allow_html=True)
-        n_itens = 0
+        st.markdown(f'<div class="ini-secao">Para fazer<span>{_plural(len(fazer), "pendência", "pendências") if fazer else ""}</span></div>',
+                    unsafe_allow_html=True)
+        if not fazer:
+            st.markdown('<div class="ini-ok">✓ Tudo em dia: nenhuma ação pendente.</div>', unsafe_allow_html=True)
+        for n, (icone, cls, titulo, det, acao) in enumerate(fazer):
+            _item(n, icone, titulo, det, acao, cls)
 
-        # 1) pós-organização com prazo vencido ou no dia
-        if not acoes_pos.empty:
-            try:
-                templates = db.get_post_org_templates() or {}
-            except Exception:
-                templates = {}
-            for _, a in acoes_pos.iterrows():
-                at = str(a.get("action_type") or "").lower()
-                nome_etapa, dmais, objetivo = ETAPAS_POS.get(at, (at.replace("_", " ").title(), "", ""))
-                venc = _data(a.get("due_date")) or hoje
-                cliente = a.get("cliente_nome") or "cliente"
-                txt = (templates.get(at, {}) or {}).get("texto", "")
-                url = whatsapp_link(a.get("cliente_telefone"), txt.replace("{nome}", str(cliente).split(" ")[0]) if txt else "")
-                aid = a.get("action_id")
+        c_s, c_l = st.columns([3, 1.2], vertical_alignment="bottom")
+        c_s.markdown('<div class="ini-secao" style="margin:22px 0 0">Hoje na agenda</div>', unsafe_allow_html=True)
+        with c_l, st.container(key="ini_links"):
+            if st.button("Abrir agenda →", key="ini_ir_agenda", type="tertiary", use_container_width=True):
+                st.session_state["ag_dia"] = hoje
+                _ir("Agenda")
+        if agenda_hoje:
+            st.markdown('<div class="ini-cartao">' + "".join(_linha_agenda(i) for i in agenda_hoje) + '</div>',
+                        unsafe_allow_html=True)
+        else:
+            st.markdown('<div class="ini-cartao"><div class="ini-vazio">Nenhum serviço ou visita marcado para hoje.</div></div>',
+                        unsafe_allow_html=True)
 
-                def _acao(url=url, aid=aid, venc=venc):
-                    st.markdown(_botao_wa(url), unsafe_allow_html=True)
-                    if st.button("Feito", key=f"ini_feito_{aid}", use_container_width=True):
-                        db.update_post_organization_action(action_id=aid, status='FEITO')
-                        st.rerun()
-                    if st.button("Adiar 3 dias", key=f"ini_adiar_{aid}", type="tertiary", use_container_width=True):
-                        db.update_post_organization_action(action_id=aid, status='PENDENTE', due_date=venc + timedelta(days=3))
-                        st.rerun()
-                _item("pos", f"Pós {dmais}".strip(), f"{nome_etapa} · {cliente}",
-                      f"{objetivo} · proposta #{a.get('proposta_numero', '')} · "
-                      + (f'<span class="ini-atraso">venceu {_quando(venc, hoje)}</span>' if venc < hoje else _quando(venc, hoje)),
-                      _acao)
-                n_itens += 1
-
-        # 2) recebimentos em atraso ou nos próximos 3 dias
-        if not rec_pend.empty:
-            for _, r in rec_pend[rec_pend["d"].apply(lambda d: bool(d) and d <= hoje + timedelta(days=3))].sort_values("d").iterrows():
-                atrasado = r["d"] < hoje
-                _item("rec", "Receber", f"{fmt_brl(r['valor'])} · {r.get('descricao') or 'Recebimento'}",
-                      (f'<span class="ini-atraso">venceu {_quando(r["d"], hoje)}</span>' if atrasado else f"vence {_quando(r['d'], hoje)}")
-                      + f" ({_dm(r['d'])})",
-                      lambda k=r['id']: st.button("Abrir", key=f"ini_rec_{k}", use_container_width=True,
-                                                   on_click=st.session_state.__setitem__, args=("current_page", "Financeiro")))
-                n_itens += 1
-
-        # 3) contas a pagar em atraso ou nos próximos 3 dias
-        if not desp_pend.empty:
-            for _, r in desp_pend[desp_pend["d"].apply(lambda d: bool(d) and d <= hoje + timedelta(days=3))].sort_values("d").iterrows():
-                atrasado = r["d"] < hoje
-                _item("pag", "Pagar", f"{fmt_brl(r['valor'])} · {r.get('descricao') or 'Conta'}",
-                      (f'<span class="ini-atraso">venceu {_quando(r["d"], hoje)}</span>' if atrasado else f"vence {_quando(r['d'], hoje)}")
-                      + f" ({_dm(r['d'])})",
-                      lambda k=r['id']: st.button("Abrir", key=f"ini_pag_{k}", use_container_width=True,
-                                                   on_click=st.session_state.__setitem__, args=("current_page", "Financeiro")))
-                n_itens += 1
-
-        # 4) propostas enviadas sem resposta: hora do follow-up
-        if not propostas.empty:
-            abertas = propostas[propostas["st"] == "em_aberto"]
-            for _, p in abertas.iterrows():
-                enviada = _data(p.get("data_proposta")) or _data(p.get("data_inicio"))
-                if not enviada or (hoje - enviada).days < DIAS_FOLLOWUP:
-                    continue
-                cliente = p.get("cliente_nome") or "cliente"
-                msg = (f"Oi, {str(cliente).split(' ')[0]}! Tudo bem? Passando para saber se ficou alguma dúvida "
-                       f"sobre a proposta de organização que te enviei. Fico à disposição!")
-                url = whatsapp_link(tel.get(p.get("cliente_id")), msg)
-                _item("prop", "Follow-up", f"Proposta #{p.get('numero')} · {cliente}",
-                      f"{fmt_brl(p['valor'])} · enviada {_quando(enviada, hoje)}, ainda sem resposta",
-                      lambda url=url: st.markdown(_botao_wa(url), unsafe_allow_html=True))
-                n_itens += 1
-
-        # 5) aniversariantes de hoje até 7 dias
-        if not clientes.empty and "data_aniversario" in clientes.columns:
-            for _, c in clientes.iterrows():
-                d = _aniversario(c, hoje)
-                if not d or (d - hoje).days > 7:
-                    continue
-                primeiro = str(c["nome"]).split(" ")[0]
-                url = whatsapp_link(c.get("telefone"), f"Feliz aniversário, {primeiro}! Desejo um novo ciclo leve e cheio de alegria. 💛")
-                _item("niver", "Aniversário", str(c["nome"]), f"{_quando(d, hoje)} ({_dm(d)})",
-                      lambda url=url: st.markdown(_botao_wa(url, "Dar parabéns"), unsafe_allow_html=True))
-                n_itens += 1
-
-        if not n_itens:
-            st.markdown('<div class="ini-ok">Tudo em dia: nenhuma ação pendente para hoje.</div>', unsafe_allow_html=True)
-
-    # ---------- propostas em andamento e aniversariantes ----------
     with col_lado:
         st.markdown(f'<div class="ini-secao">Funil de propostas · {fn["dias"]} dias</div>', unsafe_allow_html=True)
-        with st.container(border=True):
-            st.markdown(_funil_html(fn), unsafe_allow_html=True)
+        st.markdown(_funil_html(funil_situacao(propostas, hoje), fn["dias"]), unsafe_allow_html=True)
 
-        st.markdown('<div class="ini-secao" style="margin-top:18px">Propostas em andamento</div>', unsafe_allow_html=True)
-        with st.container(border=True):
-            if ativas.empty:
-                st.markdown('<span style="color:#667085">Nenhuma proposta em andamento.</span>', unsafe_allow_html=True)
-            else:
-                from utils.proposta_status import label_for
-                linhas = ""
-                for _, p in ativas.sort_values("valor", ascending=False).head(8).iterrows():
-                    linhas += (f'<div class="ini-lin"><span>#{p.get("numero")} · {p.get("cliente_nome") or "—"}'
-                               f'<span class="ini-st {p["st"]}">{label_for(p["st"])}</span></span><b>{fmt_brl(p["valor"])}</b></div>')
-                st.markdown(linhas, unsafe_allow_html=True)
-            if st.button("Abrir propostas", key="ini_ir_propostas", icon=":material/arrow_forward:", use_container_width=True):
+        st.markdown('<div class="ini-secao" style="margin-top:22px">Propostas em andamento</div>', unsafe_allow_html=True)
+        if ativas.empty:
+            st.markdown('<div class="ini-cartao"><div class="ini-vazio">Nenhuma proposta em andamento.</div></div>',
+                        unsafe_allow_html=True)
+        else:
+            ordem = {"em_execucao": 0, "aprovada": 1, "em_aberto": 2}
+            lista = ativas.assign(_o=ativas["st"].map(ordem).fillna(3)).sort_values(["_o", "valor"], ascending=[True, False])
+            html_ = ""
+            for _, p in lista.head(6).iterrows():
+                servico = str(p.get("tipo_proposta") or "").strip()
+                html_ += (f'<div class="ini-prop"><div><b>{esc(p.get("cliente_nome") or "—")}</b>'
+                          f'<span class="d">{esc(servico) + " · " if servico else ""}{fmt_brl(p["valor"])} · Nº {esc(p.get("numero"))}</span></div>'
+                          f'{pilula(p["st"])}</div>')
+            st.markdown(html_, unsafe_allow_html=True)
+        with st.container(key="ini_links3"):
+            if st.button("Ver todas as propostas →", key="ini_ir_propostas", type="tertiary", use_container_width=True):
                 _ir("Propostas")
-
-        st.markdown(f'<div class="ini-secao" style="margin-top:18px">Aniversariantes de {MESES[hoje.month - 1]}</div>',
-                    unsafe_allow_html=True)
-        with st.container(border=True):
-            niver = []
-            if not clientes.empty and "data_aniversario" in clientes.columns:
-                for _, c in clientes.iterrows():
-                    d = _aniversario(c, hoje)
-                    if d and d.month == hoje.month:
-                        niver.append((d.day, c["nome"]))
-            if niver:
-                st.markdown("".join(f'<div class="ini-lin"><span>{n}</span><b>{dia:02d}/{hoje.month:02d}</b></div>'
-                                    for dia, n in sorted(niver)), unsafe_allow_html=True)
-            else:
-                st.markdown(f'<span style="color:#667085">Nenhuma cliente faz aniversário em {MESES[hoje.month - 1]}.</span>',
-                            unsafe_allow_html=True)

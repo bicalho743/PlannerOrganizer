@@ -106,9 +106,34 @@ def _linhas(df):
     return df.to_dict("records")
 
 
-def montar_agenda(inicio, fim, compromissos=None, propostas=None, acoes_pos=None, financeiro=None, clientes=None):
-    """Itens da agenda entre inicio e fim (inclusive), em ordem de dia, hora e tipo."""
+def _endereco(c):
+    """Endereço da cliente numa linha (para abrir a rota no Maps); vazio se não houver."""
+    if not c:
+        return ""
+    partes = [str(c.get(k) or "").strip() for k in ("endereco", "bairro", "cidade", "estado")]
+    return ", ".join(p for p in partes if p and p.lower() != "nan")
+
+
+def montar_agenda(inicio, fim, compromissos=None, propostas=None, acoes_pos=None, financeiro=None, clientes=None,
+                  detalhado=False):
+    """Itens da agenda entre inicio e fim (inclusive), em ordem de dia, hora e tipo.
+
+    detalhado=True (tela nova da Agenda e Início do site): o serviço aparece em todos os dias entre o início e o fim
+    ("Dia 2 de 3") e os itens ganham proposta_id, status, cliente_id, endereco e telefone. O app usa o padrão
+    (só o dia de início e o de fim), então nada muda para ele.
+    """
     from utils.proposta_status import normalize
+    por_cliente = {}
+    for c in _linhas(clientes):
+        try:
+            por_cliente[int(c.get("id"))] = c
+        except (TypeError, ValueError):
+            pass
+
+    def extra(item, **kw):
+        if detalhado:
+            item.update(kw)
+        return item
 
     def no_periodo(d):
         return d is not None and inicio <= d <= fim
@@ -124,8 +149,12 @@ def montar_agenda(inicio, fim, compromissos=None, propostas=None, acoes_pos=None
         recebido = str(c.get("status_receita") or "") in ("Recebido", "Pago")
         situacao = ("recebido" if recebido else "a receber") if valor > 0 else ""
         detalhe = " · ".join(x for x in (c.get("cliente_nome"), c.get("local")) if x)
-        itens.append(_item("compromisso", d, c.get("titulo") or "Compromisso", detalhe, valor,
-                           c.get("hora"), situacao, int(c["id"])))
+        cli = por_cliente.get(int(c["cliente_id"])) if c.get("cliente_id") and not pd.isna(c.get("cliente_id")) else None
+        itens.append(extra(_item("compromisso", d, c.get("titulo") or "Compromisso", detalhe, valor,
+                                 c.get("hora"), situacao, int(c["id"])),
+                           cliente_id=int(cli["id"]) if cli else None,
+                           endereco=str(c.get("local") or "").strip() or _endereco(cli),
+                           telefone=(cli or {}).get("telefone") or ""))
 
     from utils.whatsapp_helper import whatsapp_link
     for c in _linhas(clientes):
@@ -139,9 +168,10 @@ def montar_agenda(inicio, fim, compromissos=None, propostas=None, acoes_pos=None
                 continue
             if no_periodo(d):
                 nome = str(c.get("nome") or "Cliente")
-                itens.append(_item("aniversario", d, nome, "Dê os parabéns",
-                                   whatsapp=whatsapp_link(c.get("telefone"),
-                                                          MSG_ANIVERSARIO.format(nome=nome.split(" ")[0]))))
+                itens.append(extra(_item("aniversario", d, nome, "Dê os parabéns",
+                                         whatsapp=whatsapp_link(c.get("telefone"),
+                                                                MSG_ANIVERSARIO.format(nome=nome.split(" ")[0]))),
+                                   cliente_id=c.get("id")))
 
     for p in _linhas(propostas):
         if normalize(p.get("status") or "") not in SITUACAO_SERVICO:
@@ -150,6 +180,26 @@ def montar_agenda(inicio, fim, compromissos=None, propostas=None, acoes_pos=None
         cliente = p.get("cliente_nome") or ""
         ini = _data(p.get("data_inicio")) or _data(p.get("data_inicio_execucao"))
         fim_p = _data(p.get("data_fim"))
+        if detalhado:
+            if not ini:
+                continue
+            dias = int(_num(p.get("previsao_dias")) or 0)
+            ultimo = fim_p if fim_p and fim_p >= ini else ini + timedelta(days=max(dias, 1) - 1)
+            total = (ultimo - ini).days + 1
+            if total > 60:          # data de fim errada: não espalha o serviço pela agenda inteira
+                ultimo, total = ini, 1
+            cli = por_cliente.get(int(p["cliente_id"])) if p.get("cliente_id") and not pd.isna(p.get("cliente_id")) else None
+            servico = str(p.get("tipo_proposta") or "").strip() or "Serviço"
+            for k in range(total):
+                d = ini + timedelta(days=k)
+                if not no_periodo(d):
+                    continue
+                det = (f"Dia {k + 1} de {total} · " if total > 1 else "") + f"Proposta Nº {p.get('numero')}"
+                itens.append(extra(_item("servico", d, f"{servico} · {cliente}".strip(" ·"), det),
+                                   proposta_id=int(p["id"]), status=normalize(p.get("status") or ""),
+                                   cliente_id=int(cli["id"]) if cli else None, endereco=_endereco(cli),
+                                   telefone=(cli or {}).get("telefone") or ""))
+            continue
         if no_periodo(ini):
             itens.append(_item("servico", ini, f"Início do serviço · {cliente}".strip(" ·"), nome))
         if no_periodo(fim_p) and fim_p != ini:
@@ -161,8 +211,8 @@ def montar_agenda(inicio, fim, compromissos=None, propostas=None, acoes_pos=None
             continue
         etapa = ETAPAS_POS.get(a.get("action_type"), str(a.get("action_type") or "Retorno"))
         num = a.get("proposta_numero")
-        itens.append(_item("pos", d, f"{etapa} · {a.get('cliente_nome') or ''}".strip(" ·"),
-                           f"Proposta #{num}" if num else ""))
+        itens.append(extra(_item("pos", d, f"{etapa} · {a.get('cliente_nome') or ''}".strip(" ·"),
+                                 f"Proposta #{num}" if num else ""), action_id=a.get("action_id")))
 
     for t in _linhas(financeiro):
         if str(t.get("status") or "") != "Pendente":
