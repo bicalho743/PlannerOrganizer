@@ -42,6 +42,13 @@ Responda em português, passo a passo e sem jargão. O README.md tem arquitetura
   (INITIAL_PURCHASE/RENEWAL em BRL; CANCELLATION por reembolso estorna).
 - Administração (aprovar, Pix do mês, marcar pago) aparece para os e-mails em `ADMIN_EMAILS` (variável no Render).
 
+## Login e downloads do site (25/11/2026)
+- Login guardado num cookie assinado `po_sessao` (`utils/sessao_cookie.py`, HMAC com SESSAO_SEGREDO ou derivado da
+  DATABASE_URL, 30 dias): recarregar e publicar não desconectam. Sair chama `sessao_cookie.sair()` (limpa usuario_id e o cookie).
+- PDFs do site: `utils/ui.baixar_pdf` / `baixar_pdf_pronto` publicam em `static/_pdf/<código>/<nome>.pdf` (link que não
+  expira com a tela, apagado após 2 h). Não usar `st.download_button` para PDF (dava 404 e nome em código).
+- Telas reais e vídeo da landing: `scripts/telas_reais/LEIAME.md` (conta demo_landing, app Expo no navegador).
+
 ## Avisos no celular
 - `/tarefas/lembretes-diarios` (GitHub Actions `lembretes-diarios.yml`, 08h07 Brasília, segredo `TAREFAS_CHAVE`):
   um resumo por celular por dia (`push_tokens.ultimo_resumo`), abre o Início ao tocar.
