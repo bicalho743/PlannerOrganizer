@@ -486,12 +486,12 @@ def concluir(db):
                              telefone=(o.get("tel_cliente") or "").strip() or None, origem_cliente=None)
         r = orcamento(o) or {}
         pid = db.add_proposta(cliente_id=cli, descricao=descricao(o), valor=_valor(o), status=STATUS_EM_ABERTO,
-                              tipo_proposta="Organização", data_inicio=date.today(),
+                              tipo_proposta=TIPOS.get(o.get("tipo"), "Organização"),
                               previsao_dias=max(1, math.ceil(r.get("dias_no_local") or 1)),
-                              prazo_entrega=date.today(), gerar_transacoes_automaticas=False)
+                              gerar_transacoes_automaticas=False)
         sinal = round(_valor(o) * int(o.get("sinal_pct") or 0) / 100, 2)
-        if pid and sinal > 0:
-            db.update_proposta(pid, sinal=sinal)
+        if pid:   # data de hoje (o padrão do modelo é a data em que o servidor subiu)
+            db.update_proposta(pid, data_proposta=date.today(), **({"sinal": sinal} if sinal > 0 else {}))
         resumo["proposta_id"] = pid
     except Exception as e:
         print(f"[onboarding] proposta: {e}", flush=True)

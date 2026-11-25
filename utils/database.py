@@ -297,16 +297,24 @@ class Database:
         """Migração idempotente de colunas adicionadas depois da criação da
         tabela (create_all não altera tabelas existentes). Roda uma vez por
         processo (guardado por _metadata_refreshed)."""
+        # número da proposta por conta: único por (conta, número), não no banco todo. Em transação
+        # própria: se falhar, Database._numero_por_conta fica False e add_proposta numera como antes.
+        try:
+            from sqlalchemy import text as _sa_text
+            with engine.begin() as conn:
+                conn.execute(_sa_text("CREATE UNIQUE INDEX IF NOT EXISTS idx_proposta_usuario_numero "
+                                      "ON propostas (usuario_id, numero)"))
+                conn.execute(_sa_text("DROP INDEX IF EXISTS idx_proposta_numero"))
+            Database._numero_por_conta = True
+        except Exception as e:
+            Database._numero_por_conta = False
+            print(f"[migração] número por conta: {e}", flush=True)
         try:
             from sqlalchemy import text as _sa_text
             with engine.begin() as conn:
                 conn.execute(_sa_text(
                     "ALTER TABLE propostas ADD COLUMN IF NOT EXISTS sinal DOUBLE PRECISION DEFAULT 0"
                 ))
-                # número da proposta é por conta: único por (conta, número), não no banco todo
-                conn.execute(_sa_text("DROP INDEX IF EXISTS idx_proposta_numero"))
-                conn.execute(_sa_text("CREATE UNIQUE INDEX IF NOT EXISTS idx_proposta_usuario_numero "
-                                      "ON propostas (usuario_id, numero)"))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS logo TEXT"))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS cnpj VARCHAR"))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS precificacao TEXT"))
@@ -1375,6 +1383,8 @@ class Database:
                              .filter(Proposta.usuario_id == self.usuario_id)
                              .execution_options(todas_as_contas=True).scalar())
             proximo_numero = 1 if ultimo_numero is None else int(ultimo_numero) + 1
+            if not getattr(Database, "_numero_por_conta", False):
+                proximo_numero = proximo_id   # índice antigo (número único no banco todo) ainda ativo
 
             # Criar dicionário com valores para a proposta
             proposta_data = {
@@ -1401,6 +1411,11 @@ class Database:
                 proposta_data['data_fim'] = data_fim_local
             if prazo_entrega_local is not None:
                 proposta_data['prazo_entrega'] = prazo_entrega_local
+            if previsao_dias is not None:
+                try:
+                    proposta_data['previsao_dias'] = int(previsao_dias)
+                except (TypeError, ValueError):
+                    pass
 
             # Criar a proposta com os valores filtrados
             proposta = Proposta(**proposta_data)

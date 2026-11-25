@@ -67,7 +67,8 @@ def test_titulo_numero_e_status(tmp_path, monkeypatch):
         ok, msg, arquivo = gerar_pdf_cliente_proposta(Database(usuario_id=uid), pid, tipo_documento="proposta")
         assert ok, msg
         web = _texto(open(arquivo, "rb").read())
-        assert "Proposta de Serviço" in web and f"#{numero}" in web and f"#{pid} " not in web
+        # modelo novo da proposta (pdf_proposta): "Nº <número da conta>", nunca o id interno
+        assert "Proposta de Serviço" in web and f"Nº {numero}" in web and f"Nº {pid}" not in web
     finally:
         router.api.dependency_overrides.clear()
         _limpar(engine, uid)

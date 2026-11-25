@@ -3,6 +3,7 @@ Módulo de apoio para operações com propostas.
 Este arquivo contém funções utilitárias para trabalhar com propostas
 de forma isolada e robusta.
 """
+import re
 import os
 import traceback
 from datetime import datetime
@@ -559,6 +560,45 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None, tipo_docum
                 "4. No caso da proposta incluir treinamento, é necessário a presença de funcionário no período da organização\n"
                 "5. Não incluido produtos e organizadores, caso o cliente opte por adquirí-los"
             )
+
+        if tipo_documento == "proposta":
+            # modelo novo (uma cor só, Nº da conta, validade, investimento e "Aprovar pelo WhatsApp")
+            from utils.pdf_proposta import gerar_pdf_proposta, condicoes
+            _subs = {"pré-mudança": "Embalar e organizar a mudança", "pós-mudança": "Desembalar e organizar a casa nova",
+                     "organização": "Organização dos ambientes da casa", "consultoria": "Consultoria de organização"}
+            _itens = []
+            for it in itens_tuples:
+                if isinstance(it, dict):
+                    _itens.append((it['nome'], f"{it['quantidade']} un.", it['total']))
+                else:
+                    nome_it = it[0]
+                    if nome_it.startswith("Personal Organizer - "):
+                        nome_it = f"Serviço de {str(tipo_proposta or 'organização').lower()}"
+                    _itens.append((nome_it, "", it[1]))
+            _prev = proposta.get('previsao_dias')
+            try:
+                _prev = int(float(_prev)) if _prev not in (None, '') and not pd.isna(_prev) else None
+            except Exception:
+                _prev = None
+            _st = str(proposta.get('status', '') or '').lower()
+            gerar_pdf_proposta({
+                'numero': proposta.get('numero') or proposta.get('id', ''),
+                'cliente': cliente.get('nome', ''),
+                'tipo': tipo_proposta or 'Organização',
+                'subtitulo': _subs.get(str(tipo_proposta or '').strip().lower(), ''),
+                'prazo': f"{_prev} dia{'s' if _prev and _prev > 1 else ''}" if _prev else '',
+                'inicio': di if (di and _st not in ('em_aberto', 'aguardando', '')) else '',
+                'data': proposta.get('data_proposta') or proposta.get('data_inicio'),
+                'descricao': proposta.get('descricao', ''),
+                'itens': _itens,
+                'total': total_geral,
+                'sinal': float(proposta.get('sinal', 0) or 0),
+                'sinal_pago': _st in ('aprovada', 'em_execucao', 'em execução', 'finalizada', 'concluida'),
+                'condicoes': condicoes(observacoes_perfil),
+                'equipe': (lambda m: f"você + {m.group(1)} assistente{'s' if m.group(1) != '1' else ''}" if m else '')(
+                    re.search(r"com (\d+) assistente", str(proposta.get('descricao', '')))),
+            }, filename)
+            return True, f"{titulo_doc} gerado com sucesso", filename
 
         from utils.pdf_generator_v2 import gerar_pdf_cliente
         dados_pdf = {
