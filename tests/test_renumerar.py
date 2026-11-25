@@ -34,3 +34,29 @@ def test_renumera_pela_data_sem_mexer_em_outra_conta():
     assert [x[1] for x in r] == [1, 2, 3]
     assert [str(x[0])[:10] for x in r] == ["2026-01-01", "2026-03-01", "2026-05-01"]
     assert outra == [1, 2, 3]
+
+
+def test_tarefa_unica_renumera_so_uma_vez(monkeypatch):
+    from sqlalchemy import text
+    from utils.database import Database, engine
+    from utils import renumerar as rn
+    uid = "ren-" + uuid.uuid4().hex[:10]
+    email = f"{uid}@t.com"
+    db = Database(usuario_id=uid)
+    db.create_perfil(uid, email.upper(), "X")
+    cli = db.add_cliente(nome="C")
+    for d in (date(2026, 5, 1), date(2026, 1, 1)):
+        db.add_proposta(cliente_id=cli, descricao="x", valor=10, status="em_aberto", data_inicio=d,
+                        gerar_transacoes_automaticas=False)
+    with engine.begin() as c:
+        c.execute(text("UPDATE propostas SET numero = id + 1000 WHERE usuario_id = :u"), {"u": uid})
+    monkeypatch.setattr(rn, "CONTAS_A_RENUMERAR", {"teste_" + uid: email})
+    rn.tarefas_unicas(engine)
+    q = text("SELECT numero FROM propostas WHERE usuario_id = :u ORDER BY data_proposta")
+    with engine.connect() as c:
+        assert [x[0] for x in c.execute(q, {"u": uid}).all()] == [1, 2]
+    with engine.begin() as c:   # depois disso, mexer na mão não é desfeito: a tarefa não roda de novo
+        c.execute(text("UPDATE propostas SET numero = numero + 50 WHERE usuario_id = :u"), {"u": uid})
+    rn.tarefas_unicas(engine)
+    with engine.connect() as c:
+        assert [x[0] for x in c.execute(q, {"u": uid}).all()] == [51, 52]

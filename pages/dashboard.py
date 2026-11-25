@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, timezone
 import pandas as pd
 from utils.currency_formatter import fmt_brl
 from utils.whatsapp_helper import whatsapp_link
-from utils.visual import CSS_PILULA, esc, pilula, saudacao
+from utils.visual import CSS_PILULA, esc, icone, pilula, saudacao
 from utils import visual
 
 MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto",
@@ -28,6 +28,8 @@ ETAPAS_POS = {
     'continuidade':    ('Continuidade', 'D+60', 'oferecer o serviço contínuo'),
     'retorno_tecnico': ('Retorno técnico', '', 'visita técnica agendada'),
 }
+DIAS_POS_ANTIGO = 14  # retorno de pós vencido há mais que isso vira um cartão só, com o total
+MAX_FAZER = 6  # cartões de "Para fazer" à vista; o resto abre em "Mostrar mais"
 DIAS_FOLLOWUP = 7  # proposta em aberto sem resposta há mais que isso pede follow-up
 
 
@@ -125,6 +127,12 @@ h1.ini-titulo::after { content: ""; display: block; width: 40px; height: 3px; bo
 .ini-ic.pag { background: #FBE9E7; color: #9B2C2C; }
 .ini-ic.rec { background: #E3F1E8; color: #2F6B4F; }
 .ini-txt { min-width: 0; }
+.ini-ic svg { display: block; }
+[class*="st-key-inifz_"] [data-testid="stColumn"] [data-testid="stHorizontalBlock"] { flex-direction: row !important; flex-wrap: nowrap !important; gap: 6px !important; }
+[class*="st-key-inifz_"] [data-testid="stColumn"] [data-testid="stColumn"] { min-width: 0 !important; width: auto !important; }
+[class*="st-key-inifz_"] [data-testid="stColumn"] [data-testid="stColumn"]:not(:first-child) { flex: 0 0 40px !important; }
+[class*="st-key-inifz_"] .stButton > button { min-height: 38px; }
+[class*="st-key-inifz_"] .stButton > button p { white-space: nowrap; }
 .ini-txt b { color: var(--navy); font-size: .98rem; overflow-wrap: anywhere; }
 .ini-txt .det { display: block; font-size: .84rem; color: #5B6B80; margin-top: 2px; overflow-wrap: anywhere; }
 .ini-atraso { color: #B42318 !important; font-weight: 600; }
@@ -159,10 +167,25 @@ h1.ini-titulo::after { content: ""; display: block; width: 40px; height: 3px; bo
                 font-weight: 700; display: flex; align-items: center; justify-content: center; }
 .ini-passo .n.ok { background: #E3F1E8; color: #2F6B4F; }
 .ini-passo .n.prox { background: var(--gold); color: var(--navy); }
-.st-key-ini_links .stButton, .st-key-ini_links3 .stButton > button { border: 0 !important; background: transparent !important; color: #9C7A22 !important;
-     font-weight: 700 !important; padding: 0 !important; min-height: 0 !important; box-shadow: none !important; }
-@media (max-width: 1100px) { .ini-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+[class*="st-key-ini_links"] button, [class*="st-key-ini_links"] button p { color: #9C7A22 !important; font-weight: 700 !important; }
+[class*="st-key-ini_links"] .stButton { display: flex; justify-content: flex-end; }
+.st-key-ini_links_mais .stButton { justify-content: flex-start; }
+.st-key-ini_links3 .stButton { justify-content: center; }
+[class*="st-key-inifz_"] { container-type: inline-size; }
+@container (max-width: 470px) {
+  [class*="st-key-inifz_"] > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { flex-direction: row !important; flex-wrap: wrap !important; row-gap: 10px !important; }
+  [class*="st-key-inifz_"] > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { flex: 1 1 100% !important; width: 100% !important; }
+  [class*="st-key-inifz_"] > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:last-child { padding-left: 54px; padding-top: 10px; }
+}
+/* tela média: "Para fazer" ocupa a largura toda e o funil e as propostas vêm embaixo */
+@media (max-width: 1280px) {
+  .ini-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .st-key-ini_corpo > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { flex-direction: row !important; flex-wrap: wrap !important; }
+  .st-key-ini_corpo > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { flex: 1 1 100% !important; width: 100% !important; }
+}
 @media (max-width: 640px) {
+  .st-key-ini_cab_agenda [data-testid="stHorizontalBlock"] { flex-direction: row !important; flex-wrap: nowrap !important; }
+  .st-key-ini_cab_agenda [data-testid="stColumn"] { min-width: 0 !important; width: auto !important; flex: 1 1 auto !important; }
   h1.ini-titulo { font-size: 2.1rem !important; }
   .st-key-cta_ini_nova { padding-top: 0; }
   .ini-kpi .val { font-size: 1.4rem; }
@@ -183,12 +206,12 @@ def _botao_wa(url, rotulo="WhatsApp"):
     return f'<a class="ini-wa" href="{url}" target="_blank" rel="noopener">{rotulo}</a>'
 
 
-def _item(n, icone, titulo, detalhe, acao, cls=""):
+def _item(n, ic, titulo, detalhe, acao, cls=""):
     """Um cartão de "Para fazer": ícone, texto e a ação ao lado (função que desenha o botão)."""
     with st.container(border=True, key=f"inifz_{n}"):
-        c_txt, c_acao = st.columns([5, 2], vertical_alignment="center")
+        c_txt, c_acao = st.columns([4.4, 3], vertical_alignment="center")
         with c_txt:
-            st.markdown(f'<div class="ini-item"><span class="ini-ic {cls}">{icone}</span>'
+            st.markdown(f'<div class="ini-item"><span class="ini-ic {cls}">{icone(ic, 20)}</span>'
                         f'<div class="ini-txt"><b>{titulo}</b><span class="det">{detalhe}</span></div></div>',
                         unsafe_allow_html=True)
         with c_acao:
@@ -210,7 +233,7 @@ def _funil_html(sit, dias):
 
 
 def _linha_agenda(i):
-    hora = esc(i["hora"]) if i["hora"] else "—"
+    hora = esc(i["hora"]) if i["hora"] else (f'<span style="color:#9C7A22">{icone("servico" if i["tipo"] == "servico" else "visita", 18)}</span>')
     extra = pilula(i.get("status")) if i["tipo"] == "servico" and i.get("status") else ""
     if i["valor"]:
         extra = f'<b style="white-space:nowrap">{fmt_brl(i["valor"])}</b>'
@@ -344,30 +367,42 @@ def show():
             templates = db.get_post_org_templates() or {}
         except Exception:
             templates = {}
+        antigas = []
         for _, a in acoes_pos.iterrows():
-            at = str(a.get("action_type") or "").lower()
-            nome_etapa, dmais, objetivo = ETAPAS_POS.get(at, (at.replace("_", " ").title(), "", ""))
             venc = _data(a.get("due_date")) or hoje
+            if (hoje - venc).days > DIAS_POS_ANTIGO:
+                antigas.append(venc)
+                continue
+            at = str(a.get("action_type") or "").lower()
+            nome_etapa, dmais, _obj = ETAPAS_POS.get(at, (at.replace("_", " ").title(), "", ""))
             cliente = a.get("cliente_nome") or "cliente"
             txt = (templates.get(at, {}) or {}).get("texto", "")
             url = whatsapp_link(a.get("cliente_telefone"), txt.replace("{nome}", str(cliente).split(" ")[0]) if txt else "")
             aid = a.get("action_id")
 
             def _acao(url=url, aid=aid, venc=venc):
-                st.markdown(_botao_wa(url, "Mandar mensagem"), unsafe_allow_html=True)
-                b1, b2 = st.columns(2)
-                if b1.button("Feito", key=f"ini_feito_{aid}", type="tertiary", use_container_width=True):
+                c_wa, c_ok, c_adia = st.columns([3, 1, 1], gap="small", vertical_alignment="center")
+                c_wa.markdown(_botao_wa(url, "Mensagem"), unsafe_allow_html=True)
+                if c_ok.button("", icon=":material/check:", key=f"ini_feito_{aid}", help="Feito",
+                               use_container_width=True):
                     db.update_post_organization_action(action_id=aid, status='FEITO')
                     st.rerun()
-                if b2.button("Adiar", key=f"ini_adiar_{aid}", type="tertiary", use_container_width=True,
-                             help="Adiar 3 dias"):
+                if c_adia.button("", icon=":material/schedule:", key=f"ini_adiar_{aid}", help="Adiar 3 dias",
+                                 use_container_width=True):
                     db.update_post_organization_action(action_id=aid, status='PENDENTE', due_date=venc + timedelta(days=3))
                     st.rerun()
+            dias = dmais.replace("D+", "")
             quando = (f'<span class="ini-atraso">venceu {_quando(venc, hoje)}</span>' if venc < hoje
-                      else _quando(venc, hoje))
-            fazer.append(("↻", "", f"{esc(nome_etapa)} · {esc(cliente)}",
-                          f"{esc(objetivo)} {('(' + dmais + ')') if dmais else ''} · proposta Nº {esc(a.get('proposta_numero', ''))} · {quando}",
-                          _acao))
+                      else f"vence {_quando(venc, hoje)}")
+            fazer.append(("retorno", "", f"{esc(nome_etapa)} · {esc(cliente)}",
+                          (f"{dias} dias depois da organização · " if dias.isdigit() else "")
+                          + f"{quando} · proposta Nº {esc(a.get('proposta_numero', ''))}", _acao))
+        if antigas:
+            n = len(antigas)
+            fazer.append(("retorno", "", f"{n} retorno{'s' if n > 1 else ''} de pós-organização sem fazer",
+                          f"o mais antigo venceu {_quando(min(antigas), hoje)}",
+                          lambda: st.button("Ver retornos", key="ini_pos_antigas", use_container_width=True,
+                                            on_click=st.session_state.__setitem__, args=("current_page", "PosOrganizacao"))))
 
     for df_, lado, rotulo in ((rec_pend, "rec", "Receber"), (desp_pend, "pag", "Pagar")):
         if df_.empty:
@@ -376,7 +411,7 @@ def show():
             atrasado = r["d"] < hoje
             det = ((f'<span class="ini-atraso">venceu {_quando(r["d"], hoje)}</span>' if atrasado
                     else f"vence {_quando(r['d'], hoje)}") + f" ({_dm(r['d'])})")
-            fazer.append(("R$", lado, f"{rotulo} {fmt_brl(r['valor'])} · {esc(r.get('descricao') or '')}".strip(" ·"), det,
+            fazer.append(("receber" if lado == "rec" else "pagar", lado, f"{rotulo} {fmt_brl(r['valor'])} · {esc(r.get('descricao') or '')}".strip(" ·"), det,
                           lambda k=r['id'], lado=lado: st.button("Abrir", key=f"ini_{lado}_{k}",
                                                                  use_container_width=True, on_click=st.session_state.__setitem__,
                                                                  args=("current_page", "Financeiro"))))
@@ -391,7 +426,7 @@ def show():
                    f"sobre a proposta de organização que te enviei. Fico à disposição!")
             url = whatsapp_link(tel.get(p.get("cliente_id")), msg)
             servico = str(p.get("tipo_proposta") or "").strip()
-            fazer.append(("✉", "", f"{esc(cliente)} não respondeu a proposta",
+            fazer.append(("mensagem", "", f"{esc(cliente)} não respondeu a proposta",
                           f"{esc(servico) + ' · ' if servico else ''}{fmt_brl(p['valor'])} · enviada {_quando(enviada, hoje)}",
                           lambda url=url: st.markdown(_botao_wa(url, "Lembrar no WhatsApp"), unsafe_allow_html=True)))
 
@@ -402,7 +437,7 @@ def show():
                 continue
             primeiro = str(c["nome"]).split(" ")[0]
             url = whatsapp_link(c.get("telefone"), f"Feliz aniversário, {primeiro}! Desejo um novo ciclo leve e cheio de alegria. 💛")
-            fazer.append(("🎂", "", f"Aniversário de {esc(c['nome'])}", f"{_quando(d, hoje).capitalize()} ({_dm(d)})",
+            fazer.append(("bolo", "", f"Aniversário de {esc(c['nome'])}", f"{_quando(d, hoje).capitalize()} ({_dm(d)})",
                           lambda url=url: st.markdown(_botao_wa(url, "Dar parabéns"), unsafe_allow_html=True)))
 
     n_serv = len(agenda_hoje)
@@ -440,20 +475,29 @@ def show():
         f'<span class="sub">{(str(fn["fechadas"]) + " de " + str(fn["fechadas"] + fn["recusadas"]) + " propostas aprovadas") if conv is not None else "nenhuma proposta respondida ainda"}</span></div>'
         '</div>', unsafe_allow_html=True)
 
-    col_fazer, col_lado = st.columns([1.2, 1], gap="large")
+    corpo = st.container(key="ini_corpo")
+    col_fazer, col_lado = corpo.columns([1.35, 1], gap="large")
 
     with col_fazer:
         st.markdown(f'<div class="ini-secao">Para fazer<span>{_plural(len(fazer), "pendência", "pendências") if fazer else ""}</span></div>',
                     unsafe_allow_html=True)
         if not fazer:
             st.markdown('<div class="ini-ok">✓ Tudo em dia: nenhuma ação pendente.</div>', unsafe_allow_html=True)
-        for n, (icone, cls, titulo, det, acao) in enumerate(fazer):
-            _item(n, icone, titulo, det, acao, cls)
+        todos = st.session_state.get("ini_fazer_todos")
+        for n, (ic, cls, titulo, det, acao) in enumerate(fazer if todos else fazer[:MAX_FAZER]):
+            _item(n, ic, titulo, det, acao, cls)
+        if len(fazer) > MAX_FAZER:
+            with st.container(key="ini_links_mais"):
+                if st.button("Mostrar menos" if todos else f"Mostrar mais {len(fazer) - MAX_FAZER}",
+                             key="ini_fazer_mais", type="tertiary"):
+                    st.session_state["ini_fazer_todos"] = not todos
+                    st.rerun()
 
-        c_s, c_l = st.columns([3, 1.2], vertical_alignment="bottom")
-        c_s.markdown('<div class="ini-secao" style="margin:22px 0 0">Hoje na agenda</div>', unsafe_allow_html=True)
+        st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
+        c_s, c_l = st.container(key="ini_cab_agenda").columns([3, 1.2], vertical_alignment="center")
+        c_s.markdown('<div class="ini-secao" style="margin:0">Hoje na agenda</div>', unsafe_allow_html=True)
         with c_l, st.container(key="ini_links"):
-            if st.button("Abrir agenda →", key="ini_ir_agenda", type="tertiary", use_container_width=True):
+            if st.button("Abrir agenda →", key="ini_ir_agenda", type="tertiary"):
                 st.session_state["ag_dia"] = hoje
                 _ir("Agenda")
         if agenda_hoje:
@@ -482,5 +526,5 @@ def show():
                           f'{pilula(p["st"])}</div>')
             st.markdown(html_, unsafe_allow_html=True)
         with st.container(key="ini_links3"):
-            if st.button("Ver todas as propostas →", key="ini_ir_propostas", type="tertiary", use_container_width=True):
+            if st.button("Ver todas as propostas →", key="ini_ir_propostas", type="tertiary"):
                 _ir("Propostas")

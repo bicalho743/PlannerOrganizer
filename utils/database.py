@@ -309,6 +309,12 @@ class Database:
         except Exception as e:
             Database._numero_por_conta = False
             print(f"[migração] número por conta: {e}", flush=True)
+        if Database._numero_por_conta:
+            try:
+                from utils.renumerar import tarefas_unicas
+                tarefas_unicas(engine)
+            except Exception as e:
+                print(f"[migração] renumeração única: {e}", flush=True)
         try:
             from sqlalchemy import text as _sa_text
             with engine.begin() as conn:

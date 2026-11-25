@@ -176,7 +176,7 @@ def _dialogo_compromisso(c):
 from urllib.parse import quote_plus
 
 from utils import visual
-from utils.visual import CSS_PILULA, esc, pilula
+from utils.visual import CSS_PILULA, esc, icone, pilula
 
 SEM_CURTA = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"]
 DIAS_LONGOS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
@@ -213,6 +213,7 @@ h1.ag-titulo::after { content: ""; display: block; width: 40px; height: 3px; bor
                       min-height: 92px; box-shadow: none !important; background: #fff; overflow: hidden; }
 .kanban-card.ag-cel.semana { min-height: 260px; }
 .ag-cel.semana .ag-chip { white-space: normal; }
+.ag-cel { word-break: normal !important; }
 .kanban-card.ag-cel.fora { background: #FAF8F3; }
 .kanban-card.ag-cel.fora .n { color: #B4BCC8; }
 .kanban-card.ag-cel.sel { border: 2px solid var(--gold) !important; background: #FFFCF3; }
@@ -230,7 +231,7 @@ h1.ag-titulo::after { content: ""; display: block; width: 40px; height: 3px; bor
 .ag-chip.mais { background: transparent; color: #5B6B80; padding-left: 2px; }
 .ag-dica { font-size: .78rem; color: #5B6B80; margin-top: 10px; }
 .ag-p-eyebrow { font-size: .7rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #9C7A22; }
-.ag-p-dia { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.6rem; font-weight: 600; color: var(--navy); line-height: 1.15; margin: 2px 0; }
+.ag-p-dia { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.45rem; font-weight: 600; color: var(--navy); line-height: 1.15; margin: 2px 0; }
 .ag-p-res { font-size: .84rem; color: #5B6B80; margin-bottom: 8px; }
 .ag-pi { display: flex; gap: 12px; }
 .ag-pi .h { flex: none; width: 46px; font-weight: 700; color: var(--navy); font-variant-numeric: tabular-nums; font-size: .92rem; }
@@ -251,6 +252,36 @@ h1.ag-titulo::after { content: ""; display: block; width: 40px; height: 3px; bor
 .st-key-ag_filtro button[aria-checked="true"] { background: var(--navy) !important; border-color: var(--navy) !important; color: #fff !important; }
 .st-key-ag_filtro button[aria-checked="true"] p, .st-key-ag_filtro button[aria-checked="true"] * { color: #fff !important; }
 .st-key-ag_visao button[aria-checked="true"] { background: #fff !important; border-color: var(--gold) !important; color: var(--navy) !important; }
+.st-key-ag_topo [data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; align-items: center !important; }
+.st-key-ag_topo [data-testid="stColumn"]:not(:first-child) { flex: 0 0 auto !important; width: auto !important; min-width: 0 !important; }
+.st-key-ag_topo [data-testid="stColumn"]:first-child { flex: 1 1 auto !important; min-width: 0 !important; }
+.st-key-ag_topo .stButton > button { min-width: 44px; padding: 4px 12px; }
+.st-key-ag_topo .stButton > button p { white-space: nowrap; }
+.st-key-ag_visao button { outline: none !important; box-shadow: none !important; }
+.st-key-ag_visao button p { white-space: nowrap; }
+.st-key-ag_filtro button p { display: inline-flex; align-items: center; gap: 7px; }
+.st-key-ag_filtro button:nth-of-type(n+2) p::before { content: ""; width: 9px; height: 9px; border-radius: 3px; flex: none; }
+.st-key-ag_filtro button:nth-of-type(2) p::before { background: #0D1B2A; }
+.st-key-ag_filtro button:nth-of-type(3) p::before { background: #F6EDD3; border: 1px solid #C9A84C; }
+.st-key-ag_filtro button:nth-of-type(4) p::before { background: #fff; border: 1.5px solid #C9A84C; }
+.st-key-ag_filtro button:nth-of-type(5) p::before { background: #E8D5A3; }
+.st-key-ag_filtro button:nth-of-type(6) p::before { background: #CDE6D6; }
+.st-key-ag_filtro button:nth-of-type(7) p::before { background: #F6D3CD; }
+.ag-chip svg { display: inline-block; vertical-align: -1px; margin-right: 3px; }
+.ag-cel.semana .ag-chip { word-break: normal; overflow-wrap: break-word; hyphens: auto; }
+.ag-pi { margin-bottom: 10px; }
+.ag-pi .h .ic { color: #9C7A22; display: inline-flex; }
+.st-key-ag_cal { container-type: inline-size; }
+@container (max-width: 560px) {
+  .ag-mes { padding-bottom: 8px; line-height: 1.3; }
+  .st-key-ag_topo [data-testid="stHorizontalBlock"] { flex-direction: row !important; flex-wrap: wrap !important; row-gap: 8px !important; }
+  .st-key-ag_topo [data-testid="stColumn"]:first-child { flex: 1 1 100% !important; }
+}
+/* tela média: o painel do dia vem embaixo do calendário, com a largura toda */
+@media (max-width: 1280px) {
+  .st-key-ag_corpo > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { flex-direction: row !important; flex-wrap: wrap !important; }
+  .st-key-ag_corpo > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { flex: 1 1 100% !important; width: 100% !important; }
+}
 .ag-p-vazio { color: #5B6B80; font-size: .9rem; padding: 8px 0 12px; }
 @media (max-width: 640px) {
   h1.ag-titulo { font-size: 2.1rem !important; }
@@ -264,6 +295,10 @@ h1.ag-titulo::after { content: ""; display: block; width: 40px; height: 3px; bor
   .ag-chip.aniversario { background: #E8D5A3; } .ag-chip.receber { background: #2F6B4F; } .ag-chip.pagar { background: #C0533A; }
   .ag-chip.mais { display: none; }
   .ag-sem span { font-size: .6rem; letter-spacing: 0; }
+  .st-key-ag_topo [data-testid="stHorizontalBlock"] { flex-wrap: wrap !important; }
+  .st-key-ag_topo [data-testid="stColumn"]:first-child, .st-key-ag_topo [data-testid="stColumn"]:nth-child(2) { flex: 1 1 100% !important; }
+  .st-key-ag_topo [data-testid="stColumn"]:nth-child(n+3) { flex: 1 1 0 !important; }
+  .st-key-ag_topo .stButton > button { width: 100%; }
 }
 """ + CSS_PILULA + """
 </style>
@@ -288,13 +323,14 @@ def _grade(ref, visao):
 def _chip(i):
     hora = f"{i['hora']} " if i["hora"] else ""
     tit = i["titulo"]
+    ic = ""
     if i["tipo"] == "aniversario":
-        tit = "🎂 " + tit.split(" ")[0]
+        tit, ic = tit.split(" ")[0], icone("bolo", 11)
     elif i["tipo"] == "pos":
-        tit = "↻ " + tit
+        ic = icone("retorno", 11)
     elif i["tipo"] in ("receber", "pagar") and i["valor"]:
         tit = f"{fmt_brl(i['valor'])} · {tit}"
-    return f'<span class="ag-chip {i["tipo"]}" title="{esc(hora + i["titulo"])}">{esc(hora + tit)}</span>'
+    return f'<span class="ag-chip {i["tipo"]}" title="{esc(hora + i["titulo"])}">{ic}{esc(hora + tit)}</span>'
 
 
 def _cel_html(d, itens, ref, hoje, sel, visao):
@@ -307,7 +343,7 @@ def _cel_html(d, itens, ref, hoje, sel, visao):
     chips = "".join(_chip(i) for i in itens[:limite])
     if len(itens) > limite:
         chips += f'<span class="ag-chip mais">+{len(itens) - limite}</span>'
-    return f'<div class="{cls}"><span class="n{" hoje" if d == hoje else ""}">{d.day}</span>{chips}</div>'
+    return f'<div class="{cls}" lang="pt-BR"><span class="n{" hoje" if d == hoje else ""}">{d.day}</span>{chips}</div>'
 
 
 def _maps(endereco):
@@ -324,7 +360,9 @@ def _ir(pagina):
 
 
 def _painel_item(n, i, db):
-    hora = esc(i["hora"]) if i["hora"] else ("🎂" if i["tipo"] == "aniversario" else "")
+    sem_hora = {"aniversario": "bolo", "pos": "retorno", "receber": "receber", "pagar": "pagar",
+                "servico": "servico", "compromisso": "visita"}
+    hora = esc(i["hora"]) if i["hora"] else f'<span class="ic">{icone(sem_hora.get(i["tipo"], "visita"), 18)}</span>'
     direita = ""
     if i["tipo"] == "servico" and i.get("status"):
         direita = f'<div style="margin-top:6px">{pilula(i["status"])}</div>'
@@ -414,10 +452,11 @@ def show():
     for i in itens:
         por_dia.setdefault(i["data"], []).append(i)
 
-    col_cal, col_dia = st.columns([2.1, 1], gap="medium")
+    col_cal, col_dia = st.container(key="ag_corpo").columns([2.1, 1], gap="medium")
     with col_cal, st.container(key="ag_cal"):
         with st.container(key="ag_topo"):
-            c_mes, c_vis, c_ant, c_hoje, c_prox = st.columns([3, 1.6, .55, .8, .55], vertical_alignment="center")
+            c_mes, c_vis, c_ant, c_hoje, c_prox = st.columns([3, 1.6, .55, .8, .55], vertical_alignment="center",
+                                                             gap="small")
             if visao == "Semana":
                 s_fim = ini + timedelta(days=6)
                 rot = (f"{ini.day} a {s_fim.day} de {MESES[s_fim.month - 1]}" if ini.month == s_fim.month
@@ -426,13 +465,13 @@ def show():
                 rot = f"{MESES[ref.month - 1].capitalize()} de {ref.year}"
             c_mes.markdown(f'<div class="ag-mes">{rot}</div>', unsafe_allow_html=True)
             c_vis.segmented_control("Visão", ["Semana", "Mês"], default="Mês", key="ag_visao", label_visibility="collapsed")
-            if c_ant.button("", icon=":material/arrow_back:", key="ag_ant", help="Anterior", use_container_width=True):
+            if c_ant.button("", icon=":material/arrow_back:", key="ag_ant", help="Anterior"):
                 st.session_state["ag_ref"] = ref - timedelta(days=7) if visao == "Semana" else ref.replace(day=1) - timedelta(days=1)
                 st.rerun()
-            if c_hoje.button("Hoje", key="ag_hoje", use_container_width=True):
+            if c_hoje.button("Hoje", key="ag_hoje"):
                 st.session_state["ag_ref"] = st.session_state["ag_dia"] = hoje
                 st.rerun()
-            if c_prox.button("", icon=":material/arrow_forward:", key="ag_prox", help="Próximo", use_container_width=True):
+            if c_prox.button("", icon=":material/arrow_forward:", key="ag_prox", help="Próximo"):
                 st.session_state["ag_ref"] = ref + timedelta(days=7) if visao == "Semana" else mes_de(ref)[1] + timedelta(days=1)
                 st.rerun()
 
@@ -465,12 +504,16 @@ def show():
             except Exception:
                 do_dia = []
         quando = "Hoje" if sel == hoje else ("Amanhã" if sel == hoje + timedelta(days=1) else "")
-        n_comp = sum(1 for i in do_dia if i["tipo"] in ("servico", "compromisso"))
+        contagem = []
+        for tipos_, um, varios in ((("servico", "compromisso"), "compromisso", "compromissos"),
+                                   (("pos",), "retorno", "retornos"), (("aniversario",), "aniversário", "aniversários"),
+                                   (("receber", "pagar"), "conta", "contas")):
+            n_ = sum(1 for i in do_dia if i["tipo"] in tipos_)
+            if n_:
+                contagem.append(f"{n_} {um if n_ == 1 else varios}")
         partes = [quando] if quando else []
-        partes.append(f"{n_comp} compromisso{'s' if n_comp != 1 else ''}")
-        n_niver = sum(1 for i in do_dia if i["tipo"] == "aniversario")
-        if n_niver:
-            partes.append(f"{n_niver} aniversário{'s' if n_niver != 1 else ''}")
+        partes.append(", ".join(contagem[:-1]) + " e " + contagem[-1] if len(contagem) > 1
+                      else (contagem[0] if contagem else "nada marcado"))
         st.markdown(f'<div class="ag-p-eyebrow">Sua programação</div>'
                     f'<div class="ag-p-dia">{DIAS_LONGOS[sel.weekday()]}, {sel.day} de {MESES[sel.month - 1]}</div>'
                     f'<div class="ag-p-res">{" · ".join(partes)}</div>', unsafe_allow_html=True)

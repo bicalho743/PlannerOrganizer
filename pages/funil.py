@@ -78,31 +78,3 @@ def show():
         "PDF": marca(x["pdf"]), "Viu planos": marca(x["planos"]), "Assinou": marca(x["assinou"]),
     } for x in lista], hide_index=True, use_container_width=True)
     st.caption("PDF e \"Viu planos\" começaram a ser medidos em 24/11/2026; antes disso aparecem vazios.")
-
-    st.divider()
-    with st.expander("Ferramenta: renumerar as propostas de uma conta (1, 2, 3...)"):
-        st.caption("Para contas antigas, cujos números seguiam a contagem do banco todo. A ordem nova segue a data "
-                   "da proposta. Os lançamentos e PDFs continuam ligados; só o número mostrado muda. "
-                   "Lançamentos antigos do Financeiro guardam o número antigo no texto da descrição.")
-        from sqlalchemy import text as _t
-        from utils import renumerar as rn
-        email = st.text_input("E-mail da conta", key="renum_email").strip().lower()
-        if email:
-            with engine.connect() as c:
-                u = c.execute(_t("SELECT usuario_id FROM perfis WHERE lower(email) = :e"), {"e": email}).first()
-            if not u:
-                st.warning("Nenhuma conta com esse e-mail.")
-            else:
-                prev = rn.previa(engine, u[0])
-                if not prev:
-                    st.info("Essa conta não tem propostas.")
-                else:
-                    st.dataframe([{"Data": str(d or "")[:10], "Número atual": a, "Número novo": n}
-                                  for _, a, n, d in prev], hide_index=True, use_container_width=True)
-                    if st.button(f"Renumerar as {len(prev)} propostas", key="renum_ok", type="primary"):
-                        try:
-                            m = rn.renumerar(engine, u[0])
-                            st.success(f"Pronto: {m} proposta(s) mudaram de número.")
-                        except Exception as e:
-                            st.error(str(e))
-

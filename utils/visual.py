@@ -55,3 +55,22 @@ def esc(v):
 def pilula(status):
     simbolo, rotulo, cls = PILULAS.get(status, ("", str(status or ""), "re"))
     return f'<span class="pv-pil {cls}">{simbolo} {rotulo}</span>'
+
+
+# ícones de traço (mesma família dos do menu lateral), no lugar de emoji e de símbolos de texto
+_TRACOS = {
+    "mensagem": '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+    "retorno": '<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>',
+    "bolo": '<path d="M4 21h16"/><path d="M5 21v-7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7"/>'
+            '<path d="M5 16c1.5 1 3 1 4.5 0s3-1 4.5 0 3 1 5 0"/><path d="M12 12V8"/><path d="M12 5.5a1 1 0 0 0 0-2"/>',
+    "receber": '<path d="M12 4v13"/><path d="m6 11 6 6 6-6"/><path d="M5 21h14"/>',
+    "pagar": '<path d="M12 20V7"/><path d="m6 13 6-6 6 6"/><path d="M5 3h14"/>',
+    "visita": '<path d="M12 21s-7-6.1-7-11.5a7 7 0 0 1 14 0C19 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+    "servico": '<path d="M4 7h16v12H4z"/><path d="M9 7V5h6v2"/><path d="M4 12h16"/>',
+}
+
+
+def icone(nome, tam=18):
+    return (f'<svg width="{tam}" height="{tam}" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+            f'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+            f'{_TRACOS.get(nome, "")}</svg>')

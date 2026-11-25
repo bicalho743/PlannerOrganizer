@@ -212,7 +212,8 @@ def montar_agenda(inicio, fim, compromissos=None, propostas=None, acoes_pos=None
         etapa = ETAPAS_POS.get(a.get("action_type"), str(a.get("action_type") or "Retorno"))
         num = a.get("proposta_numero")
         itens.append(extra(_item("pos", d, f"{etapa} · {a.get('cliente_nome') or ''}".strip(" ·"),
-                                 f"Proposta #{num}" if num else ""), action_id=a.get("action_id")))
+                                 (f"Proposta Nº {num}" if detalhado else f"Proposta #{num}") if num else ""),
+                           action_id=a.get("action_id")))
 
     for t in _linhas(financeiro):
         if str(t.get("status") or "") != "Pendente":
