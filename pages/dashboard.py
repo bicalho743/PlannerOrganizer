@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, timezone
 import pandas as pd
 from utils.currency_formatter import fmt_brl
 from utils.whatsapp_helper import whatsapp_link
-from utils.visual import CSS_PILULA, esc, icone, pilula, saudacao
+from utils.visual import CSS_PILULA, esc, icone, icone_whatsapp, pilula, saudacao
 from utils import visual
 
 MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto",
@@ -140,6 +140,8 @@ h1.ini-titulo::after { content: ""; display: block; width: 40px; height: 3px; bo
 .ini-wa { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 4px 12px; width: 100%;
           border-radius: 8px; background: #fff; border: 1px solid #D5DBE3; color: var(--navy) !important; font-weight: 600;
           font-size: .84rem; text-decoration: none !important; box-sizing: border-box; text-align: center; line-height: 1.2; }
+.ini-wa { gap: 7px; }
+.ini-wa.off svg { filter: grayscale(1); opacity: .5; }
 .ini-wa:hover { border-color: var(--gold); color: #7A5F0B !important; }
 .ini-wa.off { color: #98A2B3 !important; pointer-events: none; }
 .ini-cartao { background: #fff; border: 1px solid #E7E2D6; border-radius: 16px; padding: 6px 18px; }
@@ -202,8 +204,8 @@ COR_AGENDA = {"servico": "#0D1B2A", "compromisso": "#C9A84C", "pos": "#C9A84C", 
 
 def _botao_wa(url, rotulo="WhatsApp"):
     if not url:
-        return f'<span class="ini-wa off" title="Cliente sem telefone cadastrado">{rotulo}</span>'
-    return f'<a class="ini-wa" href="{url}" target="_blank" rel="noopener">{rotulo}</a>'
+        return f'<span class="ini-wa off" title="Cliente sem telefone cadastrado">{icone_whatsapp(17)}<span>{rotulo}</span></span>'
+    return f'<a class="ini-wa" href="{url}" target="_blank" rel="noopener">{icone_whatsapp(17)}<span>{rotulo}</span></a>'
 
 
 def _item(n, ic, titulo, detalhe, acao, cls=""):

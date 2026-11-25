@@ -2259,11 +2259,14 @@ class Database:
 
     def add_andamento_proposta(self, proposta_id, status, observacao, comodo=None):
         def query():
+            from utils.visual import hoje as _hoje_brasilia
             andamento = AndamentoProposta(
                 proposta_id=proposta_id,
                 status=status,
                 observacao=observacao,
-                comodo=comodo
+                comodo=comodo,
+                usuario_id=self.usuario_id,      # sem isto o filtro por conta escondia o registro
+                data=_hoje_brasilia(),           # o padrão do modelo congela a data em que o servidor subiu
             )
             self.session.add(andamento)
             return andamento.id

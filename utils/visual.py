@@ -74,3 +74,17 @@ def icone(nome, tam=18):
     return (f'<svg width="{tam}" height="{tam}" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
             f'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
             f'{_TRACOS.get(nome, "")}</svg>')
+
+
+_WA = ("M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.87 9.87 0 0 0 4.74 1.21"
+       "c5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm5.82 14.01c-.25.69-1.44 1.32-2 1.37-.51.05-1.15.07-1.85"
+       "-.12-.43-.13-.97-.31-1.67-.61-2.94-1.27-4.86-4.23-5.01-4.43-.15-.2-1.2-1.59-1.2-3.04 0-1.45.76-2.16 1.03-2.46"
+       ".27-.3.59-.37.79-.37h.57c.18 0 .43-.07.67.51.25.59.84 2.04.91 2.19.07.15.12.32.02.52-.1.2-.15.32-.3.49-.15.17"
+       "-.31.39-.45.52-.15.15-.3.31-.13.6.17.3.77 1.27 1.65 2.06 1.14 1.01 2.09 1.33 2.39 1.48.3.15.47.12.64-.07.17-.2"
+       ".74-.86.94-1.16.2-.3.39-.25.66-.15.27.1 1.72.81 2.02.96.3.15.49.22.57.34.07.12.07.71-.18 1.4z")
+
+
+def icone_whatsapp(tam=16):
+    """Logo do WhatsApp (verde), para botões que abrem a conversa com a mensagem pronta."""
+    return (f'<svg width="{tam}" height="{tam}" viewBox="0 0 24 24" aria-hidden="true" style="flex:none">'
+            f'<path fill="#25D366" d="{_WA}"/></svg>')

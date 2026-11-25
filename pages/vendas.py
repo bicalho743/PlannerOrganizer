@@ -8,8 +8,9 @@ Regras (o banco garante, ver tests/test_vendas_integ.py):
 - o custo do produto fica gravado em cada item: a tela mostra o lucro e a margem de cada venda;
 - cancelar mantém o histórico (devolve o estoque, cancela o que falta receber e lança a devolução do já recebido).
 
-Tela: números do período (com comparação), quadro por situação do pagamento (Paga, A receber, Cancelada) com busca,
-detalhes em janela e análise por período.
+Tela (protótipo "vendas"): números do período (lucro, vendido, a receber, estoque baixo), vendas recentes com busca,
+período e filtro por situação, Repor estoque (com lançamento de compra) e Mais vendidos, detalhes em janela, tabela de
+todas as vendas e análise por período.
 """
 import streamlit as st
 import pandas as pd
@@ -26,6 +27,8 @@ from utils.design_tokens import (
 
 from utils.currency_formatter import fmt_brl as _fmt_brl
 from utils.formatadores import valor_ou_traco
+from utils import visual
+from utils.visual import esc
 
 FORMAS_PAGAMENTO = ["PIX", "Cartão de crédito", "Cartão de débito", "Dinheiro", "Transferência", "Boleto"]
 SITUACOES = [("Paga", "#d4edda"), ("A receber", "#fff3cd"), ("Cancelada", "#e2e3e5")]
@@ -148,7 +151,7 @@ def _render_nova_venda_form(clientes_df, produtos_df):
             c3.write(_fmt_brl(item["preco_unitario"]))
             c4.write(_fmt_brl(item["total"]))
             with c5:
-                if botao_excluir("🗑️", f"nv_rm_{i}", use_container_width=False, help="Remover"):
+                if botao_excluir("Remover", f"nv_rm_{i}", use_container_width=False, help="Remover da venda"):
                     st.session_state.produtos_venda.pop(i)
                     st.rerun()
 
@@ -166,7 +169,7 @@ def _render_nova_venda_form(clientes_df, produtos_df):
         with col1:
             forma_pagamento = st.selectbox("Forma de pagamento", FORMAS_PAGAMENTO, key="nv_pagamento")
         with col2:
-            data_venda = st.date_input("Data da venda", value=datetime.now().date(), format="DD/MM/YYYY", key="nv_data")
+            data_venda = st.date_input("Data da venda", value=visual.hoje(), format="DD/MM/YYYY", key="nv_data")
 
         recebimento = st.radio("Pagamento", ["Recebido na hora", "A receber"], horizontal=True, key="nv_receb",
                                help="A receber: o valor entra no Financeiro como pendente, com vencimento, e aparece em "
@@ -492,82 +495,256 @@ def _render_detail_panel(venda_id, venda_row):
 
 
 
+def _delta(a, b):
+    """Variação contra o período anterior de mesmo tamanho ('' se não há base)."""
+    if not b:
+        return ""
+    v = (a - b) / abs(b)
+    cor = "#2F6B4F" if v >= 0 else "#9B2C2C"
+    return f'<span style="color:{cor};font-weight:600">{"▲" if v >= 0 else "▼"} {abs(v):.0%}</span> vs anterior'
+
+
 def _metricas(vp, comp):
-    """Números do período com a variação contra o período anterior de mesmo tamanho."""
+    """Números do período: (vendas, faturamento, ticket médio, lucro, margem) e as variações contra o anterior."""
     def soma(df, c):
         return float(df[c].apply(_safe_float).sum()) if not df.empty else 0.0
-
-    def delta(a, b):
-        if not b:
-            return ""
-        v = (a - b) / abs(b)
-        cor = "#067647" if v >= 0 else "#B42318"
-        return f'<span style="color:{cor};font-weight:600">{"▲" if v >= 0 else "▼"} {abs(v):.0%}</span> vs anterior'
 
     fat, fat_c = soma(vp, "valor_total"), soma(comp, "valor_total")
     luc, luc_c = soma(vp, "lucro"), soma(comp, "lucro")
     n, n_c = len(vp), len(comp)
     tk = fat / n if n else 0.0
     tk_c = fat_c / n_c if n_c else 0.0
-    return [("Vendas", f"{n}", delta(n, n_c)), ("Faturamento", _fmt_brl(fat), delta(fat, fat_c)),
-            ("Ticket médio", _fmt_brl(tk), delta(tk, tk_c)),
-            ("Lucro", _fmt_brl(luc), " · ".join(x for x in [f"margem {luc / fat:.0%}" if fat else "", delta(luc, luc_c)] if x))]
+    return {"n": n, "fat": fat, "tk": tk, "luc": luc, "margem": (luc / fat) if fat else None,
+            "d_fat": _delta(fat, fat_c), "d_luc": _delta(luc, luc_c), "d_tk": _delta(tk, tk_c), "d_n": _delta(n, n_c)}
+
+
+# ícones de traço (mesma família do menu); sem emoji
+_IC_SACOLA = ('<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
+              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8h12l-1 13H7z"/>'
+              '<path d="M9 8a3 3 0 0 1 6 0"/></svg>')
+_IC_CANCEL = ('<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
+              'stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="m9 9 6 6M15 9l-6 6"/></svg>')
+
+CSS = """
+<style>
+.vd-eyebrow { font-size: .74rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #9C7A22; margin: 0 0 4px; }
+h1.vd-titulo { margin: 0 !important; padding: 0 !important; font-family: 'Cormorant Garamond', Georgia, serif !important;
+               font-size: 2.6rem !important; font-weight: 600 !important; color: var(--navy) !important; line-height: 1.15 !important; }
+h1.vd-titulo::after { content: ""; display: block; width: 40px; height: 3px; border-radius: 2px; background: var(--gold); margin-top: 8px; }
+.vd-sub { color: #5B6B80; font-size: .98rem; margin: 10px 0 4px; }
+.st-key-vd_acoes { padding-top: 44px; }
+.st-key-vd_acoes [data-testid="stHorizontalBlock"] { flex-direction: row !important; flex-wrap: nowrap !important; align-items: center; justify-content: flex-end; gap: 10px !important; }
+.st-key-vd_acoes [data-testid="stColumn"] { width: auto !important; min-width: 0 !important; flex: 0 1 auto !important; }
+.st-key-vd_produtos button, .st-key-vd_produtos button p { color: #9C7A22 !important; font-weight: 700 !important; white-space: nowrap; }
+.st-key-cta_vd_nova .stButton > button { min-height: 46px; padding: 0 20px; border-radius: 10px; white-space: nowrap; }
+.vd-kpis { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 12px; margin: 18px 0 22px; }
+.vd-kpi { background: #fff; border: 1px solid #E7E2D6; border-radius: 16px; padding: 18px 20px; min-width: 0; }
+.vd-kpi .rot { font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #5B6B80; }
+.vd-kpi .val { font-size: 1.6rem; font-weight: 700; color: var(--navy); margin: 8px 0 4px; font-variant-numeric: tabular-nums;
+               white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vd-kpi .val.verde { color: #2F6B4F; }
+.vd-kpi .val.verm { color: #9B2C2C; }
+.vd-kpi .sub { font-size: .8rem; color: #5B6B80; line-height: 1.4; display: block; }
+.vd-kpi.destaque { background: var(--navy); border-color: var(--navy); }
+.vd-kpi.destaque .rot { color: var(--gold); }
+.vd-kpi.destaque .val { color: #fff; }
+.vd-kpi.destaque .sub { color: #C8D1DC; }
+.vd-secao { font-size: .74rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #4A5B73; margin: 4px 0 10px; }
+.vd-row { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #E7E2D6 !important; border-radius: 12px !important;
+          padding: 12px 14px !important; margin-bottom: 0 !important; box-shadow: none !important; min-width: 0; }
+.vd-row .ic { flex: none; width: 34px; height: 34px; border-radius: 10px; background: #F6EDD3; color: #7A5F0B;
+              display: flex; align-items: center; justify-content: center; }
+.vd-row .ic.canc { background: #F2F4F7; color: #667085; }
+.vd-row .tx { min-width: 0; flex: 1; }
+.vd-row .tx b { display: block; color: var(--navy); font-size: .9rem; overflow-wrap: anywhere; }
+.vd-row .tx .d { display: block; font-size: .8rem; color: #5B6B80; overflow-wrap: anywhere; }
+.vd-row .dir { display: flex; align-items: center; gap: 12px; flex: none; }
+.vd-row .v { font-weight: 700; font-size: .9rem; color: var(--navy); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.vd-row.cancelada .tx b, .vd-row.cancelada .v { color: #98A2B3; text-decoration: line-through; }
+[class*="st-key-kcard_vdr_"] { margin-bottom: 8px; }
+.vd-kpi.destaque .sub span { color: #A8D5BA !important; }
+.st-key-vd_cab_lista [data-testid="stHorizontalBlock"] { flex-direction: row !important; flex-wrap: wrap !important; align-items: center; row-gap: 6px; }
+.st-key-vd_cab_lista [data-testid="stColumn"]:first-child { flex: 1 1 auto !important; width: auto !important; min-width: 0 !important; }
+.st-key-vd_cab_lista [data-testid="stColumn"]:last-child { flex: 0 1 auto !important; width: auto !important; min-width: 0 !important; }
+.st-key-vd_cab_lista .vd-secao { margin: 0; }
+.st-key-vd_cab_lista [data-testid="stColumn"] { height: auto !important; }
+.st-key-vd_situacao [data-testid="stButtonGroup"] > div { gap: 6px; flex-wrap: wrap; }
+.st-key-vd_situacao button { border-radius: 999px !important; border: 1px solid #E7E2D6 !important; background: #fff !important;
+                             min-height: 30px !important; padding: 2px 12px !important; }
+.st-key-vd_situacao button p { font-size: .82rem !important; font-weight: 600 !important; color: #5B6B80 !important; }
+.st-key-vd_situacao button[aria-checked="true"] { background: var(--navy) !important; border-color: var(--navy) !important; }
+.st-key-vd_situacao button[aria-checked="true"] p { color: #fff !important; }
+.vd-pil { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: .74rem;
+          font-weight: 700; white-space: nowrap; line-height: 1.3; }
+.vd-pil.ok { background: #E3F1E8; color: #2F6B4F; }
+.vd-pil.ab { border: 1.5px solid #C9A84C; color: #7A5F0B; background: #fff; }
+.vd-pil.cc { background: #F2F4F7; color: #667085; }
+[class*="st-key-vdc_"] { background: #fff; border-radius: 16px !important; border-color: #E7E2D6 !important; padding: 18px !important; }
+.vd-h4 { font-size: 1rem; font-weight: 700; color: var(--navy); margin: 0 0 6px; }
+.vd-li { display: flex; justify-content: space-between; gap: 10px; font-size: .9rem; padding: 9px 0; border-top: 1px solid #F0ECE3; }
+.vd-li span { color: #5B6B80; overflow-wrap: anywhere; }
+.vd-li b { color: var(--navy); white-space: nowrap; }
+.vd-li b.verm { color: #9B2C2C; }
+.vd-nota { font-size: .8rem; color: #5B6B80; margin-top: 6px; }
+.vd-vazio { color: #5B6B80; font-size: .9rem; padding: 6px 0 2px; }
+.st-key-vd_compra_btn .stButton > button { background: #fff !important; color: var(--navy) !important; border: 1px solid #E7E2D6 !important;
+                                           min-height: 46px; font-weight: 700 !important; border-radius: 10px; }
+.st-key-vd_compra_btn .stButton > button p { font-weight: 700 !important; }
+.st-key-vd_compra_btn .stButton > button:hover { border-color: var(--gold) !important; }
+.st-key-vd_filtros [data-testid="stHorizontalBlock"] { align-items: flex-end; }
+.st-key-vd_mais button, .st-key-vd_mais button p { color: #9C7A22 !important; font-weight: 700 !important; }
+.st-key-vd_corpo > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { align-items: flex-start; }
+.vd-aviso { color: #5B6B80; font-size: .8rem; margin-top: 4px; }
+[class*="st-key-kcard_vdr_"] { container-type: inline-size; }
+@container (max-width: 520px) {
+  .vd-row { flex-wrap: wrap; }
+  .vd-row .dir { width: 100%; padding-left: 46px; justify-content: space-between; }
+}
+@media (max-width: 1280px) {
+  .st-key-vd_cab > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { flex-direction: row !important; flex-wrap: wrap !important; }
+  .st-key-vd_cab > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { flex: 1 1 100% !important; width: 100% !important; }
+  .st-key-vd_acoes { padding-top: 0; }
+}
+@media (max-width: 1180px) {
+  .vd-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .st-key-vd_corpo > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { flex-direction: row !important; flex-wrap: wrap !important; }
+  .st-key-vd_corpo > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { flex: 1 1 100% !important; width: 100% !important; }
+}
+@media (max-width: 640px) {
+  h1.vd-titulo { font-size: 2.1rem !important; }
+  .st-key-vd_acoes { padding-top: 0; }
+  .st-key-vd_acoes [data-testid="stHorizontalBlock"] { justify-content: space-between; flex-direction: row-reverse !important; }
+  .vd-kpi { padding: 14px 16px; }
+  .st-key-vd_cab_lista [data-testid="stColumn"]:first-child { flex: 1 1 100% !important; width: 100% !important; min-height: 24px; }
+  .vd-kpi .val { font-size: 1.25rem; }
+  .st-key-vd_filtros [data-testid="stHorizontalBlock"] { flex-direction: row !important; flex-wrap: wrap !important; }
+  .st-key-vd_filtros [data-testid="stColumn"] { flex: 1 1 100% !important; width: 100% !important; }
+}
+</style>
+"""
+
+ROTULO_PERIODO = {"Este mês": None, "Últimos 30 dias": "nos últimos 30 dias", "Últimos 90 dias": "nos últimos 90 dias",
+                  "Últimos 12 meses": "nos últimos 12 meses", "Tudo": "desde o início"}
+FILTROS_SITUACAO = ["Todas", "Paga", "A receber", "Cancelada"]
+POR_PAGINA = 8
+
+
+def _ir(pagina):
+    st.session_state.current_page = pagina
+    st.rerun()
+
+
+def _fechar_venda():
+    st.session_state["venda_selecionada"] = None
+    for k in ("vd_lista", "vd_lista_ultima"):  # a mesma linha pode ser aberta de novo
+        st.session_state.pop(k, None)
+
+
+def _fechar_compra():
+    st.session_state["vd_compra_open"] = False
+
+
+def _pilula(situacao, parcelas):
+    if situacao == "Cancelada":
+        return '<span class="vd-pil cc">Cancelada</span>'
+    if situacao == "Paga":
+        return '<span class="vd-pil ok">✓ Recebido</span>'
+    n, r = parcelas or (0, 0)
+    if n > 1:
+        return f'<span class="vd-pil ab">○ {r} de {n} recebida{"s" if r != 1 else ""}</span>'
+    return '<span class="vd-pil ab">○ A receber</span>'
+
+
+def _linha_venda(v, resumo, parcelas):
+    cliente = esc(valor_ou_traco(v.get("cliente_nome"), "Cliente"))
+    titulo = f"{cliente} · {esc(resumo)}" if resumo else cliente
+    d = v.get("data_venda")
+    partes = [d.strftime("%d/%m") if hasattr(d, "strftime") and not pd.isna(d) else ""]
+    num = v.get("proposta_numero")
+    if num and not pd.isna(num):
+        partes.append(f"junto com a proposta nº {esc(num)}")
+    forma = valor_ou_traco(v.get("forma_pagamento"), "")
+    if forma:
+        partes.append(esc(forma))
+    falta = _safe_float(v.get("a_receber"))
+    if falta > 0.004:
+        partes.append(f"falta {esc(_fmt_brl(falta))}")
+    canc = v.get("situacao") == "Cancelada"
+    return (f'<div class="kanban-card vd-row{" cancelada" if canc else ""}">'
+            f'<span class="ic{" canc" if canc else ""}">{_IC_CANCEL if canc else _IC_SACOLA}</span>'
+            f'<div class="tx"><b>{titulo}</b><span class="d">{" · ".join(p for p in partes if p)}</span></div>'
+            f'<div class="dir">{_pilula(v.get("situacao"), parcelas)}<span class="v">{esc(_fmt_brl(v.get("valor_total", 0)))}</span></div></div>')
+
+
+def _dialogo_compra(produtos_df):
+    """Lançar compra de estoque: soma a quantidade comprada ao estoque do produto (o valor pago vai pelo Financeiro)."""
+    @st.dialog("Lançar compra de estoque", on_dismiss=_fechar_compra)
+    def _d():
+        if produtos_df.empty:
+            st.info("Cadastre seus produtos primeiro em Cadastros › Produtos.")
+            return
+        df = produtos_df.sort_values("nome")
+        pid = st.selectbox("Produto", df["id"].tolist(), index=None, placeholder="Escolha o produto",
+                           format_func=lambda x: f'{df[df["id"] == x]["nome"].iloc[0]} · em estoque: '
+                                                 f'{int(_safe_float(df[df["id"] == x]["estoque"].iloc[0]))}',
+                           key="vd_compra_prod")
+        qtd = st.number_input("Quantidade comprada", min_value=1, value=1, step=1, key="vd_compra_qtd")
+        st.caption("Soma ao estoque do produto. O valor pago você lança no Financeiro, como despesa.")
+        c1, c2 = st.columns(2)
+        if c1.button("Lançar no estoque", type="primary", use_container_width=True, key="vd_compra_ok"):
+            if pid is None:
+                st.error("Escolha o produto.")
+                return
+            novo = st.session_state.db.atualizar_estoque(int(pid), int(qtd))
+            if novo is None:
+                st.error("Não foi possível atualizar o estoque agora.")
+                return
+            nome = df[df["id"] == pid]["nome"].iloc[0]
+            st.session_state["vd_compra_open"] = False
+            st.session_state["vd_msg"] = f"Estoque de {nome} atualizado: {int(novo)} unidade{'s' if novo != 1 else ''}."
+            st.rerun()
+        if c2.button("Cancelar", use_container_width=True, key="vd_compra_canc"):
+            st.session_state["vd_compra_open"] = False
+            st.rerun()
+    _d()
 
 
 def show():
     from utils.auth_guard import require_auth
+    from utils import vendas_dados
     require_auth()
-    st.markdown("""
-    <style>
-    .vendas-page .main h2 { font-size: 1.1rem !important; font-weight: 700 !important; }
-    .vendas-page .main h3 { font-size: 0.95rem !important; font-weight: 700 !important; }
-    [data-testid="stMetricLabel"] { font-size: 0.72rem !important; }
-    [data-testid="stMetricValue"] { font-size: 1rem !important; }
-    .stTextInput input, .stSelectbox select,
-    .stNumberInput input, .stDateInput input,
-    .stTextArea textarea { font-size: 0.85rem !important; }
-    label[data-testid="stWidgetLabel"] > div > p { font-size: 0.82rem !important; }
-
-    .kanban-col-header {
-        font-weight: 700; font-size: 0.82rem;
-        padding: 6px 10px; border-radius: 8px 8px 0 0;
-        margin-bottom: 6px; text-align: center;
-        letter-spacing: 0.03em; text-transform: uppercase;
-    }
-    .kanban-card {
-        border: 1px solid #dee2e6; border-radius: 8px;
-        padding: 8px 10px; margin-bottom: 6px;
-        background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    }
-    .kanban-card-cliente { font-weight: 600; font-size: 0.82rem; margin-bottom: 1px; color: #1a202c; }
-    .kanban-card-sub { font-size: 0.72rem; color: #6c757d; margin-bottom: 3px; }
-    .kanban-card-valor { font-size: 0.78rem; color: #1a5276; font-weight: 600; }
-    .kanban-card-falta { font-size: 0.72rem; color: #B54708; font-weight: 600; }
-    .vd-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 4px 0 12px; }
-    .vd-kpi { background: #fff; border: 1px solid #E4E7EC; border-radius: 12px; padding: 12px 14px; }
-    .vd-kpi .rot { font-size: .7rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #667085; }
-    .vd-kpi .val { font-size: 1.2rem; font-weight: 700; color: #101828; margin: 3px 0 2px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .vd-kpi .sub { font-size: .76rem; color: #667085; display: block; line-height: 1.4; }
-    .vd-kpi.alerta { border-color: #FEC84B; background: #FFFAEB; }
-    @media (max-width: 900px) { .vd-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown('<div class="vendas-page">', unsafe_allow_html=True)
+    st.markdown(CSS, unsafe_allow_html=True)
 
     if "db" not in st.session_state:
         st.error("Erro: Conexão com banco de dados não inicializada")
         return
+    db = st.session_state.db
+    ss = st.session_state
+    ss.setdefault("venda_selecionada", None)
+    ss.setdefault("vendas_nova_venda_open", False)
+    ss.setdefault("vd_compra_open", False)
 
-    st.markdown('<h1 class="page-title">Vendas</h1>', unsafe_allow_html=True)
+    # ---------- cabeçalho ----------
+    c_tit, c_btn = st.container(key="vd_cab").columns([2.8, 1.5], vertical_alignment="top")
+    c_tit.markdown('<div class="vd-eyebrow">Produtos para as suas clientes</div><h1 class="vd-titulo">Vendas</h1>'
+                   '<div class="vd-sub">Colmeias, cestos e organizadores que você vende junto com o serviço, '
+                   'com lucro e estoque.</div>', unsafe_allow_html=True)
+    with c_btn, st.container(key="vd_acoes"):
+        b1, b2 = st.columns(2)
+        with b1, st.container(key="vd_produtos"):
+            if st.button("Meus produtos e estoque", type="tertiary", key="vd_ir_produtos"):
+                _ir("Cadastros")
+        with b2, st.container(key="cta_vd_nova"):
+            if st.button("Nova venda", icon=":material/add:", key="btn_nova_venda_top"):
+                ss["vendas_nova_venda_open"] = not ss["vendas_nova_venda_open"]
+                if not ss["vendas_nova_venda_open"]:
+                    ss.produtos_venda = []
 
-    if "venda_selecionada" not in st.session_state:
-        st.session_state["venda_selecionada"] = None
-    if "vendas_nova_venda_open" not in st.session_state:
-        st.session_state["vendas_nova_venda_open"] = False
+    if ss.get("vd_msg"):
+        st.success(ss.pop("vd_msg"))
 
     try:
-        vendas_df = st.session_state.db.get_vendas()
+        vendas_df = db.get_vendas()
     except Exception as e:
         st.warning(f"Erro ao carregar vendas: {str(e)}")
         vendas_df = pd.DataFrame()
@@ -577,10 +754,16 @@ def show():
         vendas_df["data_venda"] = pd.to_datetime(vendas_df["data_venda"], errors="coerce")
         if "situacao" not in vendas_df:
             vendas_df["situacao"] = vendas_df["status"]
+    try:
+        produtos_df = db.get_produtos()
+    except Exception:
+        produtos_df = pd.DataFrame()
+    if produtos_df is None:
+        produtos_df = pd.DataFrame()
 
     # vendas registradas antes da correção ficaram como "Pendente" no Financeiro, mesmo pagas na hora
     try:
-        n_antigas = st.session_state.db.contar_vendas_antigas_pendentes()
+        n_antigas = db.contar_vendas_antigas_pendentes()
     except Exception:
         n_antigas = 0
     if n_antigas:
@@ -590,14 +773,16 @@ def show():
                         "nesta tela entrava como pendente, mesmo paga na hora, e por isso não contava no faturamento. "
                         "Se elas já foram pagas, marque como recebidas (na data de cada venda).")
             if st.button("Marcar vendas antigas como recebidas", key="vd_marcar_antigas"):
-                n = st.session_state.db.marcar_vendas_antigas_recebidas()
+                n = db.marcar_vendas_antigas_recebidas()
                 st.success(f"{n} venda{'s' if n != 1 else ''} marcada{'s' if n != 1 else ''} como recebida{'s' if n != 1 else ''}.")
                 st.rerun()
 
-    hoje = datetime.now().date()
-    f1, f2 = st.columns([1, 2])
-    nome_periodo = f1.selectbox("Período", list(PERIODOS_VENDA), index=2, key="vd_periodo")
-    busca = f2.text_input("Buscar cliente ou observação", key="vd_busca", placeholder="Nome da cliente…")
+    # ---------- números (o período e a busca ficam junto da lista, abaixo; aqui vale o que está escolhido) ----------
+    hoje = visual.hoje()
+    nome_periodo = ss.get("vd_periodo") or "Este mês"
+    if nome_periodo not in PERIODOS_VENDA:
+        nome_periodo = "Este mês"
+    busca = (ss.get("vd_busca") or "").strip()
     ini, fim = _periodo(nome_periodo, hoje)
 
     def _no_periodo(df, i, f):
@@ -606,160 +791,198 @@ def show():
         d = df["data_venda"].dt.date
         return df[(d >= i) & (d <= f)] if i else df[d <= f]
 
-    vp = _no_periodo(vendas_df, ini, fim)
-    # o quadro mostra todas as datas (o período vale para os números do topo); a busca também
-    lista = vendas_df
-    if busca and not lista.empty:
-        b = busca.strip().lower()
-        lista = lista[lista["cliente_nome"].astype(str).str.lower().str.contains(b, regex=False)
-                      | lista["observacoes"].astype(str).str.lower().str.contains(b, regex=False)]
-        vp = lista[lista.index.isin(vp.index)]
+    def _filtra_busca(df):
+        if not busca or df.empty:
+            return df
+        b = busca.lower()
+        return df[df["cliente_nome"].astype(str).str.lower().str.contains(b, regex=False)
+                  | df["observacoes"].astype(str).str.lower().str.contains(b, regex=False)]
+
+    vp = _filtra_busca(_no_periodo(vendas_df, ini, fim))
     ativas = vp[vp["situacao"] != "Cancelada"] if not vp.empty else vp
     comp = pd.DataFrame()
     if ini and not vendas_df.empty:
         dur = (fim - ini).days + 1
-        comp = _no_periodo(vendas_df, ini - timedelta(days=dur), ini - timedelta(days=1))
-        comp = comp[comp["situacao"] != "Cancelada"]
+        comp = _filtra_busca(_no_periodo(vendas_df, ini - timedelta(days=dur), ini - timedelta(days=1)))
+        comp = comp[comp["situacao"] != "Cancelada"] if not comp.empty else comp
+    m = _metricas(ativas, comp if ini else ativas.iloc[0:0])
+    rot = ROTULO_PERIODO.get(nome_periodo) or f"em {visual.MESES[hoje.month - 1]}"
+
+    abertas_ids = vendas_df[vendas_df["a_receber"].apply(_safe_float) > 0.004]["id"].tolist() \
+        if "a_receber" in vendas_df else []
     a_receber = float(vendas_df["a_receber"].apply(_safe_float).sum()) if "a_receber" in vendas_df else 0.0
-    n_abertas = int((vendas_df["a_receber"].apply(_safe_float) > 0.004).sum()) if "a_receber" in vendas_df else 0
-    cards = "".join(f'<div class="vd-kpi"><span class="rot">{r}</span><div class="val">{v}</div><span class="sub">{s or "&nbsp;"}</span></div>'
-                    for r, v, s in _metricas(ativas, comp if ini else ativas.iloc[0:0]))
-    cards += (f'<div class="vd-kpi{" alerta" if a_receber else ""}"><span class="rot">A receber</span>'
-              f'<div class="val">{_fmt_brl(a_receber)}</div><span class="sub">{n_abertas} venda{"s" if n_abertas != 1 else ""} '
-              'em aberto, de qualquer data</span></div>')
-    st.markdown(f'<div class="vd-kpis">{cards}</div>', unsafe_allow_html=True)
+    parc_abertas = vendas_dados.parcelas_por_venda(db, abertas_ids)
+    n_parc = sum(n - r for n, r in parc_abertas.values()) or len(abertas_ids)
+    baixo = vendas_dados.estoque_baixo(produtos_df)
 
-    col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
-    with col_btn:
-        with st.container(key="gold_nova_venda"):
-            if st.button("Nova venda", type="primary", icon=":material/add:", use_container_width=True, key="btn_nova_venda_top"):
-                st.session_state["vendas_nova_venda_open"] = not st.session_state["vendas_nova_venda_open"]
-                if not st.session_state["vendas_nova_venda_open"]:
-                    st.session_state.produtos_venda = []
+    sub_lucro = " · ".join(x for x in [rot, f"margem {m['margem']:.0%}" if m["margem"] is not None else "", m["d_luc"]] if x)
+    sub_vend = " · ".join(x for x in [f"{m['n']} venda{'s' if m['n'] != 1 else ''}",
+                                      f"ticket médio {_fmt_brl(m['tk'])}" if m["n"] else "", m["d_fat"]] if x)
+    st.markdown(
+        '<div class="vd-kpis">'
+        f'<div class="vd-kpi destaque"><span class="rot">Lucro com produtos</span><div class="val">{_fmt_brl(m["luc"])}</div>'
+        f'<span class="sub">{sub_lucro}</span></div>'
+        f'<div class="vd-kpi"><span class="rot">Vendido</span><div class="val">{_fmt_brl(m["fat"])}</div>'
+        f'<span class="sub">{sub_vend}</span></div>'
+        f'<div class="vd-kpi"><span class="rot">A receber</span><div class="val verde">{_fmt_brl(a_receber)}</div>'
+        f'<span class="sub">{n_parc} parcela{"s" if n_parc != 1 else ""} · de qualquer data</span></div>'
+        f'<div class="vd-kpi"><span class="rot">Estoque baixo</span><div class="val{" verm" if len(baixo) else ""}">{len(baixo)}</div>'
+        f'<span class="sub">produto{"s" if len(baixo) != 1 else ""} para repor</span></div>'
+        '</div>', unsafe_allow_html=True)
 
-    if st.session_state["vendas_nova_venda_open"]:
-        with st.expander("Nova Venda", expanded=True):
+    # ---------- nova venda ----------
+    if ss["vendas_nova_venda_open"]:
+        with st.expander("Nova venda", expanded=True):
             try:
-                clientes_df = st.session_state.db.get_clientes()
-                produtos_df = st.session_state.db.get_produtos()
-                _render_nova_venda_form(clientes_df, produtos_df)
+                _render_nova_venda_form(db.get_clientes(), produtos_df)
             except Exception as e:
                 st.error(f"Erro ao carregar formulário: {str(e)}")
 
     # Relatório pós-finalização
-    if st.session_state.get("mostrar_gerar_relatorio", False) and st.session_state.get("venda_recente_id"):
-        st.markdown("---")
-        st.success("Venda finalizada! Gere o relatório abaixo.")
-        rc1, rc2 = st.columns(2)
-        with rc1:
-            if botao_documento("Gerar relatório", use_container_width=True, key="btn_rel_pos"):
-                try:
-                    vid = st.session_state.venda_recente_id
-                    vrow = vendas_df[vendas_df["id"] == vid].iloc[0]
-                    itens_tmp = st.session_state.db.get_itens_venda(vid)
-                    nome = str(vrow.get("cliente_nome") or "Cliente")
-                    proposta_dados = {
-                        "id": vrow.get("proposta_numero") or vrow["id"],
-                        "tipo_proposta": "Venda",
-                        "status": vrow.get("situacao", "Paga"),
-                        "forma_pagamento": st.session_state.venda_recente_forma_pagamento,
-                        "valor_total": st.session_state.venda_recente_valor_total,
-                        "data_venda": vrow["data_venda"],
-                        "observacoes": st.session_state.venda_recente_observacoes or ""
-                    }
-                    pdf_bytes = _pdf_venda(proposta_dados, {"nome": nome}, itens_tmp)
-                    safe = nome.replace(" ", "_").replace("/", "_").lower()
-                    st.success("PDF gerado!")
-                    st.download_button("Baixar PDF", data=pdf_bytes, file_name=f"Venda_{vid}_{safe}.pdf",
-                                       mime="application/pdf", key="dl_rel_pos")
-                except Exception as e:
-                    st.error(f"Erro: {str(e)}")
-        with rc2:
-            if st.button("Nova venda", type="secondary", use_container_width=True, key="btn_nova_pos"):
-                st.session_state.mostrar_gerar_relatorio = False
-                for k in list(st.session_state.keys()):
-                    if k.startswith("venda_recente_"):
-                        del st.session_state[k]
-                st.rerun()
-
-    st.markdown("---")
-
-    # quadro por situação do pagamento; "A receber" mostra todas as vendas em aberto, de qualquer data
-    abertas = vendas_df[(vendas_df["situacao"] == "A receber")] if not vendas_df.empty else vendas_df
-    if busca and not abertas.empty:
-        b = busca.strip().lower()
-        abertas = abertas[abertas["cliente_nome"].astype(str).str.lower().str.contains(b, regex=False)]
-    colunas = st.columns(3)
-    for col_idx, ((rotulo, cor), col_widget) in enumerate(zip(SITUACOES, colunas)):
-        col_df = abertas if rotulo == "A receber" else (lista[lista["situacao"] == rotulo] if not lista.empty else lista)
-        with col_widget:
-            st.markdown(f'<div class="kanban-col-header" style="background-color:{cor};">{rotulo} ({len(col_df)})</div>',
-                        unsafe_allow_html=True)
-            if col_df.empty:
-                st.caption("Nenhuma venda nesta situação." if rotulo == "A receber"
-                           else ("Nenhuma venda encontrada." if busca else "Nenhuma venda nesta situação."))
-                continue
-            col_df = col_df.sort_values("data_venda", ascending=False)
-            limite = 30
-            for _, venda in col_df.head(limite).iterrows():
-                vid = venda["id"]
-                cliente = html_module.escape(valor_ou_traco(venda.get("cliente_nome"), "Cliente"))
-                pagamento = html_module.escape(valor_ou_traco(venda.get("forma_pagamento"), ""))
-                data_str = html_module.escape(_fmt_date(venda.get("data_venda")))
-                valor_f = html_module.escape(_fmt_brl(venda.get("valor_total", 0)))
-                sub_html = " · ".join(p for p in [pagamento, data_str] if p)
-                falta = _safe_float(venda.get("a_receber"))
-                extra = f'<div class="kanban-card-falta">falta {html_module.escape(_fmt_brl(falta))}</div>' if falta else ""
-                if cartao_clicavel(
-                    f'<div class="kanban-card">'
-                    f'<div class="kanban-card-cliente">{cliente}</div>'
-                    f'<div class="kanban-card-sub">{sub_html}</div>'
-                    f'<div class="kanban-card-valor">{valor_f}</div>{extra}'
-                    f'</div>',
-                    key=f"card_btn_{col_idx}_{vid}", rotulo=f"Abrir venda de {cliente}"):
-                    st.session_state["venda_selecionada"] = vid
+    if ss.get("mostrar_gerar_relatorio", False) and ss.get("venda_recente_id"):
+        with st.container(border=True, key="vdc_pos_venda"):
+            st.success("Venda finalizada! Gere o relatório abaixo.")
+            rc1, rc2 = st.columns(2)
+            with rc1:
+                if botao_documento("Gerar relatório", use_container_width=True, key="btn_rel_pos"):
+                    try:
+                        vid = ss.venda_recente_id
+                        vrow = vendas_df[vendas_df["id"] == vid].iloc[0]
+                        itens_tmp = db.get_itens_venda(vid)
+                        nome = str(vrow.get("cliente_nome") or "Cliente")
+                        proposta_dados = {
+                            "id": vrow.get("proposta_numero") or vrow["id"],
+                            "tipo_proposta": "Venda",
+                            "status": vrow.get("situacao", "Paga"),
+                            "forma_pagamento": ss.venda_recente_forma_pagamento,
+                            "valor_total": ss.venda_recente_valor_total,
+                            "data_venda": vrow["data_venda"],
+                            "observacoes": ss.venda_recente_observacoes or ""
+                        }
+                        pdf_bytes = _pdf_venda(proposta_dados, {"nome": nome}, itens_tmp)
+                        safe = nome.replace(" ", "_").replace("/", "_").lower()
+                        st.success("PDF gerado!")
+                        st.download_button("Baixar PDF", data=pdf_bytes, file_name=f"Venda_{vid}_{safe}.pdf",
+                                           mime="application/pdf", key="dl_rel_pos")
+                    except Exception as e:
+                        st.error(f"Erro: {str(e)}")
+            with rc2:
+                if st.button("Fechar", type="secondary", use_container_width=True, key="btn_nova_pos"):
+                    ss.mostrar_gerar_relatorio = False
+                    for k in list(ss.keys()):
+                        if k.startswith("venda_recente_"):
+                            del ss[k]
                     st.rerun()
-            if len(col_df) > limite:
-                st.caption(f"e mais {len(col_df) - limite} mais antigas. Busque pelo nome ou veja em “Todas as vendas”.")
-    if busca:
-        st.caption(f"Busca em todas as datas por “{busca.strip()}”.")
-    else:
-        st.caption(f"O quadro mostra vendas de todas as datas, das mais novas para as mais antigas. "
-                   f"O período ({nome_periodo.lower()}) vale para os números do topo.")
 
-    _lista_vendas(vendas_df, busca)
+    # ---------- corpo: vendas recentes | repor estoque e mais vendidos ----------
+    corpo = st.container(key="vd_corpo")
+    esq, dir_ = corpo.columns([1.9, 1], gap="medium")
+    with esq:
+        with st.container(key="vd_cab_lista"):
+            h1_, h2_ = st.columns([1, 1])
+            h1_.markdown('<div class="vd-secao">Vendas recentes</div>', unsafe_allow_html=True)
+            with h2_:
+                filtro = st.segmented_control("Situação", FILTROS_SITUACAO, default="Todas", key="vd_situacao",
+                                              label_visibility="collapsed") or "Todas"
+        with st.container(key="vd_filtros"):
+            f1, f2 = st.columns([2, 1])
+            f1.text_input("Buscar", key="vd_busca", placeholder="Buscar cliente ou observação",
+                          label_visibility="collapsed")
+            f2.selectbox("Período dos números", list(PERIODOS_VENDA), index=list(PERIODOS_VENDA).index("Este mês"),
+                         key="vd_periodo", label_visibility="collapsed",
+                         help="Vale para os números do topo e para Mais vendidos. A lista mostra todas as datas.")
+        lista = _filtra_busca(vendas_df)
+        if filtro != "Todas" and not lista.empty:
+            lista = lista[lista["situacao"] == filtro]
+        if lista.empty:
+            st.markdown('<div class="vd-vazio">' + ("Nenhuma venda encontrada." if (busca or filtro != "Todas")
+                        else "Nenhuma venda registrada ainda. Clique em Nova venda para começar.") + '</div>',
+                        unsafe_allow_html=True)
+        else:
+            lista = lista.sort_values(["data_venda", "id"], ascending=False)
+            limite = ss.get("vd_limite", POR_PAGINA)
+            mostrar = lista.head(limite)
+            ids = mostrar["id"].tolist()
+            resumos = vendas_dados.itens_resumo(db, ids)
+            parcelas = vendas_dados.parcelas_por_venda(db, ids)
+            for _, v in mostrar.iterrows():
+                vid = int(v["id"])
+                if cartao_clicavel(_linha_venda(v, resumos.get(vid, ""), parcelas.get(vid)), key=f"vdr_{vid}",
+                                   rotulo=f"Abrir venda de {valor_ou_traco(v.get('cliente_nome'), 'Cliente')}"):
+                    ss["venda_selecionada"] = vid
+                    ss["vd_compra_open"] = False
+                    st.rerun()
+            if len(lista) > limite:
+                with st.container(key="vd_mais"):
+                    if st.button(f"Mostrar mais ({len(lista) - limite})", type="tertiary", key="vd_mais_btn"):
+                        ss["vd_limite"] = limite + POR_PAGINA * 2
+                        st.rerun()
+            st.markdown(f'<div class="vd-aviso">Todas as datas, das mais novas para as mais antigas. Os números do topo '
+                        f'seguem o período escolhido ({esc(nome_periodo.lower())}).</div>', unsafe_allow_html=True)
+        with st.expander("Todas as vendas em tabela", expanded=False):
+            _lista_vendas(vendas_df, busca)
 
-    # Detalhes em modal centralizado (mesmo padrão do Financeiro e das Propostas)
-    selected_id = st.session_state.get("venda_selecionada")
+    with dir_:
+        with st.container(border=True, key="vdc_repor"):
+            st.markdown('<div class="vd-h4">Repor estoque</div>', unsafe_allow_html=True)
+            if baixo.empty:
+                st.markdown('<div class="vd-li"><span>' + ("Nenhum produto com estoque baixo." if not produtos_df.empty
+                            else "Nenhum produto cadastrado.") + '</span></div>', unsafe_allow_html=True)
+            else:
+                st.markdown("".join(f'<div class="vd-li"><span>{esc(r["nome"])}</span><b class="verm">{int(r["estoque"])} un.</b></div>'
+                                    for _, r in baixo.head(6).iterrows()), unsafe_allow_html=True)
+                if len(baixo) > 6:
+                    st.markdown(f'<div class="vd-nota">e mais {len(baixo) - 6}.</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="vd-nota">Entram aqui os produtos com até {vendas_dados.ESTOQUE_BAIXO} unidades.</div>',
+                        unsafe_allow_html=True)
+            with st.container(key="vd_compra_btn"):
+                if st.button("Lançar compra de estoque", use_container_width=True, key="vd_compra"):
+                    from utils import somente_leitura
+                    if somente_leitura.ativo():   # modo consulta: abre o convite para assinar, não a janela
+                        somente_leitura.tentou()
+                    else:
+                        ss["vd_compra_open"] = True
+                        ss["venda_selecionada"] = None
+                        st.rerun()
+        with st.container(border=True, key="vdc_top"):
+            st.markdown('<div class="vd-h4">Mais vendidos</div>', unsafe_allow_html=True)
+            top = vendas_dados.mais_vendidos(db, ativas["id"].tolist() if not ativas.empty else [])
+            if top:
+                st.markdown("".join(f'<div class="vd-li"><span>{esc(n)}</span><b>{esc(_fmt_brl(r))}</b></div>'
+                                    for n, r, _ in top), unsafe_allow_html=True)
+            else:
+                st.markdown('<div class="vd-li"><span>Nenhuma venda no período.</span></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="vd-nota">Pelo valor vendido {esc(rot)}.</div>', unsafe_allow_html=True)
+
+    # ---------- janelas (uma por vez) ----------
+    selected_id = ss.get("venda_selecionada")
     if selected_id is not None and not vendas_df.empty:
         rows = vendas_df[vendas_df["id"] == selected_id]
         if not rows.empty:
             venda_sel = rows.iloc[0]
 
-            @st.dialog("Detalhes da Venda", width="large")
+            @st.dialog("Detalhes da venda", width="large", on_dismiss=_fechar_venda)
             def _modal_venda():
                 _render_detail_panel(selected_id, venda_sel)
                 st.markdown("---")
                 if st.button("Fechar", key=f"venda_fechar_modal_{selected_id}", type="tertiary"):
-                    st.session_state["venda_selecionada"] = None
-                    for k in ("vd_lista", "vd_lista_ultima"):  # a mesma linha pode ser aberta de novo
-                        st.session_state.pop(k, None)
+                    _fechar_venda()
                     st.rerun()
 
             _modal_venda()
         else:
-            st.session_state["venda_selecionada"] = None
+            ss["venda_selecionada"] = None
+    elif ss.get("vd_compra_open"):
+        _dialogo_compra(produtos_df)
 
     # Análise por período (seção colapsável)
-    st.markdown("---")
+    st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
     with st.expander("Análise por período", expanded=False):
         _analise(vendas_df[vendas_df["situacao"] != "Cancelada"] if not vendas_df.empty else vendas_df)
 
 
 def _lista_vendas(vendas_df, busca):
     """Todas as vendas, de qualquer data, com o nome da cliente: clicar na linha abre a venda."""
-    st.markdown('<div class="ini-secao" style="font-size:.78rem;font-weight:600;letter-spacing:.06em;'
-                'text-transform:uppercase;color:#667085;margin:18px 0 6px">Todas as vendas</div>', unsafe_allow_html=True)
     if vendas_df.empty:
         st.caption("Nenhuma venda registrada.")
         return

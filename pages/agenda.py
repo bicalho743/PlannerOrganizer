@@ -176,7 +176,7 @@ def _dialogo_compromisso(c):
 from urllib.parse import quote_plus
 
 from utils import visual
-from utils.visual import CSS_PILULA, esc, icone, pilula
+from utils.visual import CSS_PILULA, esc, icone, icone_whatsapp, pilula
 
 SEM_CURTA = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"]
 DIAS_LONGOS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
@@ -244,6 +244,7 @@ h1.ag-titulo::after { content: ""; display: block; width: 40px; height: 3px; bor
 .ag-lnk { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 4px 10px; width: 100%;
           border-radius: 8px; background: #fff; border: 1px solid #D5DBE3; color: var(--navy) !important; font-weight: 600;
           font-size: .82rem; text-decoration: none !important; box-sizing: border-box; text-align: center; line-height: 1.2; }
+.ag-lnk { gap: 7px; }
 .ag-lnk:hover { border-color: var(--gold); color: #7A5F0B !important; }
 .st-key-ag_painel [data-testid="stHorizontalBlock"] { flex-direction: row !important; flex-wrap: nowrap !important; gap: 8px !important; }
 .st-key-ag_painel [data-testid="stColumn"] { min-width: 0 !important; flex: 1 1 0 !important; width: auto !important; }
@@ -351,7 +352,8 @@ def _maps(endereco):
 
 
 def _lnk(url, rotulo):
-    return f'<a class="ag-lnk" href="{url}" target="_blank" rel="noopener">{rotulo}</a>'
+    wa = icone_whatsapp(16) if "wa.me" in url or "whatsapp" in url else ""
+    return f'<a class="ag-lnk" href="{url}" target="_blank" rel="noopener">{wa}<span>{rotulo}</span></a>'
 
 
 def _ir(pagina):
@@ -378,6 +380,8 @@ def _painel_item(n, i, db):
             acoes.append(("btn", "Abrir", lambda: st.session_state.__setitem__("ag_sel", i["compromisso_id"])))
             if i.get("cliente_id"):
                 acoes.append(("btn", "Criar proposta", lambda: (st.session_state.__setitem__("kanban_nova_proposta_open", True),
+                                                               st.session_state.__setitem__("nova_proposta_cliente_id",
+                                                                                            int(i["cliente_id"])),
                                                                st.session_state.__setitem__("current_page", "Propostas"))))
         if i["tipo"] == "servico" and i.get("proposta_id"):
             acoes.append(("btn", "Abrir proposta", lambda: (st.session_state.__setitem__("kanban_selected_proposta", i["proposta_id"]),

@@ -51,3 +51,25 @@ def test_sem_horas_nao_divide_por_zero():
     p = dict(P, dias_mes=0)
     assert pr.hora_minima(p) == 0
     assert pr.preco_projeto(P, 0)["hora_efetiva"] == 0
+
+
+def test_orcamento_completo_mudanca_pelas_caixas():
+    from utils import precificacao as pr
+    p = dict(pr.PADROES, imposto_pct=0)
+    o = pr.orcamento_completo(p, "pre", caixas=30, assistentes=1, km=24,
+                              materiais_escolhidos=[("Caixas de papelão", 40, 6.5)])
+    # 30 caixas ÷ 15 por pessoa/dia = 2 pessoa-dias = 12 h; em 2 pessoas, 6 h cada = 1 dia
+    assert o["horas"] == 12 and o["pessoas"] == 2 and o["dias"] == 1
+    assert o["materiais"] == 260 and round(o["deslocamento"], 2) == 28.8
+    assert o["total"] % 10 == 0 and o["total"] > o["minimo"] > 0
+    assert round(o["taxa_cartao"], 2) == round(o["total"] * 0.0499, 2)
+    assert o["sinal"] == o["total"] / 2
+
+
+def test_orcamento_completo_organizacao_e_vazio():
+    from utils import precificacao as pr
+    p = dict(pr.PADROES)
+    o = pr.orcamento_completo(p, "organizacao", horas_ambientes=16, assistentes=1)
+    assert o["dias"] == 2 and o["pessoas"] == 2 and o["voce"] > 0 and o["assistente"] == 8 * 30
+    assert pr.orcamento_completo(p, "organizacao")["total"] == 0
+    assert len(pr.materiais({})) == len(pr.MATERIAIS_PADRAO)

@@ -164,3 +164,17 @@ def test_precificacao_salva_no_perfil(api):
     # como na web, a conta em modo consulta ainda ajusta os próprios números
     conta["uid"] = expirada
     assert cli.put("/precificacao", json={"parametros": novos}).status_code == 200
+
+
+def test_precificacao_do_app_nao_apaga_o_que_o_site_guardou(api):
+    """O app manda só os números que conhece; os materiais e os números novos do site continuam."""
+    from utils.database import Database
+    cli, conta, ativa, _ = api
+    db = Database(usuario_id=ativa)
+    db.salvar_precificacao({"renda_desejada": 5000.0, "km_valor": 2.5,
+                            "materiais": [{"nome": "Etiquetas", "preco": 12.0, "unidade": "un"}]})
+    app = {"renda_desejada": 6000, "dias_mes": 12, "horas_dia": 6, "margem_pct": 20}
+    assert cli.put("/precificacao", json={"parametros": app}).status_code == 200
+    salvos = db.get_precificacao()
+    assert salvos["renda_desejada"] == 6000.0 and salvos["km_valor"] == 2.5
+    assert salvos["materiais"] == [{"nome": "Etiquetas", "preco": 12.0, "unidade": "un"}]

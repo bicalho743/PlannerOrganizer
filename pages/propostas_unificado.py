@@ -18,6 +18,7 @@ from utils.design_tokens import (
 )
 from utils.status_execucao import EXEC_EM_EXECUCAO, EXEC_FINALIZADA, EXEC_CANCELADA
 from utils.ui import botao_excluir, link_fechar, input_moeda, cartao_clicavel, baixar_pdf, botao_editar, botao_documento
+from utils.visual import CSS_PILULA, esc, hoje, icone_whatsapp, pilula
 
 
 def _safe_float(val, default=0.0):
@@ -176,8 +177,9 @@ def _render_nova_proposta_form(clientes):
                                    uma_vez=f"po_1a_proposta_{st.session_state.get('usuario_id', '')}")
                     except Exception as _e_ev:
                         print(f"[rastreamento] {_e_ev}")
-                    st.success(f"Proposta #{novo_numero} criada com sucesso!")
-                    st.session_state['kanban_nova_proposta_open'] = False
+                    st.success(f"Proposta Nº {novo_numero} criada com sucesso!")
+                    from utils import nova_proposta as _np
+                    _np.fechar()
                     st.rerun()
                 else:
                     st.error("Erro ao salvar proposta.")
@@ -185,318 +187,545 @@ def _render_nova_proposta_form(clientes):
                 st.error(f"Erro ao salvar proposta: {str(e)}")
 
 
-def _render_detail_panel(proposta_id, proposta, propostas_com_clientes):
-    """Renders the full detail panel for a selected proposal."""
-    from utils.proposta_status import (
-        normalize as _normalize_status,
-        STATUS_EM_ABERTO, STATUS_APROVADA, STATUS_RECUSADA,
-        STATUS_EM_EXECUCAO, STATUS_FINALIZADA,
-    )
-    status_atual = _normalize_status(proposta.get('status', '')) or ''
-    em_aberto = status_atual == STATUS_EM_ABERTO
-    aprovada_parada = status_atual == STATUS_APROVADA
 
-    finalizada = status_atual in [STATUS_FINALIZADA, STATUS_RECUSADA]
-
-    if em_aberto or aprovada_parada:
-        # A descrição real aparece dentro do card "Resumo da proposta";
-        # não repetir aqui como caption para evitar redundância.
-        _render_open_proposal_actions(proposta_id, proposta)
-    elif finalizada:
-        st.caption(proposta.get('descricao', '')[:120])
-        _render_finalized_proposal_actions(proposta_id, proposta)
-    else:
-        st.caption(proposta.get('descricao', '')[:120])
-        _tab_itens(proposta_id, show_finalizar=True, proposta=proposta)
-
-
-def _proposal_status_label(status_norm):
-    """Rótulo amigável + cores (fg, soft-bg) para o status.
-
-    Apenas apresentação no frontend — o backend continua usando o status
-    canônico. Cobre todos os estágios para dar cabeçalho consistente às
-    telas de aberta/aprovada, execução e finalizada/recusada."""
-    from utils.proposta_status import (
-        STATUS_APROVADA, STATUS_EM_EXECUCAO, STATUS_FINALIZADA, STATUS_RECUSADA,
-    )
-    mapa = {
-        STATUS_APROVADA:    ("Aprovada", "#1D6A4A", "#e8f3ee"),
-        STATUS_EM_EXECUCAO: ("Em execução", "#1F6FB2", "#e7f1fa"),
-        STATUS_FINALIZADA:  ("Finalizada", "#4A4A4A", "#eeeeee"),
-        STATUS_RECUSADA:    ("Recusada", "#C0392B", "#fdecea"),
-    }
-    return mapa.get(status_norm, ("Aguardando aprovação", "#B7860D", "#fdf6e6"))
-
+# ══════════════════════════════════════════════════════════════════════════════
+# Detalhe de uma proposta (gaveta à direita, protótipo "detalhe")
+# Cabeçalho · Próximo passo · WhatsApp / PDF / Agenda · valores · abas (Serviço, Produtos, Fornecedores,
+# Assistentes, Outros custos, Relatórios PDF) · Histórico · Mais ações (editar, duplicar, excluir).
+# ══════════════════════════════════════════════════════════════════════════════
 
 def _proposal_meta_header(proposta, status_norm):
-    """Cabeçalho: badge de status + categoria + início previsto (dados reais)."""
-    label, badge_bg, badge_soft = _proposal_status_label(status_norm)
-    categoria = str(proposta.get('tipo_proposta') or '').strip()
-    data_str = ""
-    d = proposta.get('data_inicio')
-    if d:
-        try:
-            data_str = d.strftime("%d/%m/%Y") if hasattr(d, 'strftime') else str(d)[:10]
-        except Exception:
-            data_str = str(d)[:10]
-
-    partes = [
-        f'<span style="background:{badge_soft};color:{badge_bg};font-size:12px;font-weight:700;'
-        f'padding:4px 12px;border-radius:20px;white-space:nowrap;border:1px solid {badge_bg}33;">● {label}</span>'
-    ]
-    if categoria:
-        partes.append(f'<span style="font-size:13px;color:#6B6660;">Categoria: <strong style="color:{NAVY};">{html_module.escape(categoria)}</strong></span>')
-    if data_str:
-        partes.append(f'<span style="font-size:13px;color:#6B6660;">Início previsto: <strong style="color:{NAVY};">{data_str}</strong></span>')
-
-    sep = '<span style="color:#d8d5cf;">|</span>'
-    st.markdown(
-        f'<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:4px 2px 16px;">'
-        + sep.join(partes) +
-        '</div>',
-        unsafe_allow_html=True,
-    )
+    """Pílula da situação (usada pela visão antiga de itens, _tab_itens)."""
+    st.markdown(f'<div style="padding:4px 2px 12px">{pilula(status_norm)}</div>', unsafe_allow_html=True)
 
 
-def _resumo_proposta_card_html(proposta):
-    """Card 'Resumo da proposta' — mostra APENAS os dados reais cadastrados."""
-    desc = str(proposta.get('descricao') or '').strip()
-    if desc:
-        conteudo = (
-            '<div style="font-size:11px;font-weight:700;letter-spacing:.5px;color:#9a9890;'
-            'text-transform:uppercase;margin-bottom:8px;">Descrição</div>'
-            f'<div style="font-size:14px;color:#1C1C1A;line-height:1.55;white-space:pre-wrap;">'
-            f'{html_module.escape(desc)}</div>'
-        )
+ABAS_DETALHE = ["Serviço", "Produtos", "Fornecedores", "Assistentes", "Outros custos", "Relatórios PDF"]
+
+
+def _status_de(proposta):
+    """Situação para a tela: em_aberto, aprovada, em_execucao, finalizada ou recusada (mesmas regras do quadro)."""
+    from utils.proposta_status import normalize as _normalize_status
+    s = _normalize_status(proposta.get('status', '')) or ''
+    if s not in ('finalizada', 'recusada') and str(proposta.get('status_execucao') or '') == EXEC_EM_EXECUCAO:
+        return 'em_execucao'
+    return s
+
+
+def _dm(d):
+    return f"{d.day:02d}/{d.month:02d}" if d else ""
+
+
+def _num_proposta(proposta, pid):
+    n = proposta.get('numero', pid)
+    try:
+        return f"{int(float(n)):03d}"
+    except (TypeError, ValueError):
+        return str(n)
+
+
+def _cliente_da_proposta(proposta):
+    try:
+        cid = int(float(proposta.get('cliente_id')))
+        df = st.session_state.db.get_clientes()
+        linha = df[df['id'] == cid]
+        return linha.iloc[0].to_dict() if not linha.empty else {}
+    except Exception:
+        return {}
+
+
+def _limpar_pdfs(pid):
+    from utils.nova_proposta import limpar_pdfs
+    limpar_pdfs(pid)
+
+
+def _fechar_detalhe():
+    st.session_state['kanban_selected_proposta'] = None
+
+
+def _iniciar_execucao(proposta_id, proposta):
+    """Aprovada → Em execução (o mesmo do botão "Iniciar execução" de antes)."""
+    from utils.proposta_status import STATUS_EM_EXECUCAO
+    try:
+        res = st.session_state.db.update_proposta_status(
+            proposta_id=proposta_id, novo_status=STATUS_EM_EXECUCAO,
+            data_aprovacao=proposta.get('data_aprovacao') or hoje())
+        if res.get('status', False):
+            _limpar_pdfs(proposta_id)
+            st.session_state['kanban_selected_proposta'] = None
+            st.session_state.db.invalidar_cache()
+            st.rerun()
+        else:
+            st.error(res.get('message', 'Erro ao iniciar.'))
+    except Exception as e:
+        st.error(str(e))
+
+
+def _finalizar(proposta_id):
+    """Em execução → Concluída: finalizar_proposta_v2 grava o financeiro (produtos, extras, fornecedores,
+    assistentes) e a pós-organização, como o antigo "FINALIZAR PROJETO"."""
+    try:
+        res = finalizar_proposta_v2(int(proposta_id))
+    except Exception as e:
+        st.error(str(e))
+        return
+    if res.get('status', False):
+        _limpar_pdfs(proposta_id)
+        st.session_state['kanban_selected_proposta'] = None
+        st.session_state['proposta_finalizada_sucesso'] = True
+        st.session_state.db.invalidar_cache()
+        st.rerun()
     else:
-        conteudo = (
-            '<div style="font-size:13px;color:#9a9890;font-style:italic;">'
-            'Não há descrição adicional cadastrada nesta proposta.</div>'
-        )
-    return (
-        '<div style="background:#fff;border:1px solid #e8e5df;border-radius:14px;'
-        'padding:20px 22px;height:100%;box-shadow:0 1px 3px rgba(0,0,0,.04);">'
-        f'<div style="font-size:15px;font-weight:700;color:{NAVY};margin-bottom:14px;">Resumo da proposta</div>'
-        f'{conteudo}'
-        '</div>'
-    )
+        st.error(res.get('message', res.get('mensagem', 'Erro ao finalizar.')))
 
 
-def _resumo_financeiro_rows_html(valor, sinal):
-    """Linhas Valor total / Entrada / Saldo restante (saldo = total − entrada)."""
-    saldo = valor - sinal
-    entrada_row = ""
+def _reabrir(proposta_id):
+    try:
+        from reabrir_proposta import reabrir_proposta_finalizada
+        res = reabrir_proposta_finalizada(proposta_id)
+    except Exception as e:
+        st.error(str(e))
+        return
+    if res.get('status') in ['sucesso', 'sucesso_com_alerta']:
+        _limpar_pdfs(proposta_id)
+        st.session_state.db.invalidar_cache()
+        st.session_state['kanban_selected_proposta'] = None
+        if res.get('status') == 'sucesso_com_alerta' and res.get('alerta'):
+            st.session_state['_prop_aviso'] = res.get('alerta')
+        st.rerun()
+    else:
+        st.error(res.get('mensagem'))
+
+
+def _marcar_cb(proposta_id, status, texto):
+    from utils import propostas_dados
+    propostas_dados.marcar(st.session_state.db, proposta_id, status, texto)
+    st.session_state.db.invalidar_cache()
+
+
+def _det_cabecalho(proposta_id, proposta, status, cliente):
+    from utils.propostas_dados import servico_curto
+    nome = proposta.get('nome') or proposta.get('cliente_nome') or 'Cliente'
+    lugar = str(cliente.get('bairro') or cliente.get('cidade') or '').strip()
+    partes = [str(proposta.get('tipo_proposta') or '').strip(), servico_curto(proposta, 44)]
+    partes = [x for i, x in enumerate(partes) if x and x not in partes[:i]] + ([lugar] if lugar else [])
+    st.markdown(
+        f'<div class="pd-top"><div><div class="pd-ey">Proposta nº {esc(_num_proposta(proposta, proposta_id))}</div>'
+        f'<h1 class="pd-tit">{esc(nome)}</h1><div class="pd-sub">{esc(" · ".join(partes))}</div></div>'
+        f'<div>{pilula(status)}</div></div>', unsafe_allow_html=True)
+
+
+def _det_proximo(proposta_id, proposta, status, marcas):
+    """Painel azul-marinho com o próximo passo e o botão dele."""
+    from utils import propostas_dados as dados
+    from utils.propostas_dados import _data
+    if status == 'em_aberto':
+        sit, quando_ = dados.envio(proposta, marcas)
+        tit = "Esperar a resposta da cliente" if sit == "enviada" else "Enviar a proposta para a cliente"
+        sub = (f"Enviada {dados.quando(quando_)}" if sit == "enviada" and quando_ else
+               "Ainda não enviada: use Enviar pelo WhatsApp")
+        rot, icone_, tipo_b = "Aprovar proposta", ":material/check:", "gold"
+    elif status == 'aprovada':
+        ini = _data(proposta.get('data_inicio'))
+        tit = "Agendar e iniciar o serviço"
+        sub = f"Serviço marcado para {_dm(ini)}" if ini else "Ainda sem data: use Agendar na agenda"
+        rot, icone_, tipo_b = "Iniciar execução", ":material/play_arrow:", "gold"
+    elif status == 'em_execucao':
+        dia = dados.dia_do_servico(proposta)
+        tit = "Concluir o serviço"
+        sub = (f"Dia {dia[0]} de {dia[1]}" if dia else "Em andamento") + " · ao finalizar, o financeiro e a pós-organização são lançados"
+        rot, icone_, tipo_b = "Finalizar serviço", ":material/task_alt:", "gold"
+    elif status == 'finalizada':
+        fim = _data(proposta.get('data_fim'))
+        tit = "Serviço concluído" + (f" em {_dm(fim)}" if fim else "")
+        sub = "Ao reabrir, a proposta volta para Em execução"
+        rot, icone_, tipo_b = "Reabrir", ":material/replay:", "lin"
+    else:
+        tit = "Proposta recusada"
+        sub = "Ao reabrir, a proposta volta para Em aberto"
+        rot, icone_, tipo_b = "Reabrir", ":material/replay:", "lin"
+    with st.container(key="pd_prox"):
+        c1, c2 = st.columns([1.5, 1], vertical_alignment="center")
+        c1.markdown(f'<div class="pd-prox"><span class="l">Próximo passo</span><b>{esc(tit)}</b>'
+                    f'<span class="l">{esc(sub)}</span></div>', unsafe_allow_html=True)
+        with c2, st.container(key=f"{'cta' if tipo_b == 'gold' else 'pdlin'}_pd_acao"):
+            clicou = st.button(rot, key=f"pd_acao_{proposta_id}", icon=icone_, use_container_width=True)
+    if not clicou:
+        return
+    if status == 'em_aberto':
+        _aprovar(proposta_id, proposta)
+    elif status == 'aprovada':
+        _iniciar_execucao(proposta_id, proposta)
+    elif status == 'em_execucao':
+        _finalizar(proposta_id)
+    else:
+        _reabrir(proposta_id)
+
+
+def _aprovar(proposta_id, proposta):
+    """Aprovação (clique único, como antes): grava o sinal informado e lança o sinal como receita recebida."""
+    from utils.proposta_status import STATUS_APROVADA
+    valor = _safe_float(proposta.get('valor'))
+    sinal = _safe_float(proposta.get('sinal'))
+    chave = f"sinal_aprovar_{proposta_id}"
+    if chave in st.session_state:   # campo na tela: vazio vale 0 (como no formulário antigo)
+        sinal_atual = min(float(st.session_state.get(chave) or 0), valor)
+    else:
+        sinal_atual = sinal
+    try:
+        if abs(sinal_atual - sinal) > 0.004:
+            st.session_state.db.update_proposta(proposta_id, sinal=sinal_atual)
+        res = st.session_state.db.update_proposta_status(
+            proposta_id=proposta_id, novo_status=STATUS_APROVADA, data_aprovacao=hoje())
+        if res.get('status', False):
+            _limpar_pdfs(proposta_id)
+            st.session_state.db.sincronizar_sinal_proposta(proposta_id)
+            st.session_state['kanban_selected_proposta'] = None
+            st.session_state.db.invalidar_cache()
+            st.rerun()
+        else:
+            st.error(res.get('message', 'Erro ao aprovar.'))
+    except Exception as e:
+        st.error(str(e))
+
+
+def _det_aprovacao(proposta_id, proposta):
+    """Em aberto: o sinal que a cliente paga ao aprovar e o atalho para recusar."""
+    valor = _safe_float(proposta.get('valor'))
+    sinal = _safe_float(proposta.get('sinal'))
+    with st.container(border=True, key="pd_aprov"):
+        c1, c2 = st.columns([1.3, 1], vertical_alignment="center")
+        with c1:
+            s = input_moeda("Sinal pago pela cliente ao aprovar (R$)", f"sinal_aprovar_{proposta_id}", value=sinal,
+                            step=10.0, help="Entra no Financeiro como recebido e é descontado do total no relatório da cliente.")
+        if s > valor:
+            st.caption("O sinal não pode passar do valor da proposta.")
+            s = valor
+        c2.markdown(f'<div class="pd-saldo">Saldo no fim: <b>{_fmt_brl(max(valor - s, 0))}</b></div>',
+                    unsafe_allow_html=True)
+        with st.container(key="pd_links_rec"):
+            if st.button("Recusar proposta", key=f"btn_recusar_{proposta_id}", type="tertiary", icon=":material/close:"):
+                st.session_state[f"confirm_refuse_{proposta_id}"] = True
+                st.rerun()
+
+
+def _det_acoes(proposta_id, proposta, status, cliente, itens=None):
+    """Enviar pelo WhatsApp · Baixar PDF · Agendar na agenda."""
+    from utils.nova_proposta import link_whatsapp, mensagem_whatsapp
+    from utils.propostas_dados import _data
+    nome = proposta.get('nome') or proposta.get('cliente_nome') or ''
+    valor = _safe_float(proposta.get('valor'))
+    with st.container(key="pd_acoes"):
+        c1, c2, c3 = st.columns(3)
+        with c1, st.container(key=f"wa_pd_{proposta_id}"):
+            if status == 'em_aberto':
+                url = link_whatsapp(cliente.get('telefone'), mensagem_whatsapp(nome, proposta.get('tipo_proposta'), valor))
+                st.link_button("Enviar pelo WhatsApp", url, use_container_width=True, key=f"pd_zap_{proposta_id}",
+                               on_click=_marcar_cb, args=(proposta_id, "Enviada", "Enviada pelo WhatsApp"))
+            else:
+                primeiro = str(nome).split(' ')[0]
+                url = link_whatsapp(cliente.get('telefone'), f"Oi, {primeiro}! Tudo bem?")
+                st.link_button("Conversar no WhatsApp", url, use_container_width=True, key=f"pd_zap_{proposta_id}")
+        with c2:
+            def _gerar():
+                from utils.propostas_helper import gerar_pdf_cliente_proposta
+                try:
+                    ok, msg, arq = gerar_pdf_cliente_proposta(st.session_state.db, proposta_id, tipo_documento="proposta")
+                except Exception as e:
+                    return None, None, str(e)
+                return (arq, os.path.basename(arq), None) if ok and arq else (None, None, msg)
+            # a chave muda com a situação, os valores e os itens: o PDF guardado nunca fica desatualizado
+            import hashlib
+            assin = repr((status, _safe_float(proposta.get('valor')), _safe_float(proposta.get('sinal')),
+                          str(proposta.get('descricao') or ''), str(proposta.get('data_inicio') or ''),
+                          [round(_total_itens(k, v), 2) for k, v in (itens or {}).items()]))
+            versao = hashlib.md5(assin.encode()).hexdigest()[:8]
+            baixar_pdf("Baixar PDF", f"proposta_det_{proposta_id}_{versao}", _gerar)
+        with c3:
+            ini = _data(proposta.get('data_inicio'))
+            if status in ('finalizada', 'recusada'):
+                # a data de fim de uma concluída é a data da conclusão: aqui só abre a Agenda
+                if st.button(f"Ver na Agenda{': ' + _dm(ini) if ini else ''}", key=f"pd_ag_ir2_{proposta_id}",
+                             use_container_width=True):
+                    st.session_state['ag_dia'] = ini or hoje()
+                    st.session_state['kanban_selected_proposta'] = None
+                    st.session_state.current_page = "Agenda"
+                    st.rerun()
+                return
+            with st.popover("Agendar na agenda" if not ini else f"Na agenda: {_dm(ini)}", use_container_width=True):
+                st.caption("O serviço aparece na Agenda nos dias de trabalho depois que a cliente aprova.")
+                d = st.date_input("Primeiro dia do serviço", value=ini or hoje(), format="DD/MM/YYYY",
+                                  key=f"pd_ag_data_{proposta_id}")
+                try:
+                    dias = max(int(float(proposta.get('previsao_dias') or 1)), 1)
+                except (TypeError, ValueError):
+                    dias = 1
+                dias = st.number_input("Dias de serviço", 1, 60, dias, 1, key=f"pd_ag_dias_{proposta_id}")
+                if st.button("Salvar na agenda", key=f"pd_ag_ok_{proposta_id}", type="primary", use_container_width=True):
+                    try:
+                        st.session_state.db.update_proposta(proposta_id, data_inicio=d, previsao_dias=int(dias),
+                                                            data_fim=d + timedelta(days=int(dias) - 1))
+                        st.session_state.db.invalidar_cache()
+                        _limpar_pdfs(proposta_id)
+                        st.rerun()
+                    except Exception as e:
+                        st.error(str(e))
+                if st.button("Abrir a Agenda", key=f"pd_ag_ir_{proposta_id}", type="tertiary"):
+                    st.session_state['ag_dia'] = ini or hoje()
+                    st.session_state['kanban_selected_proposta'] = None
+                    st.session_state.current_page = "Agenda"
+                    st.rerun()
+
+
+def _det_valores(proposta, status):
+    valor = _safe_float(proposta.get('valor'))
+    sinal = _safe_float(proposta.get('sinal'))
+    recebido = status in ('aprovada', 'em_execucao', 'finalizada')
     if sinal > 0:
-        entrada_row = (
-            '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">'
-            '<span style="font-size:13px;color:#6B6660;">Entrada / sinal</span>'
-            f'<span style="font-size:13px;color:#1D6A4A;font-weight:600;">− {_fmt_brl(sinal)}</span>'
-            '</div>'
-        )
-    return (
-        '<div style="background:#faf9f7;border:1px solid #e8e5df;border-radius:12px;padding:14px 16px;margin-top:6px;">'
-        '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">'
-        '<span style="font-size:13px;color:#6B6660;">Valor total da proposta</span>'
-        f'<span style="font-size:13px;color:{NAVY};font-weight:600;">{_fmt_brl(valor)}</span>'
-        '</div>'
-        f'{entrada_row}'
-        '<div style="border-top:1px solid #e8e5df;margin:6px 0;"></div>'
-        '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;margin:0 -6px;'
-        'background:#fdf6e6;border-radius:8px;">'
-        f'<span style="font-size:14px;color:{NAVY};font-weight:700;">Saldo restante</span>'
-        f'<span style="font-size:16px;color:{NAVY};font-weight:800;">{_fmt_brl(max(0.0, saldo))}</span>'
-        '</div>'
-        '</div>'
-    )
+        rot_s = "sinal recebido" if recebido else "sinal na aprovação"
+        cls = ' class="verde"' if recebido else ""
+    else:
+        rot_s, cls = "sem sinal", ""
+    st.markdown(
+        f'<div class="pd-res"><div><b>{_fmt_brl(valor).replace(",00", "")}</b><span>valor do serviço</span></div>'
+        f'<div><b{cls}>{_fmt_brl(sinal).replace(",00", "")}</b><span>{rot_s}</span></div>'
+        f'<div><b>{_fmt_brl(max(valor - sinal, 0)).replace(",00", "")}</b><span>a receber no fim</span></div></div>',
+        unsafe_allow_html=True)
 
 
-def _pdf_gerar_baixar(proposta_id, key_sufixo):
-    """Baixar a proposta em PDF para entregar à cliente: um clique gera e baixa."""
-    def _gerar():
-        from utils.propostas_helper import gerar_pdf_cliente_proposta
+def _itens_da_proposta(proposta_id):
+    db = st.session_state.db
+    try:
+        produtos = db.get_produtos_organizadores(proposta_id)
+    except Exception:
+        produtos = pd.DataFrame()
+    saida = {"Produtos": produtos}
+    for rot, tipo in (("Fornecedores", "FORNECEDOR"), ("Assistentes", "ASSISTENTE"), ("Outros custos", "OUTROS")):
         try:
-            sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(
-                st.session_state.db, proposta_id, tipo_documento="proposta")
-        except Exception as e:
-            return None, None, str(e)
-        if sucesso and arquivo:
-            return arquivo, os.path.basename(arquivo), None
-        return None, None, mensagem
-
-    baixar_pdf("Baixar proposta em PDF", f"proposta_{key_sufixo}_{proposta_id}", _gerar)
+            saida[rot] = db.get_acrescimos_proposta_por_tipo(proposta_id, tipo)
+        except Exception:
+            saida[rot] = pd.DataFrame()
+    return saida
 
 
-def _mais_acoes_proposta(proposta_id, proposta):
-    """Menu 'Mais ações': Editar · Duplicar · Excluir (destrutiva)."""
-    with st.expander("⋮  Mais ações"):
-        # ── Editar proposta ──────────────────────────────────────────────
+def _total_itens(rot, df):
+    if df is None or df.empty:
+        return 0.0
+    if rot == "Produtos":
+        return float((df['valor'].astype(float) * df['quantidade'].astype(float)).sum())
+    return float(df['valor'].astype(float).sum())
+
+
+def _aba_servico(proposta_id, proposta, status, marcas, itens):
+    from utils.propostas_dados import observacoes_visita, servico_curto
+    valor = _safe_float(proposta.get('valor'))
+    tipo = str(proposta.get('tipo_proposta') or 'Serviço').strip()
+    desc = str(proposta.get('descricao') or '').strip()
+    curto = servico_curto(proposta, 60)
+    titulo = tipo if curto == tipo else f"{tipo}: {curto}"
+    try:
+        prev = int(float(proposta.get('previsao_dias') or 0))
+    except (TypeError, ValueError):
+        prev = 0
+    det = desc or "Sem descrição cadastrada."
+    html = (f'<div class="pd-it"><div><b>{esc(titulo)}</b><span class="desc">{esc(det)}</span>'
+            + (f'<span>{prev} dia{"s" if prev != 1 else ""} de serviço</span>' if prev else "")
+            + f'</div><b>{_fmt_brl(valor).replace(",00", "")}</b></div>')
+    total = valor
+    for rot, df in itens.items():
+        t = _total_itens(rot, df)
+        if t > 0:
+            total += t
+            n = len(df)
+            html += (f'<div class="pd-it"><div><b>{rot}</b><span>{n} {"item" if n == 1 else "itens"}</span></div>'
+                     f'<b>{_fmt_brl(t).replace(",00", "")}</b></div>')
+    if total > valor:
+        html += f'<div class="pd-it tot"><div><b>Total geral</b></div><b>{_fmt_brl(total)}</b></div>'
+    obs = observacoes_visita(marcas)
+    if obs and obs not in desc:
+        html += (f'<div class="pd-it"><div><b>Observações da visita</b><span class="desc">{esc(obs)}</span>'
+                 f'<span>Só para você: não aparecem no PDF desta proposta.</span></div></div>')
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def _aba_itens(proposta_id, rot, status, itens):
+    """Produtos, fornecedores, assistentes e outros custos. Incluir e editar fica liberado durante a execução,
+    como antes (é o que vai para o Financeiro ao finalizar); nas outras situações a lista é só para consulta."""
+    if status == 'em_execucao':
+        {"Produtos": _tab_produtos, "Fornecedores": _tab_fornecedores, "Assistentes": _tab_assistentes,
+         "Outros custos": _tab_outros}[rot](proposta_id)
+        return
+    df = itens.get(rot)
+    if df is None or df.empty:
+        st.markdown(f'<div class="pd-vazio">Nenhum item em {rot.lower()}.</div>', unsafe_allow_html=True)
+    elif rot == "Produtos":
+        html = ""
+        for _, p in df.iterrows():
+            q = int(_safe_float(p.get('quantidade'), 1))
+            v = _safe_float(p.get('valor'))
+            html += (f'<div class="pd-it"><div><b>{esc(p.get("nome"))}</b><span>{q} × {_fmt_brl(v)} · '
+                     f'{esc(p.get("comodo") or "Geral")}</span></div><b>{_fmt_brl(q * v)}</b></div>')
+        st.markdown(html, unsafe_allow_html=True)
+    else:
+        html = ""
+        for _, a in df.iterrows():
+            nome = a.get('fornecedor') if rot != "Outros custos" else str(a.get('descricao') or '').split(' - ')[0]
+            sub = a.get('descricao') if rot != "Outros custos" else (a.get('fornecedor') or '')
+            html += (f'<div class="pd-it"><div><b>{esc(nome or "—")}</b><span>{esc(sub or "")}</span></div>'
+                     f'<b>{_fmt_brl(_safe_float(a.get("valor")))}</b></div>')
+        st.markdown(html, unsafe_allow_html=True)
+    if status in ('em_aberto', 'aprovada'):
+        st.caption("Para incluir itens, inicie a execução: eles vão para o Financeiro ao finalizar.")
+    elif status in ('finalizada', 'recusada'):
+        st.caption("Para mudar os itens, reabra a proposta.")
+
+
+def _aba_relatorios(proposta_id, proposta, status):
+    nome_cliente = proposta.get('nome', proposta.get('cliente_nome', 'Cliente'))
+    numero = proposta.get('numero', proposta_id)
+    rc1, rc2 = st.columns(2)
+    with rc1:
+        if status in ('em_aberto', 'aprovada'):
+            def _prop():
+                from utils.propostas_helper import gerar_pdf_cliente_proposta
+                try:
+                    ok, msg, arq = gerar_pdf_cliente_proposta(st.session_state.db, proposta_id, tipo_documento="proposta")
+                except Exception as e:
+                    return None, None, str(e)
+                return (arq, os.path.basename(arq), None) if ok and arq else (None, None, msg)
+            baixar_pdf("Baixar proposta da cliente", f"rel_prop_{proposta_id}", _prop,
+                       legenda="Proposta de serviço para enviar")
+        else:
+            _report_card_download("", "relatório do cliente", "Fechamento do serviço para a cliente", proposta_id,
+                                  "cliente", nome_cliente, numero)
+    with rc2:
+        _report_card_download("", "relatório interno", "Margens e custos, só para você", proposta_id, "interno",
+                              nome_cliente, numero)
+    rc3, rc4 = st.columns(2)
+    with rc3:
+        _report_card_download("", "relatório de fornecedores", "Lista de terceiros", proposta_id, "fornecedores",
+                              nome_cliente, numero)
+    with rc4:
+        _report_card_download("", "relatório de produtos", "Produtos vendidos na organização", proposta_id, "vendas",
+                              nome_cliente, numero)
+
+
+def _det_historico(proposta, status, marcas):
+    from utils.propostas_dados import _data
+    eventos = []
+    criada = _data(proposta.get('data_proposta'))
+    rascunho = any(m['status'] == 'Rascunho' for m in marcas)
+    if criada:
+        eventos.append((criada, 0, "#C9A84C", "Proposta criada" + (" como rascunho" if rascunho else "")))
+    for m in marcas:
+        if m['status'] == 'Enviada':
+            eventos.append((m['data'], 1, "#C9A84C", m['observacao'] or "Enviada"))
+        elif m['status'] == 'Lembrete':
+            eventos.append((m['data'], 1, "#C9A84C", "Lembrete pelo WhatsApp"))
+        elif m['status'] not in ('Rascunho', 'Visita') and (m['observacao'] or m['status']):
+            eventos.append((m['data'], 1, "#98A2B3", m['observacao'] or m['status']))
+    aprov = _data(proposta.get('data_aprovacao'))
+    sinal = _safe_float(proposta.get('sinal'))
+    if aprov and status in ('aprovada', 'em_execucao', 'finalizada'):
+        eventos.append((aprov, 2, "#2F6B4F", "Aprovada" + (f" · sinal de {_fmt_brl(sinal).replace(',00', '')} "
+                                                           "lançado no financeiro" if sinal > 0 else "")))
+    ini = _data(proposta.get('data_inicio_execucao'))
+    if ini and status in ('em_execucao', 'finalizada'):
+        eventos.append((ini, 3, "#0D1B2A", "Execução iniciada"))
+    fim = _data(proposta.get('data_fim'))
+    if status == 'finalizada' and fim:
+        eventos.append((fim, 4, "#2F6B4F", "Concluída"))
+    if status == 'recusada':
+        eventos.append((fim or criada, 4, "#98A2B3", "Recusada"))
+    eventos = [e for e in eventos if e[0]]
+    if not eventos:
+        return
+    eventos.sort(key=lambda e: (e[0], e[1]))
+    html = '<div class="pd-secao">Histórico</div>' + "".join(
+        f'<div class="pd-tl"><i style="background:{cor}"></i><span>{esc(txt)} · {_dm(d)}</span></div>'
+        for d, _, cor, txt in eventos)
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def _det_mais_acoes(proposta_id, proposta, status):
+    """Mais ações: editar, duplicar e excluir (reabrir fica no Próximo passo)."""
+    with st.expander("Mais ações: editar, duplicar, excluir", icon=":material/more_vert:"):
         with st.form(key=f"form_editar_open_{proposta_id}"):
-            st.markdown(f'<div style="font-weight:600;color:{NAVY};font-size:13px;margin-bottom:2px;">Editar proposta</div>', unsafe_allow_html=True)
-            ed_valor = input_moeda("Valor da proposta (R$):", f"ed_valor_{proposta_id}",
-                                   value=_safe_float(proposta.get('valor')), step=10.0)
-            _tipos = ["Organização", "Consultoria", "Acompanhamento", "Projeto", "Outro"]
+            st.markdown(f'<div style="font-weight:600;color:{NAVY};font-size:13px;margin-bottom:2px;">Editar proposta</div>',
+                        unsafe_allow_html=True)
+            c1, c2 = st.columns(2)
+            with c1:
+                ed_valor = input_moeda("Valor da proposta (R$):", f"ed_valor_{proposta_id}",
+                                       value=_safe_float(proposta.get('valor')), step=10.0)
+            ed_sinal = None
+            if status != 'em_aberto':
+                with c2:
+                    ed_sinal = input_moeda("Sinal / entrada já pago (R$):", f"ed_sinal_{proposta_id}",
+                                           value=_safe_float(proposta.get('sinal')), step=10.0,
+                                           help="Valor que a cliente pagou ao confirmar. É descontado do total no relatório da cliente.")
+            _tipos = ["Organização", "Pré-mudança", "Pós-mudança", "Consultoria", "Acompanhamento", "Projeto", "Outro"]
             _tipo_atual = str(proposta.get('tipo_proposta') or "").strip()
             if _tipo_atual and _tipo_atual not in _tipos:
                 _tipos = [_tipo_atual] + _tipos
-            ed_tipo = st.selectbox("Categoria:", _tipos,
-                                   index=_tipos.index(_tipo_atual) if _tipo_atual in _tipos else 0,
+            c3, c4 = st.columns(2)
+            ed_tipo = c3.selectbox("Categoria:", _tipos, index=_tipos.index(_tipo_atual) if _tipo_atual in _tipos else 0,
                                    key=f"ed_tipo_{proposta_id}")
-            _d = proposta.get('data_inicio')
-            try:
-                _d_val = _d if hasattr(_d, 'year') else (datetime.strptime(str(_d)[:10], "%Y-%m-%d").date() if _d else None)
-            except Exception:
-                _d_val = None
-            ed_data = st.date_input("Início previsto:", value=_d_val, format="DD/MM/YYYY",
+            from utils.propostas_dados import _data
+            ed_data = c4.date_input("Início previsto:", value=_data(proposta.get('data_inicio')), format="DD/MM/YYYY",
                                     key=f"ed_data_{proposta_id}")
-            ed_desc = st.text_area("Descrição:", value=str(proposta.get('descricao') or ''),
-                                   height=90, key=f"ed_desc_{proposta_id}")
+            ed_desc = st.text_area("Descrição:", value=str(proposta.get('descricao') or ''), height=110,
+                                   key=f"ed_desc_{proposta_id}")
             if st.form_submit_button("Salvar alterações", type="primary", use_container_width=True):
                 try:
-                    res = st.session_state.db.update_proposta(
-                        proposta_id, valor=ed_valor, tipo_proposta=ed_tipo,
-                        descricao=ed_desc, data_inicio=ed_data)
+                    campos = dict(valor=ed_valor, tipo_proposta=ed_tipo, descricao=ed_desc, data_inicio=ed_data)
+                    if ed_sinal is not None:
+                        campos['sinal'] = ed_sinal
+                    res = st.session_state.db.update_proposta(proposta_id, **campos)
                     ok = res.get('status', False) if isinstance(res, dict) else bool(res)
-                    if ok:
+                    if ok and not (isinstance(res, dict) and res.get('status') == 'error'):
+                        if status in ('aprovada', 'em_execucao'):
+                            # valor/sinal mudaram: ajusta o sinal recebido e o saldo a receber no Financeiro
+                            st.session_state.db.sincronizar_sinal_proposta(proposta_id)
                         st.session_state.db.invalidar_cache()
-                        st.success("Proposta atualizada!")
+                        _limpar_pdfs(proposta_id)
                         st.rerun()
                     else:
                         st.error(res.get('message', 'Erro ao atualizar.') if isinstance(res, dict) else 'Erro ao atualizar.')
                 except Exception as e:
                     st.error(str(e))
 
-        st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
-
-        # ── Duplicar proposta ────────────────────────────────────────────
-        if botao_editar("Duplicar proposta", key=f"btn_dup_{proposta_id}", icon=":material/content_copy:", use_container_width=True):
-            try:
-                from utils.proposta_status import STATUS_EM_ABERTO
-                novo = st.session_state.db.add_proposta(
-                    cliente_id=proposta.get('cliente_id'),
-                    descricao=str(proposta.get('descricao') or ''),
-                    valor=_safe_float(proposta.get('valor')),
-                    status=STATUS_EM_ABERTO,
-                    tipo_proposta=str(proposta.get('tipo_proposta') or '') or None,
-                )
-                if novo:
-                    st.session_state.db.invalidar_cache()
-                    st.success(f"Proposta duplicada (#{novo}).")
-                    st.session_state['kanban_selected_proposta'] = None
-                    st.rerun()
-                else:
-                    st.error("Não foi possível duplicar a proposta.")
-            except Exception as e:
-                st.error(str(e))
-
-        st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
-
-        # ── Excluir proposta (destrutiva, compacta) ──────────────────────
-        _de1, _de2 = st.columns([1, 1])
-        with _de1:
+        c1, c2 = st.columns(2)
+        with c1:
+            if botao_editar("Duplicar proposta", key=f"btn_dup_{proposta_id}", icon=":material/content_copy:",
+                            use_container_width=True):
+                try:
+                    from utils.proposta_status import STATUS_EM_ABERTO
+                    novo = st.session_state.db.add_proposta(
+                        cliente_id=proposta.get('cliente_id'), descricao=str(proposta.get('descricao') or ''),
+                        valor=_safe_float(proposta.get('valor')), status=STATUS_EM_ABERTO,
+                        tipo_proposta=str(proposta.get('tipo_proposta') or '') or None,
+                        previsao_dias=proposta.get('previsao_dias') if pd.notna(proposta.get('previsao_dias')) else None,
+                        gerar_transacoes_automaticas=False)
+                    if novo:
+                        st.session_state.db.update_proposta(novo, data_proposta=hoje())
+                        st.session_state.db.invalidar_cache()
+                        st.session_state['kanban_selected_proposta'] = int(novo)
+                        st.rerun()
+                    else:
+                        st.error("Não foi possível duplicar a proposta.")
+                except Exception as e:
+                    st.error(str(e))
+        with c2:
             if botao_excluir("Excluir proposta", f"btn_excluir_open_{proposta_id}"):
                 st.session_state[f"confirm_delete_{proposta_id}"] = True
                 st.rerun()
 
 
-def _render_open_proposal_actions(proposta_id, proposta):
-    """Tela de detalhe da proposta em aberto / aprovada — layout SaaS moderno.
-
-    Hierarquia: identificação → status → resumo financeiro → conteúdo real →
-    Aprovar/Recusar → Gerar proposta/Baixar → Mais ações → Excluir.
-    Toda a lógica de backend (aprovar, recusar, gerar PDF, excluir) é preservada.
-    """
-    from utils.proposta_status import (
-        normalize as _normalize_status,
-        STATUS_APROVADA, STATUS_EM_EXECUCAO,
-    )
-    valor = _safe_float(proposta.get('valor'))
-    sinal = _safe_float(proposta.get('sinal'))
-    status_atual = _normalize_status(proposta.get('status', '')) or ''
-    aprovada = status_atual == STATUS_APROVADA
-
-    _proposal_meta_header(proposta, status_atual)
-
-    # ── Corpo em duas colunas (desktop) / uma coluna (mobile) ────────────
-    col_esq, col_dir = st.columns([1.15, 1], gap="medium")
-
-    with col_esq:
-        st.markdown(_resumo_proposta_card_html(proposta), unsafe_allow_html=True)
-
-    sinal_atual = sinal
-    with col_dir:
-        st.markdown(f'<div style="font-size:15px;font-weight:700;color:{NAVY};margin-bottom:6px;">Resumo financeiro</div>', unsafe_allow_html=True)
-        if aprovada:
-            # Proposta já aprovada: entrada fixada, exibida apenas como resumo.
-            st.markdown(_resumo_financeiro_rows_html(valor, sinal), unsafe_allow_html=True)
-        else:
-            # Entrada editável no momento da aprovação. Recalcula o saldo ao
-            # confirmar o valor (Enter/Tab) — comportamento nativo do Streamlit.
-            sinal_atual = input_moeda(
-                "Entrada / sinal pago pelo cliente (R$):",
-                f"sinal_aprovar_{proposta_id}", value=sinal, step=10.0,
-                help="Valor já pago pelo cliente. Será descontado do total no relatório do cliente.",
-            )
-            if sinal_atual > valor:
-                st.caption("A entrada não pode ser maior que o valor total da proposta.")
-                sinal_atual = valor
-            st.markdown(_resumo_financeiro_rows_html(valor, sinal_atual), unsafe_allow_html=True)
-
-    st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
-
-    # ── Ações principais ─────────────────────────────────────────────────
-    if aprovada:
-        if st.button("▶️ Iniciar execução", key=f"btn_iniciar_{proposta_id}", use_container_width=True, type="primary"):
-            try:
-                res = st.session_state.db.update_proposta_status(
-                    proposta_id=proposta_id, novo_status=STATUS_EM_EXECUCAO,
-                    data_aprovacao=proposta.get('data_aprovacao') or datetime.now().date())
-                if res.get('status', False):
-                    st.session_state['kanban_selected_proposta'] = None
-                    st.session_state.db.invalidar_cache()
-                    st.rerun()
-                else:
-                    st.error(res.get('message', 'Erro ao iniciar.'))
-            except Exception as e:
-                st.error(str(e))
-    else:
-        a1, a2 = st.columns([1, 1.3], gap="small")
-        with a1:
-            if st.button("Recusar", key=f"btn_recusar_{proposta_id}", use_container_width=True):
-                st.session_state[f"confirm_refuse_{proposta_id}"] = True
-                st.rerun()
-        with a2:
-            # Aprovação é ação não destrutiva → clique único (sem confirmação).
-            if st.button("Aprovar proposta", key=f"btn_aprovar_{proposta_id}", use_container_width=True, type="primary"):
-                try:
-                    if sinal_atual != sinal:
-                        st.session_state.db.update_proposta(proposta_id, sinal=sinal_atual)
-                    res = st.session_state.db.update_proposta_status(
-                        proposta_id=proposta_id, novo_status=STATUS_APROVADA,
-                        data_aprovacao=datetime.now().date())
-                    if res.get('status', False):
-                        # sinal vira receita recebida; a pendente da aprovação fica com o saldo
-                        st.session_state.db.sincronizar_sinal_proposta(proposta_id)
-                        st.session_state['kanban_selected_proposta'] = None
-                        st.session_state.db.invalidar_cache()
-                        st.rerun()
-                    else:
-                        st.error(res.get('message', 'Erro ao aprovar.'))
-                except Exception as e:
-                    st.error(str(e))
-
-    # ── Ação operacional independente: gerar/baixar PDF ──────────────────
-    _pdf_gerar_baixar(proposta_id, "apr" if aprovada else "open")
-
-    # ── Mais ações (Editar · Duplicar · Excluir) ─────────────────────────
-    _mais_acoes_proposta(proposta_id, proposta)
-
+def _det_confirmacoes(proposta_id):
     # ── Confirmação: Recusar ─────────────────────────────────────────────
     if st.session_state.get(f"confirm_refuse_{proposta_id}", False):
         st.markdown(
-            f'<div style="background:#faf9f7;border:1px solid #e8e5df;border-radius:12px;padding:14px 16px;margin-top:10px;">'
-            f'<div style="font-weight:700;color:{NAVY};margin-bottom:4px;">Recusar proposta?</div>'
-            f'<div style="font-size:13px;color:#6B6660;">Esta proposta será marcada como recusada.</div></div>',
-            unsafe_allow_html=True)
+            f'<div class="pd-conf"><b>Recusar proposta?</b><span>Ela vai para o histórico, em cinza. Dá para reabrir '
+            f'depois.</span></div>', unsafe_allow_html=True)
         cr1, cr2 = st.columns([1, 1])
         with cr1:
             if st.button("Cancelar", key=f"btn_cancel_ref_{proposta_id}", use_container_width=True):
@@ -509,10 +738,12 @@ def _render_open_proposal_actions(proposta_id, proposta):
                     from utils.database import engine
                     with engine.connect() as conn:
                         conn.execute(sa_text(
-                            "UPDATE propostas SET status = 'recusada', status_execucao = 'Cancelada' WHERE id = :pid"
-                        ), {"pid": proposta_id})
+                            "UPDATE propostas SET status = 'recusada', status_execucao = 'Cancelada', "
+                            "data_fim = COALESCE(data_fim, :hoje) WHERE id = :pid AND usuario_id = :uid"
+                        ), {"pid": proposta_id, "hoje": hoje(), "uid": st.session_state.get('usuario_id')})
                         conn.commit()
                     st.session_state[f"confirm_refuse_{proposta_id}"] = False
+                    _limpar_pdfs(proposta_id)
                     st.session_state['kanban_selected_proposta'] = None
                     st.session_state.db.invalidar_cache()
                     st.rerun()
@@ -522,10 +753,8 @@ def _render_open_proposal_actions(proposta_id, proposta):
     # ── Confirmação: Excluir ─────────────────────────────────────────────
     if st.session_state.get(f"confirm_delete_{proposta_id}", False):
         st.markdown(
-            f'<div style="background:#fdecea;border:1px solid #C0392B33;border-radius:12px;padding:14px 16px;margin-top:10px;">'
-            f'<div style="font-weight:700;color:#C0392B;margin-bottom:4px;">Excluir proposta?</div>'
-            f'<div style="font-size:13px;color:#6B6660;">Esta ação não poderá ser desfeita e removerá todos os dados relacionados.</div></div>',
-            unsafe_allow_html=True)
+            '<div class="pd-conf del"><b>Excluir proposta?</b><span>Esta ação não poderá ser desfeita e removerá todos '
+            'os dados relacionados.</span></div>', unsafe_allow_html=True)
         dc1, dc2 = st.columns([1, 1])
         with dc1:
             if st.button("Cancelar", key=f"btn_cancel_del_{proposta_id}", use_container_width=True):
@@ -538,7 +767,6 @@ def _render_open_proposal_actions(proposta_id, proposta):
                     sucesso, mensagem = st.session_state.db.excluir_proposta_segura(proposta_id, usuario_id)
                     if sucesso:
                         st.session_state.db.invalidar_cache()
-                        st.success(mensagem)
                         st.session_state['kanban_selected_proposta'] = None
                         st.session_state[f"confirm_delete_{proposta_id}"] = False
                         st.rerun()
@@ -548,79 +776,109 @@ def _render_open_proposal_actions(proposta_id, proposta):
                     st.error(str(e))
 
 
-def _render_finalized_proposal_actions(proposta_id, proposta):
-    """Compact view for finalized proposals: report buttons + reopen/delete."""
-    nome_cliente = proposta.get('nome', proposta.get('cliente_nome', 'Cliente'))
-    numero = proposta.get('numero', proposta_id)
-    from utils.proposta_status import normalize as _normalize_status, STATUS_RECUSADA
-    valor = _safe_float(proposta.get('valor'))
-    sinal = _safe_float(proposta.get('sinal'))
-    status_atual = _normalize_status(proposta.get('status', '')) or ''
-
-    # Cabeçalho e resumo financeiro unificados (mesmo padrão da tela de
-    # aberta/aprovada) para consistência visual entre as etapas.
-    _proposal_meta_header(proposta, status_atual)
-    st.markdown(_resumo_financeiro_rows_html(valor, sinal), unsafe_allow_html=True)
-    st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
-
-    rc1, rc2 = st.columns(2)
-    with rc1:
-        _report_card_download("", "relatório do cliente", "Proposta de serviço para enviar", proposta_id, "cliente", nome_cliente, numero)
-    with rc2:
-        _report_card_download("", "relatório interno", "Margens e custos, só para você", proposta_id, "interno", nome_cliente, numero)
-
-    rc3, rc4 = st.columns(2)
-    with rc3:
-        _report_card_download("", "relatório de fornecedores", "Lista de terceiros", proposta_id, "fornecedores", nome_cliente, numero)
-    with rc4:
-        _report_card_download("", "relatório de produtos", "Produtos vendidos na organização", proposta_id, "vendas", nome_cliente, numero)
-
-    st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
-    if status_atual == STATUS_RECUSADA:
-        st.info("Ao reabrir, a proposta recusada voltará para o status 'Em aberto'.")
+def _render_detail_panel(proposta_id, proposta, propostas_com_clientes=None):
+    """Detalhe completo de uma proposta (dentro da gaveta à direita)."""
+    from utils import propostas_dados
+    status = _status_de(proposta)
+    marcas = propostas_dados.historicos(st.session_state.db, [proposta_id]).get(int(proposta_id), [])
+    cliente = _cliente_da_proposta(proposta)
+    st.markdown(CSS_DETALHE, unsafe_allow_html=True)
+    _det_cabecalho(proposta_id, proposta, status, cliente)
+    _det_proximo(proposta_id, proposta, status, marcas)
+    if status == 'em_aberto':
+        _det_aprovacao(proposta_id, proposta)
+    _det_confirmacoes(proposta_id)
+    itens = _itens_da_proposta(proposta_id)
+    _det_acoes(proposta_id, proposta, status, cliente, itens)
+    _det_valores(proposta, status)
+    with st.container(key="pd_abas"):
+        aba = st.pills("Seção", ABAS_DETALHE, default="Serviço", required=True, key=f"pd_aba_{proposta_id}",
+                       label_visibility="collapsed") or "Serviço"
+    if aba == "Serviço":
+        _aba_servico(proposta_id, proposta, status, marcas, itens)
+    elif aba == "Relatórios PDF":
+        _aba_relatorios(proposta_id, proposta, status)
     else:
-        st.info("Ao reabrir, a proposta voltará para o status 'Em execução'.")
-    if botao_editar("Reabrir proposta", key=f"btn_reabrir_fin_{proposta_id}", icon=":material/replay:", use_container_width=True):
-        try:
-            from reabrir_proposta import reabrir_proposta_finalizada
-            res = reabrir_proposta_finalizada(proposta_id)
-            if res.get('status') in ['sucesso', 'sucesso_com_alerta']:
-                st.session_state.db.invalidar_cache()
-                st.session_state['kanban_selected_proposta'] = None
-                st.rerun()
-            else:
-                st.error(res.get('mensagem'))
-        except Exception as e:
-            st.error(str(e))
+        _aba_itens(proposta_id, aba, status, itens)
+    _det_historico(proposta, status, marcas)
+    _det_mais_acoes(proposta_id, proposta, status)
 
-    st.markdown("<hr style='border:none;border-top:1px solid #eee;margin:14px 0 6px;'>", unsafe_allow_html=True)
-    _exf1, _exf2, _exf3 = st.columns([1, 2, 1])
-    with _exf2:
-        if botao_excluir("Excluir proposta", f"btn_excluir_fin_{proposta_id}"):
-            st.session_state[f"confirm_delete_{proposta_id}"] = True
 
-    if st.session_state.get(f"confirm_delete_{proposta_id}", False):
-        st.warning("Esta ação é permanente e removerá todos os dados relacionados.")
-        dc1, dc2, dc3 = st.columns([2, 1, 1])
-        with dc2:
-            if st.button("Cancelar", key=f"btn_cancel_del_fin_{proposta_id}", use_container_width=True):
-                st.session_state[f"confirm_delete_{proposta_id}"] = False
-                st.rerun()
-        with dc3:
-            if st.button("Confirmar", key=f"btn_confirm_del_fin_{proposta_id}", use_container_width=True, type="primary"):
-                try:
-                    usuario_id = st.session_state.get('usuario_id')
-                    sucesso, mensagem = st.session_state.db.excluir_proposta_segura(proposta_id, usuario_id)
-                    if sucesso:
-                        st.session_state.db.invalidar_cache()
-                        st.success(mensagem)
-                        st.session_state['kanban_selected_proposta'] = None
-                        st.session_state[f"confirm_delete_{proposta_id}"] = False
-                        st.rerun()
-                    else:
-                        st.error(mensagem)
-                except Exception as e:
-                    st.error(str(e))
+CSS_DETALHE = """
+<style>
+[data-testid="stDialog"]:has(.pd-top) > div { width:min(760px, 100vw) !important; max-width:100vw !important;
+   margin-left:auto !important; background:#F7F5F0 !important; }
+[role="dialog"]:has(.pd-top) { background:#F7F5F0 !important; width:100% !important; max-width:100% !important; }
+[role="dialog"]:has(.pd-top) h2 { font-size:.78rem !important; letter-spacing:.14em; text-transform:uppercase;
+   color:#9C7A22 !important; font-weight:700 !important; }
+[role="dialog"]:has(.pd-top) h2 * { font-size:.78rem !important; color:#9C7A22 !important; font-weight:700 !important; }
+.pd-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+.pd-ey { display:none; }
+h1.pd-tit { margin:0 !important; padding:0 !important; font-family:'Cormorant Garamond',Georgia,serif !important;
+            font-size:2.2rem !important; font-weight:600 !important; color:var(--navy) !important; line-height:1.15 !important;
+            overflow-wrap:anywhere; }
+h1.pd-tit::after { content:""; display:block; width:40px; height:3px; border-radius:2px; background:var(--gold); margin-top:6px; }
+.pd-sub { color:#5B6B80; font-size:.95rem; margin-top:8px; }
+.st-key-pd_prox { background:var(--navy); border-radius:16px; padding:18px 20px; margin-top:6px; }
+.pd-prox { display:flex; flex-direction:column; gap:3px; color:#fff; padding-bottom:6px; }
+.pd-prox .l { font-size:.8rem; color:rgba(255,255,255,.72); }
+.pd-prox b { font-size:1.08rem; color:#fff; }
+.st-key-pd_prox [data-testid="stHorizontalBlock"] { flex-direction:row !important; flex-wrap:wrap !important; row-gap:12px; }
+.st-key-pd_prox [data-testid="stColumn"] { min-width:200px !important; flex:1 1 200px !important; }
+.st-key-cta_pd_acao .stButton > button, .st-key-pdlin_pd_acao .stButton > button { min-height:46px; font-weight:700; }
+.st-key-pdlin_pd_acao .stButton > button { background:transparent !important; border:1px solid rgba(255,255,255,.45) !important; }
+.st-key-pdlin_pd_acao .stButton > button * { color:#fff !important; }
+.st-key-pd_aprov { background:#fff; border-color:#E7E2D6 !important; border-radius:14px !important; }
+.pd-saldo { font-size:.86rem; color:#5B6B80; padding-top:24px; }
+.st-key-pd_aprov [data-testid="stHorizontalBlock"] { flex-direction:row !important; flex-wrap:wrap !important; row-gap:0 !important; }
+.st-key-pd_aprov [data-testid="stColumn"] { min-width:200px !important; flex:1 1 200px !important; }
+.pd-saldo b { color:var(--navy); }
+.st-key-pd_links_rec button, .st-key-pd_links_rec button p { color:#9B2C2C !important; font-weight:600 !important; }
+.st-key-pd_acoes [data-testid="stHorizontalBlock"] { flex-direction:row !important; flex-wrap:wrap !important; gap:10px !important; }
+.st-key-pd_acoes [data-testid="stColumn"] { min-width:150px !important; flex:1 1 150px !important; }
+.st-key-pd_acoes a, .st-key-pd_acoes button { min-height:44px; background:#fff !important; border:1px solid #E7E2D6 !important;
+       border-radius:10px !important; }
+.st-key-pd_acoes [class*="st-key-btndoc_"] .stButton > button, .st-key-pd_acoes [data-testid="stDownloadButton"] button { background:#fff !important; border:1px solid #E7E2D6 !important; }
+.st-key-pd_acoes a p, .st-key-pd_acoes button p, .st-key-pd_acoes button span { color:var(--navy) !important; font-weight:600 !important; }
+.pd-res { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:4px 0 6px; }
+.pd-res div { background:#fff; border:1px solid #E7E2D6; border-radius:12px; padding:12px; min-width:0; }
+.pd-res b { display:block; font-size:1.2rem; color:var(--navy); font-variant-numeric:tabular-nums; white-space:nowrap;
+            overflow:hidden; text-overflow:ellipsis; }
+.pd-res b.verde { color:#2F6B4F; }
+.pd-res span { font-size:.75rem; color:#5B6B80; }
+.st-key-pd_abas [data-testid="stButtonGroup"] { gap:6px; flex-wrap:wrap; }
+.st-key-pd_abas button { border-radius:999px !important; background:#ECE7DC !important; border:0 !important; min-height:36px; }
+.st-key-pd_abas button p { color:#5B6B80 !important; font-weight:600 !important; }
+.st-key-pd_abas button[aria-checked="true"], .st-key-pd_abas button[kind*="Active"] { background:#fff !important;
+       box-shadow:inset 0 -2px 0 #C9A84C, 0 1px 2px rgba(0,0,0,.06); }
+.st-key-pd_abas button[aria-checked="true"] p, .st-key-pd_abas button[kind*="Active"] p { color:var(--navy) !important; }
+.pd-it { background:#fff; border:1px solid #E7E2D6; border-radius:12px; padding:14px 16px; margin-top:10px; display:flex;
+         justify-content:space-between; gap:12px; }
+.pd-it > div { min-width:0; }
+.pd-it b { color:var(--navy); }
+.pd-it > b { white-space:nowrap; font-variant-numeric:tabular-nums; }
+.pd-it span { display:block; font-size:.82rem; color:#5B6B80; margin-top:2px; }
+.pd-it span.desc { white-space:pre-wrap; overflow-wrap:anywhere; }
+.pd-it.tot { background:#F6EDD3; border-color:#E8D5A3; }
+.pd-vazio { background:#fff; border:1px dashed #E7E2D6; border-radius:12px; padding:16px; color:#5B6B80; font-size:.88rem; margin-top:10px; }
+.pd-secao { font-size:.74rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#5B6B80; margin:22px 0 6px; }
+.pd-tl { display:flex; gap:12px; font-size:.9rem; padding:6px 0; color:#1A202C; }
+.pd-tl i { flex:none; width:10px; height:10px; border-radius:50%; margin-top:6px; }
+.pd-conf { background:#FAF9F7; border:1px solid #E7E2D6; border-radius:12px; padding:14px 16px; margin:10px 0 8px; }
+.pd-conf b { display:block; color:var(--navy); }
+.pd-conf span { font-size:.84rem; color:#5B6B80; }
+.pd-conf.del { background:#FBE9E7; border-color:#9B2C2C33; }
+.pd-conf.del b { color:#9B2C2C; }
+.itens-empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px 20px;
+    background:#faf9f7; border-radius:12px; border:1px dashed #ddd; margin:8px 0 16px 0; text-align:center; }
+.itens-empty-title { font-size:15px; font-weight:600; color:#4a4a4a; margin-bottom:6px; }
+.itens-empty-hint { font-size:12px; color:#9a9890; }
+@media (max-width: 640px) {
+  .pd-res { grid-template-columns:1fr 1fr; }
+  h1.pd-tit { font-size:1.8rem !important; }
+}
+</style>
+"""
 
 
 def _pdf_inline_viewer(pdf_bytes, key, height=720):
@@ -1773,108 +2031,352 @@ def _tab_acoes(proposta_id, proposta):
                     st.rerun()
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# Lista (protótipo "propostasB"): cabeçalho, 4 cartões de resumo, quadro em 4 colunas e histórico
+# ══════════════════════════════════════════════════════════════════════════════
+
+COLUNAS = [("em_aberto", "Em aberto"), ("aprovada", "Aprovada"), ("em_execucao", "Em execução"),
+           ("finalizada", "Concluída")]
+COR_COLUNA = {"em_aberto": "#E5D08F", "aprovada": "#C9A84C", "em_execucao": "#0D1B2A", "finalizada": "#2F6B4F"}
+BARRA_RESUMO = {"em_aberto": "#EFE3BE", "aprovada": "#C9A84C", "em_execucao": "#0D1B2A", "finalizada": "#2F6B4F"}
+MAX_CONCLUIDAS = 3
+MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro",
+         "novembro", "dezembro"]
+MSG_LEMBRETE = ("Oi, {nome}! Tudo bem? Passando para saber se ficou alguma dúvida sobre a proposta de organização "
+                "que te enviei. Fico à disposição!")
+
+
+def _css_wa():
+    """Símbolo do WhatsApp nos botões que abrem a conversa (containers com chave "wa_...")."""
+    import urllib.parse as _up
+    svg = icone_whatsapp(16).replace('style="flex:none"', '').replace(' aria-hidden="true"', '')
+    if 'xmlns' not in svg:
+        svg = svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ', 1)
+    uri = "data:image/svg+xml;utf8," + _up.quote(svg)
+    return ('[class*="st-key-wa_"] a::before { content:""; flex:none; width:16px; height:16px; margin-right:7px; '
+            f'background:url("{uri}") center/16px 16px no-repeat; }}'
+            '[class*="st-key-wa_"] a { display:inline-flex !important; align-items:center; justify-content:center; }'
+            '[class*="st-key-wa_"] a > div { flex:0 0 auto !important; width:auto !important; }')
+
+
+CSS_QUADRO = """
+<style>
+.pq-ey { font-size:.74rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#9C7A22; margin:0 0 4px; }
+h1.pq-tit { margin:0 !important; padding:0 !important; font-family:'Cormorant Garamond',Georgia,serif !important;
+            font-size:2.6rem !important; font-weight:600 !important; color:var(--navy) !important; line-height:1.15 !important; }
+h1.pq-tit::after { content:""; display:block; width:40px; height:3px; border-radius:2px; background:var(--gold); margin-top:8px; }
+.pq-sub { color:#5B6B80; font-size:.98rem; margin:10px 0 4px; }
+.st-key-cta_pq_nova { padding-top:62px; }
+.st-key-cta_pq_nova .stButton > button { min-height:46px; }
+.pq-kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin:18px 0 22px; }
+.pq-kpi { min-width:0; }
+.pq-kpi i { display:block; height:6px; border-radius:3px; margin-bottom:10px; }
+.pq-kpi div { background:#fff; border:1px solid #E7E2D6; border-radius:16px; padding:16px 18px; }
+.pq-kpi b { display:block; font-size:1.55rem; font-weight:700; color:var(--navy); margin:8px 0 2px; font-variant-numeric:tabular-nums;
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pq-kpi span.q { font-size:.82rem; color:#5B6B80; }
+[class*="st-key-pqcol_"] { background:#EFEBE2; border-radius:16px; padding:12px 12px 6px; min-height:420px; gap:10px !important; }
+.pq-colh { display:flex; justify-content:space-between; align-items:center; font-size:.9rem; font-weight:700; color:var(--navy);
+           padding:2px 4px 2px; }
+.pq-colh .pv-pil { min-width:24px; justify-content:center; }
+[class*="st-key-pqc_"] { background:#fff; border:1px solid #E7E2D6; border-left:4px solid var(--c, #E7E2D6);
+           border-radius:12px; padding:12px 14px 10px; gap:4px !important; }
+[class*="st-key-pqr_"] { min-height:30px; }
+[class*="st-key-pqc_"]:hover { box-shadow:0 2px 8px rgba(16,24,40,.08); }
+.pq-card { cursor:pointer; padding-bottom:12px; }
+.pq-card b { display:block; color:var(--navy); margin-top:8px; font-size:.98rem; overflow-wrap:anywhere; }
+.pq-card .s { display:block; font-size:.8rem; color:#5B6B80; overflow-wrap:anywhere; margin-top:1px; }
+[class*="st-key-pqr_"] [data-testid="stHorizontalBlock"] { flex-direction:row !important; flex-wrap:nowrap !important;
+       align-items:center; gap:6px !important; }
+[class*="st-key-pqr_"] [data-testid="stColumn"] { min-width:0 !important; width:auto !important; }
+.pq-val { line-height:30px; font-weight:700; color:var(--navy); font-size:.9rem; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.pq-pago { line-height:30px; text-align:right; font-size:.8rem; color:#5B6B80; }
+[class*="pqa_"] .stButton, [class*="pqa_"] .stLinkButton { display:flex; justify-content:flex-end; }
+[class*="pqa_"] button, [class*="pqa_"] a { background:transparent !important; border:0 !important; width:auto !important;
+       padding:0 !important; min-height:28px !important; box-shadow:none !important; white-space:nowrap; }
+[class*="pqa_"] button p, [class*="pqa_"] a p, [class*="pqa_"] [data-testid="stIconMaterial"] {
+       color:#9C7A22 !important; font-weight:700 !important; font-size:.82rem !important; white-space:nowrap; }
+[class*="pqa_"] button:hover p, [class*="pqa_"] a:hover p { color:var(--navy) !important; }
+[class*="st-key-wa_pqa_"] a::before { width:14px !important; height:14px !important; background-size:14px 14px !important; margin-right:5px !important; }
+.pq-vazio { font-size:.84rem; color:#5B6B80; padding:6px 4px; }
+.pq-mais a, .pq-mais { font-size:.82rem; color:#9C7A22 !important; font-weight:600; text-decoration:none !important; padding:2px 4px; }
+.pq-mais a:hover { color:var(--navy) !important; }
+.pq-nota { font-size:.84rem; color:#5B6B80; margin-top:12px; }
+.pq-secao { font-size:.74rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#4A5B73; margin:28px 0 10px; }
+.pq-h { display:grid; grid-template-columns:52px minmax(0,1.6fr) minmax(0,1.2fr) 110px 120px 112px 64px; gap:10px;
+        align-items:center; font-size:.88rem; color:#1A202C; background:#fff; border:1px solid #E7E2D6; border-radius:12px;
+        padding:10px 14px; }
+.pq-h .n { color:#5B6B80; font-variant-numeric:tabular-nums; }
+.pq-h b { color:var(--navy); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pq-h .t { color:#5B6B80; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pq-h .v { text-align:right; font-weight:700; color:var(--navy); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.pq-h .rl { text-align:right; color:#2F6B4F; font-variant-numeric:tabular-nums; white-space:nowrap; font-size:.82rem; }
+.pq-h .d { text-align:right; color:#5B6B80; font-variant-numeric:tabular-nums; }
+.pq-h.re { background:#F7F7F5; color:#98A2B3; }
+.pq-h.re b, .pq-h.re .v { color:#98A2B3; }
+.pq-h.cab { background:transparent; border:0; padding:2px 14px; font-size:.72rem; font-weight:700; letter-spacing:.08em;
+            text-transform:uppercase; color:#5B6B80; }
+[class*="st-key-kcard_pqh_"] { margin-bottom:-6px; }
+[class*="st-key-kcard_pqh_"]:hover .pq-h { border-color:#C9A84C; }
+@media (max-width: 1280px) {
+  .st-key-pq_cols > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] { flex-direction:row !important; flex-wrap:wrap !important; row-gap:14px !important; }
+  .st-key-pq_cols > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { flex:1 1 calc(50% - 8px) !important; width:calc(50% - 8px) !important; min-width:0 !important; }
+  [class*="st-key-pqcol_"] { min-height:0; }
+  .pq-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 900px) {
+  .pq-h { grid-template-columns:44px minmax(0,1fr) 96px 64px; }
+  .pq-h .t, .pq-h .rl, .pq-h .s { display:none; }
+}
+@media (max-width: 640px) {
+  .st-key-pq_cols > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { flex:1 1 100% !important; width:100% !important; }
+  .st-key-pq_cab [data-testid="stHorizontalBlock"] { flex-direction:column !important; }
+  .st-key-cta_pq_nova { padding-top:0; }
+  h1.pq-tit { font-size:2.1rem !important; }
+  .pq-kpi b { font-size:1.25rem; }
+  .pq-kpi div { padding:12px 14px; }
+  .pq-h { grid-template-columns:minmax(0,1fr) 90px 56px; }
+  .pq-h .n { display:none; }
+}
+</style>
+"""
+
+
+def _situacoes(df):
+    """Coluna de cada proposta (mesmas regras de antes: em execução pelo status ou pelo status_execucao)."""
+    from utils.proposta_status import normalize as _normalize_status
+    if df.empty:
+        return pd.Series(dtype=str)
+    st_ = df['status'].apply(lambda s: _normalize_status(str(s or '')) or '')
+    if 'status_execucao' in df.columns:
+        exec_ = (df['status_execucao'] == EXEC_EM_EXECUCAO) & ~st_.isin(['finalizada', 'recusada'])
+        st_ = st_.where(~exec_, 'em_execucao')
+    return st_
+
+
+def _data_fim_ou(p):
+    from utils.propostas_dados import _data
+    return _data(p.get('data_fim')) or _data(p.get('data_inicio')) or _data(p.get('data_proposta'))
+
+
+def _contexto(p, situacao, marcas):
+    """'Closet e Quarto · enviada há 4 dias', '· sinal recebido', '· dia 1 de 2', '· 20/11'."""
+    from utils import propostas_dados as dados
+    serv = dados.servico_curto(p)
+    if situacao == 'em_aberto':
+        sit, d = dados.envio(p, marcas)
+        extra = "rascunho" if sit == "rascunho" else (f"enviada {dados.quando(d)}" if d else "enviada")
+    elif situacao == 'aprovada':
+        ini = dados._data(p.get('data_inicio'))
+        if _safe_float(p.get('sinal')) > 0:
+            extra = "sinal recebido"
+        elif ini:
+            extra = f"marcada para {_dm(ini)}"
+        else:
+            extra = "aguardando data"
+    elif situacao == 'em_execucao':
+        dia = dados.dia_do_servico(p)
+        extra = f"dia {dia[0]} de {dia[1]}" if dia else "em andamento"
+    else:
+        extra = _dm(_data_fim_ou(p))
+    return f"{serv} · {extra}" if extra else serv
+
+
+def _abrir(pid):
+    atual = st.session_state.get('kanban_selected_proposta')
+    st.session_state['kanban_selected_proposta'] = None if atual == pid else pid
+
+
+def _cartao(p, situacao, marcas, telefones):
+    from utils import propostas_dados as dados
+    from utils.nova_proposta import link_whatsapp, mensagem_whatsapp
+    pid = int(p['id'])
+    nome = str(p.get('nome') or p.get('cliente_nome') or 'Cliente')
+    valor = _safe_float(p.get('valor'))
+    with st.container(key=f"pqc_{situacao}_{pid}"):
+        html = (f'<div class="pq-card">{pilula(situacao)}<b>{esc(nome)}</b>'
+                f'<span class="s">{esc(_contexto(p, situacao, marcas))}</span></div>')
+        if cartao_clicavel(html, key=f"pq_{pid}", rotulo=f"Abrir proposta de {nome}"):
+            _abrir(pid)
+            st.rerun(scope="fragment")
+        with st.container(key=f"pqr_{pid}"):
+            c1, c2 = st.columns([1, 1], vertical_alignment="center")
+            c1.markdown(f'<div class="pq-val">{_fmt_brl(valor).replace(",00", "")}</div>', unsafe_allow_html=True)
+            with c2:
+                tel = telefones.get(int(_safe_float(p.get('cliente_id'), -1)))
+                if situacao == 'em_aberto':
+                    sit, _ = dados.envio(p, marcas)
+                    primeiro = nome.split(' ')[0]
+                    if sit == "rascunho":
+                        url = link_whatsapp(tel, mensagem_whatsapp(nome, p.get('tipo_proposta'), valor))
+                        rot, marca, texto = "Enviar", "Enviada", "Enviada pelo WhatsApp"
+                    else:
+                        url = link_whatsapp(tel, MSG_LEMBRETE.format(nome=primeiro))
+                        rot, marca, texto = "Lembrar", "Lembrete", "Lembrete pelo WhatsApp"
+                    with st.container(key=f"wa_pqa_{pid}"):
+                        st.link_button(rot, url, key=f"pq_wa_{pid}", icon=":material/arrow_forward:",
+                                       icon_position="right", on_click=_marcar_cb, args=(pid, marca, texto),
+                                       help="Abre o WhatsApp com a mensagem pronta")
+                elif situacao == 'aprovada':
+                    with st.container(key=f"pqa_i_{pid}"):
+                        if st.button("Iniciar", key=f"pq_ini_{pid}", icon=":material/arrow_forward:",
+                                     icon_position="right", help="Passa para Em execução"):
+                            _iniciar_execucao(pid, p)
+                elif situacao == 'em_execucao':
+                    with st.container(key=f"pqa_f_{pid}"):
+                        if st.button("Finalizar", key=f"pq_fim_{pid}", icon=":material/arrow_forward:",
+                                     icon_position="right", help="Conclui o serviço e lança o financeiro e a pós-organização"):
+                            _finalizar(pid)
+                elif str(p.get('status_pagamento_base') or '') == 'Pago':
+                    st.markdown('<div class="pq-pago">pago</div>', unsafe_allow_html=True)
+
+
 @st.fragment
-def _kanban_board_fragment(propostas_em_aberto, propostas_aprovadas, propostas_em_exec, propostas_com_clientes):
-    """Renderiza o quadro (3 colunas) + o modal de detalhe como um FRAGMENTO.
+def _kanban_board_fragment(grupos, total_concluidas, telefones, propostas_com_clientes):
+    """Quadro (4 colunas) + gaveta de detalhe, num fragmento: abrir e fechar o detalhe não redesenha os
+    resumos nem o histórico. Mudanças de situação (aprovar, iniciar, finalizar...) fazem o rerun completo.
+    As marcas de envio são lidas aqui dentro: o "Enviar" do cartão roda só o fragmento."""
+    from utils import propostas_dados
+    marcas = propostas_dados.historicos(st.session_state.db)
+    st.markdown(f"<style>[class*='st-key-pqc_'] {{}}"
+                + "".join(f"[class*='st-key-pqc_{k}_'] {{ --c:{c}; }}" for k, c in COR_COLUNA.items())
+                + "</style>", unsafe_allow_html=True)
+    with st.container(key="pq_cols"):
+        cols = st.columns(4, gap="small")
+    for col, (sit, rotulo) in zip(cols, COLUNAS):
+        df = grupos.get(sit, pd.DataFrame())
+        n = total_concluidas if sit == 'finalizada' else len(df)
+        with col, st.container(key=f"pqcol_{sit}"):
+            cls = {"em_aberto": "ab", "aprovada": "ap", "em_execucao": "ex", "finalizada": "co"}[sit]
+            st.markdown(f'<div class="pq-colh"><span>{rotulo}</span><span class="pv-pil {cls}">{n}</span></div>',
+                        unsafe_allow_html=True)
+            if df.empty:
+                st.markdown('<div class="pq-vazio">Nenhuma proposta aqui.</div>', unsafe_allow_html=True)
+            for _, p in df.iterrows():
+                _cartao(p, sit, marcas.get(int(p['id']), []), telefones)
+            if sit == 'finalizada' and total_concluidas > len(df):
+                st.markdown(f'<div class="pq-mais"><a href="#historico-propostas">Ver todas as {total_concluidas} no '
+                            f'histórico →</a></div>', unsafe_allow_html=True)
 
-    Abrir/fechar o detalhe e gerar PDF do card fazem rerun só do fragmento
-    (st.rerun(scope="fragment")): os KPIs e o histórico, que ficam FORA do
-    fragmento, não re-renderizam, deixando a abertura do modal instantânea. As
-    mutações dentro do modal (aprovar/recusar/excluir) continuam com
-    st.rerun() completo para atualizar todo o quadro."""
-    col_aberto, col_aprovada, col_execucao = st.columns(3)
-    COLS_CONFIG = [
-        (col_aberto, " Em Aberto", propostas_em_aberto, "#fff3cd"),
-        (col_aprovada, "Aprovada", propostas_aprovadas, "#d4edda"),
-        (col_execucao, "Em Execução", propostas_em_exec, "#cce5ff"),
-    ]
-    for col_idx, (col_widget, col_label, col_df, col_color) in enumerate(COLS_CONFIG):
-        with col_widget:
-            header_count = len(col_df)
-            st.markdown(
-                f'<div class="kanban-col-header" style="background-color:{col_color};">{col_label} ({header_count})</div>',
-                unsafe_allow_html=True
-            )
-            if not col_df.empty:
-                for _, proposta in col_df.iterrows():
-                    pid = proposta['id']
-                    cliente_nome = html_module.escape(str(proposta.get('nome', proposta.get('cliente_nome', 'Cliente'))))
-                    desc = html_module.escape(str(proposta.get('descricao', ''))[:60])
-                    valor_f = html_module.escape(_fmt_brl(_safe_float(proposta.get('valor'))))
-
-                    is_selected = st.session_state.get('kanban_selected_proposta') == pid
-                    if cartao_clicavel(
-                        f'<div class="kanban-card">'
-                        f'<div class="kanban-card-cliente">{cliente_nome}</div>'
-                        f'<div class="kanban-card-desc">{desc}</div>'
-                        f'<div class="kanban-card-valor">{valor_f}</div>'
-                        f'</div>',
-                        key=f"card_btn_c{col_idx}_{pid}", rotulo=f"Abrir proposta de {cliente_nome}",
-                        selecionado=is_selected):
-                        if is_selected:
-                            st.session_state['kanban_selected_proposta'] = None
-                        else:
-                            st.session_state['kanban_selected_proposta'] = pid
-                            # Feedback imediato: o st.toast sobrevive ao rerun.
-                            st.toast("Abrindo proposta…", icon="⏳")
-                        st.rerun(scope="fragment")
-
-                    if col_idx in (0, 1):
-                        if st.button("Gerar PDF", key=f"card_pdf_c{col_idx}_{pid}", type="tertiary",
-                                     icon=":material/picture_as_pdf:", use_container_width=True):
-                            try:
-                                from utils.propostas_helper import gerar_pdf_cliente_proposta
-                                sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, pid, tipo_documento="proposta")
-                                if sucesso and arquivo:
-                                    st.session_state[f"_kanban_pdf_{pid}"] = arquivo
-                                    st.rerun(scope="fragment")
-                                else:
-                                    st.error(f"Erro: {mensagem}")
-                            except Exception as e:
-                                st.error(str(e))
-                        pdf_pronto = st.session_state.get(f"_kanban_pdf_{pid}")
-                        if pdf_pronto:
-                            try:
-                                with open(pdf_pronto, "rb") as _f:
-                                    st.download_button(
-                                        "Baixar",
-                                        _f.read(),
-                                        os.path.basename(pdf_pronto),
-                                        "application/pdf",
-                                        key=f"card_dl_c{col_idx}_{pid}",
-                                        use_container_width=True,
-                                    )
-                            except Exception:
-                                st.session_state.pop(f"_kanban_pdf_{pid}", None)
-            else:
-                st.caption("Nenhuma proposta nesta etapa.")
-
-    # Modal de detalhe (dentro do fragmento para abrir sem rerun completo).
     selected_id = st.session_state.get('kanban_selected_proposta')
-    if selected_id is not None:
-        if not propostas_com_clientes.empty:
-            proposta_rows = propostas_com_clientes[propostas_com_clientes['id'] == selected_id]
-            if not proposta_rows.empty:
-                proposta_row = proposta_rows.iloc[0]
-                _nome_modal = proposta_row.get('nome', proposta_row.get('cliente_nome', 'Cliente'))
-                _num_modal = proposta_row.get('numero', selected_id)
+    if selected_id is None:
+        return
+    linhas = propostas_com_clientes[propostas_com_clientes['id'] == selected_id] if not propostas_com_clientes.empty else []
+    if len(linhas) == 0:
+        st.session_state['kanban_selected_proposta'] = None
+        return
+    proposta_row = linhas.iloc[0]
 
-                @st.dialog(f"Proposta #{_num_modal} — {_nome_modal}", width="large")
-                def _modal_detalhes():
-                    # Fechamento pelo X nativo do diálogo. Spinner dá feedback
-                    # enquanto o painel monta.
-                    with st.spinner("Carregando proposta…"):
-                        _render_detail_panel(selected_id, proposta_row, propostas_com_clientes)
+    @st.dialog(f"Proposta nº {_num_proposta(proposta_row, selected_id)}", width="large", position="right",
+               on_dismiss=_fechar_detalhe)
+    def _modal_detalhes():
+        _render_detail_panel(selected_id, proposta_row, propostas_com_clientes)
 
-                _modal_detalhes()
-            else:
-                st.session_state['kanban_selected_proposta'] = None
+    _modal_detalhes()
+
+
+def _resumos_html(grupos, concl_mes, hoje_):
+    def soma(df):
+        return float(df['valor'].apply(_safe_float).sum()) if not df.empty else 0.0
+
+    def qtd(n):
+        return f"{n} proposta{'s' if n != 1 else ''}"
+    itens = []
+    for sit, _ in COLUNAS:
+        if sit == 'finalizada':
+            v, q = soma(concl_mes), f"{len(concl_mes)} em {MESES[hoje_.month - 1]}"
+        else:
+            df = grupos.get(sit, pd.DataFrame())
+            v, q = soma(df), qtd(len(df))
+        itens.append(f'<div class="pq-kpi"><i style="background:{BARRA_RESUMO[sit]}"></i><div>{pilula(sit)}'
+                     f'<b>{_fmt_brl(v).replace(",00", "")}</b><span class="q">{q}</span></div></div>')
+    return '<div class="pq-kpis">' + "".join(itens) + '</div>'
+
+
+def _historico(hist):
+    """Concluídas e recusadas (recusadas em cinza), com busca e período; clicar abre o detalhe."""
+    st.markdown('<div id="historico-propostas"></div><div class="pq-secao">Histórico</div>', unsafe_allow_html=True)
+    if hist.empty:
+        st.markdown('<div class="pq-vazio">As propostas concluídas e recusadas aparecem aqui.</div>',
+                    unsafe_allow_html=True)
+        return
+    with st.expander(f"{len(hist)} proposta{'s' if len(hist) != 1 else ''} concluídas e recusadas",
+                     expanded=bool(st.session_state.get('pq_hist_aberto', True))):
+        hist_c1, hist_c2 = st.columns([2, 1])
+        with hist_c1:
+            busca_cliente = st.text_input("Buscar por cliente", key="hist_busca_cliente", placeholder="Nome da cliente...")
+        with hist_c2:
+            meses_opcoes = ["Todos"]
+            datas_validas = pd.to_datetime(hist['_fim'], errors='coerce').dropna()
+            for m in sorted(datas_validas.dt.to_period('M').unique(), reverse=True):
+                if m.strftime('%m/%Y') not in meses_opcoes:
+                    meses_opcoes.append(m.strftime('%m/%Y'))
+            filtro_mes = st.selectbox("Período", meses_opcoes, key="hist_filtro_mes")
+        hist_df = hist
+        if busca_cliente:
+            hist_df = hist_df[hist_df['nome'].astype(str).str.lower().str.contains(busca_cliente.lower(), regex=False)]
+        if filtro_mes != "Todos":
+            mes_num, ano_num = filtro_mes.split('/')
+            d = pd.to_datetime(hist_df['_fim'], errors='coerce')
+            hist_df = hist_df[(d.dt.month == int(mes_num)) & (d.dt.year == int(ano_num))]
+        if hist_df.empty:
+            st.info("Nenhuma proposta encontrada com os filtros selecionados.")
+            return
+        from utils.propostas_helper import (calcular_receita_liquida, _construir_catalogo_produtos,
+                                            _construir_fornecedores_comissao)
+        _catalogo_hist = _construir_catalogo_produtos(st.session_state.db)
+        _fornecedores_hist = _construir_fornecedores_comissao(st.session_state.db)
+        st.markdown('<div class="pq-h cab"><span class="n">Nº</span><span>Cliente</span><span class="t">Serviço</span>'
+                    '<span class="v">Valor</span><span class="rl">Receita líquida</span><span class="s">Situação</span>'
+                    '<span class="d">Data</span></div>', unsafe_allow_html=True)
+        for _, prop in hist_df.iterrows():
+            h_pid = int(prop['id'])
+            sit = prop['_sit']
+            try:
+                h_receita = float(calcular_receita_liquida(
+                    st.session_state.db, h_pid, proposta=prop.to_dict(), catalogo=_catalogo_hist,
+                    fornecedores_cadastro=_fornecedores_hist).get('receita_liquida', 0.0)) if sit == 'finalizada' else 0.0
+            except Exception:
+                h_receita = 0.0
+            from utils.propostas_dados import servico_curto
+            html = (f'<div class="pq-h{" re" if sit == "recusada" else ""}"><span class="n">{esc(_num_proposta(prop, h_pid))}</span>'
+                    f'<b>{esc(prop.get("nome") or prop.get("cliente_nome") or "Cliente")}</b>'
+                    f'<span class="t">{esc(servico_curto(prop))}</span>'
+                    f'<span class="v">{_fmt_brl(_safe_float(prop.get("valor")))}</span>'
+                    f'<span class="rl">{_fmt_brl(h_receita) if sit == "finalizada" else "–"}</span>'
+                    f'<span class="s">{pilula(sit)}</span><span class="d">{_dm(prop["_fim"]) if prop["_fim"] else "–"}</span></div>')
+            if cartao_clicavel(html, key=f"pqh_{h_pid}", rotulo=f"Abrir proposta {h_pid}"):
+                st.session_state['kanban_selected_proposta'] = h_pid
+                st.rerun()
+
+
+def _decidir_entrada():
+    """Outras telas abrem a Nova proposta (kanban_nova_proposta_open) ou uma proposta (kanban_selected_proposta).
+    Ao chegar de outra tela, vale o pedido mais novo: uma Nova proposta largada no meio não esconde a proposta
+    que a Agenda mandou abrir, e um detalhe que ficou aberto não esconde a Nova proposta."""
+    ss = st.session_state
+    visto = ss.get('_pq_visto') or {}
+    entrou = ss.get('_last_page_rendered') != "Propostas"
+    sel, aberta = ss.get('kanban_selected_proposta'), bool(ss.get('kanban_nova_proposta_open'))
+    if entrou and not ss.get('nova_proposta_prefill') and not ss.get('nova_proposta_cliente_id'):
+        novo_sel = sel is not None and sel != visto.get('sel')
+        nova_ab = aberta and not visto.get('aberta')
+        if novo_sel:
+            ss['kanban_nova_proposta_open'] = False
+        elif nova_ab:
+            ss['kanban_selected_proposta'] = None
+    elif ss.get('nova_proposta_prefill') or ss.get('nova_proposta_cliente_id'):
+        ss['kanban_selected_proposta'] = None
+
+
+def _lembrar_entrada():
+    st.session_state['_pq_visto'] = {'sel': st.session_state.get('kanban_selected_proposta'),
+                                     'aberta': bool(st.session_state.get('kanban_nova_proposta_open'))}
 
 
 def show():
     from utils.auth_guard import require_auth
     require_auth()
-    st.markdown('<h1 class="page-title">Propostas</h1>', unsafe_allow_html=True)
 
     if not hasattr(st.session_state, 'db'):
         st.error("Erro: Conexão com banco de dados não disponível")
@@ -1885,334 +2387,80 @@ def show():
     if 'kanban_nova_proposta_open' not in st.session_state:
         st.session_state['kanban_nova_proposta_open'] = False
 
-    if st.session_state.pop('proposta_finalizada_sucesso', False):
-        st.success(" Proposta finalizada com sucesso!")
+    st.markdown("<style>" + CSS_PILULA + _css_wa() + "</style>", unsafe_allow_html=True)
 
+    from utils import nova_proposta
+    _decidir_entrada()
+    if nova_proposta.preparar():
+        _lembrar_entrada()
+        nova_proposta.mostrar()
+        return
+    _lembrar_entrada()
+
+    st.markdown(CSS_QUADRO, unsafe_allow_html=True)
+    if st.session_state.pop('proposta_finalizada_sucesso', False):
+        st.success("Proposta finalizada! O financeiro e a pós-organização já foram lançados.")
+    aviso = st.session_state.pop('_prop_aviso', None)
+    if aviso:
+        st.warning(aviso)
+
+    # ── cabeçalho ────────────────────────────────────────────────────────
+    with st.container(key="pq_cab"):
+        c_tit, c_btn = st.columns([4, 1.3], vertical_alignment="top")
+        c_tit.markdown('<div class="pq-ey">Do primeiro contato ao serviço feito</div><h1 class="pq-tit">Propostas</h1>'
+                       '<div class="pq-sub">Monte, envie e acompanhe cada proposta até virar serviço.</div>',
+                       unsafe_allow_html=True)
+        with c_btn, st.container(key="cta_pq_nova"):
+            if st.button("Nova proposta", icon=":material/add:", key="btn_nova_proposta_top", use_container_width=True):
+                st.session_state['kanban_selected_proposta'] = None
+                nova_proposta.iniciar()
+                st.rerun()
+
+    # ── dados ────────────────────────────────────────────────────────────
     try:
         propostas = st.session_state.db.get_propostas()
         clientes = st.session_state.db.get_clientes()
-
         for col in ['valor', 'previsao_dias', 'id', 'numero', 'cliente_id']:
             if col in propostas.columns:
                 propostas[col] = pd.to_numeric(propostas[col], errors='coerce')
-
         if not propostas.empty and not clientes.empty:
-            propostas_com_clientes = propostas.merge(
-                clientes[['id', 'nome']],
-                left_on='cliente_id',
-                right_on='id',
-                suffixes=('', '_cliente'),
-                how='left'
-            )
+            propostas_com_clientes = propostas.merge(clientes[['id', 'nome']], left_on='cliente_id', right_on='id',
+                                                     suffixes=('', '_cliente'), how='left')
         else:
             propostas_com_clientes = propostas.copy() if not propostas.empty else pd.DataFrame()
-
     except Exception as e:
         st.error(f"Erro ao carregar dados iniciais: {str(e)}")
         return
 
-    _metric_css = """<style>
-    html{scroll-behavior:smooth;}
-    .kanban-metric{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;text-align:center;}
-    .kanban-metric-label{font-size:0.72rem;color:#64748b;margin:0 0 4px 0;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;}
-    .kanban-metric-value{font-size:0.95rem;font-weight:700;color:#1a202c;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .kpi-anchor{text-decoration:none;display:block;}
-    .kanban-metric-clickable{cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease;}
-    .kanban-metric-clickable:hover{border-color:#C9A84C;box-shadow:0 2px 8px rgba(201,168,76,0.25);}
-    </style>"""
-    st.markdown(_metric_css, unsafe_allow_html=True)
+    if not propostas_com_clientes.empty and 'nome' not in propostas_com_clientes.columns:
+        propostas_com_clientes['nome'] = propostas_com_clientes.get('cliente_nome', 'Cliente')
+    telefones = {}
+    if not clientes.empty and 'telefone' in clientes.columns:
+        telefones = {int(r['id']): r.get('telefone') for _, r in clientes.iterrows()}
 
-    def _calc_total_propostas(df):
-        if df.empty or 'valor' not in df.columns:
-            return 0.0
-        return df['valor'].apply(_safe_float).sum()
-
-    from utils.proposta_status import (
-        STATUS_EM_ABERTO as _ST_AB, STATUS_APROVADA as _ST_AP,
-        STATUS_EM_EXECUCAO as _ST_EX,
-        STATUS_FINALIZADA as _ST_FI, STATUS_RECUSADA as _ST_RE,
-    )
-
-    def _mask_em_execucao(df):
-        """Coluna 'Em Execução': usa o status canônico como fonte de verdade,
-        com fallback para o campo auxiliar status_execucao (compatibilidade)."""
-        m = df['status'] == _ST_EX
-        if 'status_execucao' in df.columns:
-            m = m | (df['status_execucao'] == EXEC_EM_EXECUCAO)
-        return m
-
-    _p_aberto = propostas_com_clientes[propostas_com_clientes['status'] == _ST_AB] if not propostas_com_clientes.empty else pd.DataFrame()
-    _p_aprovada = propostas_com_clientes[(propostas_com_clientes['status'] == _ST_AP) & (~_mask_em_execucao(propostas_com_clientes))] if not propostas_com_clientes.empty else pd.DataFrame()
-    _p_exec = propostas_com_clientes[_mask_em_execucao(propostas_com_clientes)] if not propostas_com_clientes.empty else pd.DataFrame()
-    _p_final = propostas_com_clientes[propostas_com_clientes['status'].isin([_ST_FI, _ST_RE])] if not propostas_com_clientes.empty else pd.DataFrame()
-
-    mc1, mc2, mc3, mc4 = st.columns(4)
-    for col, label, df, clickable in [
-        (mc1, "Em Aberto", _p_aberto, False),
-        (mc2, "Aprovada", _p_aprovada, False),
-        (mc3, "Em Execução", _p_exec, False),
-        (mc4, "Finalizada", _p_final, True),
-    ]:
-        with col:
-            _valor_kpi = _fmt_brl(_calc_total_propostas(df))
-            if clickable:
-                st.markdown(f"""
-                <a href="#historico-propostas" class="kpi-anchor" title="Ver no Histórico">
-                <div class="kanban-metric kanban-metric-clickable">
-                    <p class="kanban-metric-label">{label} ↗</p>
-                    <p class="kanban-metric-value">{_valor_kpi}</p>
-                </div></a>""", unsafe_allow_html=True)
-            else:
-                st.markdown(f"""
-                <div class="kanban-metric">
-                    <p class="kanban-metric-label">{label}</p>
-                    <p class="kanban-metric-value">{_valor_kpi}</p>
-                </div>""", unsafe_allow_html=True)
-
-    st.markdown("")
-
-    col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
-    with col_btn:
-        with st.container(key="gold_nova_proposta"):
-            nova_btn = st.button("Nova proposta", type="primary", icon=":material/add:", use_container_width=True, key="btn_nova_proposta_top")
-            if nova_btn:
-                st.session_state['kanban_nova_proposta_open'] = not st.session_state['kanban_nova_proposta_open']
-
-    if st.session_state['kanban_nova_proposta_open']:
-        with st.expander("Nova Proposta", expanded=True):
-            if clientes.empty:
-                st.warning("Nenhum cliente cadastrado. Por favor, cadastre clientes primeiro.")
-            else:
-                _render_nova_proposta_form(clientes)
-
-    st.markdown("---")
-
-    def _col_propostas(label, status_list, exec_status_list=None, exclude_exec=None):
-        if propostas_com_clientes.empty:
-            return pd.DataFrame()
-        mask = propostas_com_clientes['status'].isin(status_list)
-        if exec_status_list is not None:
-            mask = mask | propostas_com_clientes['status_execucao'].isin(exec_status_list)
-        if exclude_exec is not None:
-            mask = mask & ~propostas_com_clientes['status_execucao'].isin(exclude_exec)
-        return propostas_com_clientes[mask].copy()
-
-    propostas_em_aberto = _col_propostas(
-        "Em aberto",
-        [_ST_AB]
-    )
-
+    hoje_ = hoje()
+    grupos, hist, concl_mes, total_concl = {}, pd.DataFrame(), pd.DataFrame(), 0
     if not propostas_com_clientes.empty:
-        propostas_aprovadas = propostas_com_clientes[
-            (propostas_com_clientes['status'] == _ST_AP) & (~_mask_em_execucao(propostas_com_clientes))
-        ].copy()
-    else:
-        propostas_aprovadas = pd.DataFrame()
+        df = propostas_com_clientes.copy()
+        df['_sit'] = _situacoes(df)
+        df['_fim'] = df.apply(_data_fim_ou, axis=1)
+        for sit in ('em_aberto', 'aprovada', 'em_execucao'):
+            g = df[df['_sit'] == sit]
+            ordem = 'data_proposta' if sit == 'em_aberto' else 'data_inicio'
+            if ordem in g.columns:
+                g = g.sort_values(ordem, ascending=sit != 'em_aberto', na_position='last')
+            grupos[sit] = g
+        concl = df[df['_sit'] == 'finalizada'].sort_values('_fim', ascending=False, na_position='last')
+        total_concl = len(concl)
+        grupos['finalizada'] = concl.head(MAX_CONCLUIDAS)
+        concl_mes = concl[concl['_fim'].apply(lambda d: bool(d) and d.year == hoje_.year and d.month == hoje_.month)]
+        hist = df[df['_sit'].isin(['finalizada', 'recusada'])].sort_values('_fim', ascending=False, na_position='last')
 
-    if not propostas_com_clientes.empty:
-        propostas_em_exec = propostas_com_clientes[
-            _mask_em_execucao(propostas_com_clientes)
-        ].copy()
-    else:
-        propostas_em_exec = pd.DataFrame()
+    st.markdown(_resumos_html(grupos, concl_mes, hoje_), unsafe_allow_html=True)
 
-    if not propostas_com_clientes.empty:
-        propostas_finalizadas = propostas_com_clientes[
-            propostas_com_clientes['status'].isin([_ST_FI, _ST_RE])
-        ].copy()
-    else:
-        propostas_finalizadas = pd.DataFrame()
-
-    if not propostas_finalizadas.empty and 'data_fim' in propostas_finalizadas.columns:
-        propostas_finalizadas_sorted = propostas_finalizadas.sort_values('data_fim', ascending=False, na_position='last')
-    elif not propostas_finalizadas.empty:
-        propostas_finalizadas_sorted = propostas_finalizadas.sort_index(ascending=False)
-    else:
-        propostas_finalizadas_sorted = propostas_finalizadas
-    total_finalizadas = len(propostas_finalizadas_sorted)
-
-    kanban_css = """
-    <style>
-    .kanban-col-header {
-        font-weight: 700;
-        font-size: 0.82rem;
-        padding: 6px 10px;
-        border-radius: 8px 8px 0 0;
-        margin-bottom: 6px;
-        text-align: center;
-        letter-spacing: 0.03em;
-        text-transform: uppercase;
-    }
-    .kanban-card {
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 8px 10px;
-        margin-bottom: 6px;
-        background: #fff;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    }
-    .kanban-card-cliente {
-        font-weight: 600;
-        font-size: 0.82rem;
-        margin-bottom: 1px;
-        color: #1a202c;
-    }
-    .kanban-card-desc {
-        font-size: 0.72rem;
-        color: #6c757d;
-        margin-bottom: 3px;
-    }
-    .kanban-card-valor {
-        font-size: 0.78rem;
-        color: #1a5276;
-        font-weight: 600;
-    }
-    /* Botões "Ver Detalhes" compactos */
-    .stButton > button[kind="secondary"] {
-        font-size: 0.75rem !important;
-        padding: 4px 8px !important;
-        min-height: 0 !important;
-        height: auto !important;
-        line-height: 1.4 !important;
-    }
-    /* Cards de métricas do rodapé */
-    .kanban-metric {
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 10px 14px;
-        text-align: center;
-    }
-    .kanban-metric-label {
-        font-size: 0.72rem;
-        color: #64748b;
-        margin: 0 0 4px 0;
-        font-weight: 600;
-        letter-spacing: 0.03em;
-        text-transform: uppercase;
-    }
-    .kanban-metric-value {
-        font-size: 0.95rem;
-        font-weight: 700;
-        color: #1a202c;
-        margin: 0;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    </style>
-    """
-    st.markdown(kanban_css, unsafe_allow_html=True)
-
-    # Quadro + modal isolados num fragmento: abrir o detalhe não re-renderiza
-    # os KPIs nem o histórico (abertura instantânea).
-    _kanban_board_fragment(propostas_em_aberto, propostas_aprovadas, propostas_em_exec, propostas_com_clientes)
-
-    if total_finalizadas > 0:
-        st.markdown("---")
-        st.markdown('<div id="historico-propostas"></div>', unsafe_allow_html=True)
-        with st.expander(f"Histórico de Propostas ({total_finalizadas})", expanded=True):
-            hist_c1, hist_c2 = st.columns([2, 1])
-            with hist_c1:
-                busca_cliente = st.text_input(" Buscar por cliente", key="hist_busca_cliente", placeholder="Nome do cliente...")
-            with hist_c2:
-                meses_opcoes = ["Todos"]
-                if not propostas_finalizadas_sorted.empty:
-                    for col_data in ['data_fim', 'data_inicio', 'data_proposta']:
-                        if col_data in propostas_finalizadas_sorted.columns:
-                            datas_validas = pd.to_datetime(propostas_finalizadas_sorted[col_data], errors='coerce').dropna()
-                            if not datas_validas.empty:
-                                meses_unicos = sorted(datas_validas.dt.to_period('M').unique(), reverse=True)
-                                for m in meses_unicos:
-                                    label = m.strftime('%m/%Y')
-                                    if label not in meses_opcoes:
-                                        meses_opcoes.append(label)
-                                break
-                filtro_mes = st.selectbox(" Período", meses_opcoes, key="hist_filtro_mes")
-
-            hist_df = propostas_finalizadas_sorted.copy()
-            if busca_cliente:
-                hist_df = hist_df[hist_df.apply(
-                    lambda r: busca_cliente.lower() in str(r.get('nome', r.get('cliente_nome', ''))).lower(), axis=1
-                )]
-            if filtro_mes != "Todos":
-                mes_num, ano_num = filtro_mes.split('/')
-                for col_data in ['data_fim', 'data_inicio', 'data_proposta']:
-                    if col_data in hist_df.columns:
-                        datas_parsed = pd.to_datetime(hist_df[col_data], errors='coerce')
-                        mask_periodo = (datas_parsed.dt.month == int(mes_num)) & (datas_parsed.dt.year == int(ano_num))
-                        hist_df = hist_df[mask_periodo]
-                        break
-
-            if hist_df.empty:
-                st.info("Nenhuma proposta encontrada com os filtros selecionados.")
-            else:
-                from utils.proposta_status import normalize as _norm_h_status, label_for as _label_h_status
-                from utils.propostas_helper import (
-                    calcular_receita_liquida,
-                    _construir_catalogo_produtos,
-                    _construir_fornecedores_comissao,
-                )
-
-                _catalogo_hist = _construir_catalogo_produtos(st.session_state.db)
-                _fornecedores_hist = _construir_fornecedores_comissao(st.session_state.db)
-
-                rows = []
-                id_por_indice = []
-                for _, prop in hist_df.iterrows():
-                    h_pid = prop['id']
-                    h_nome = str(prop.get('nome', prop.get('cliente_nome', 'Cliente')))
-                    h_numero = prop.get('numero', h_pid)
-                    h_tipo = valor_ou_traco(prop.get('tipo_proposta'), "Não informado")[:60]
-                    h_valor = _safe_float(prop.get('valor'))
-                    h_status = _label_h_status(_norm_h_status(str(prop.get('status', ''))))
-                    h_data = None
-                    for col_data in ['data_fim', 'data_inicio', 'data_proposta']:
-                        if col_data in prop.index and pd.notna(prop.get(col_data)):
-                            try:
-                                h_data = pd.to_datetime(prop[col_data])
-                            except Exception:
-                                h_data = None
-                            break
-                    try:
-                        h_receita = float(calcular_receita_liquida(
-                            st.session_state.db, int(h_pid),
-                            proposta=prop.to_dict(),
-                            catalogo=_catalogo_hist,
-                            fornecedores_cadastro=_fornecedores_hist,
-                        ).get('receita_liquida', 0.0))
-                    except Exception:
-                        h_receita = 0.0
-
-                    rows.append({
-                        "Nº": f"#{h_numero}",
-                        "Cliente": h_nome,
-                        "Tipo": h_tipo,
-                        "Valor": h_valor,
-                        "Receita Líquida Total": h_receita,
-                        "Status": h_status,
-                        "Data": h_data,
-                    })
-                    id_por_indice.append(h_pid)
-
-                larguras = [0.9, 2.2, 1.8, 1.3, 1.5, 1.3, 1.2, 1.0]
-                cab = st.columns(larguras)
-                for c, titulo in zip(cab, ["Nº", "Cliente", "Tipo", "Valor", "Receita Líquida", "Status", "Data", ""]):
-                    c.markdown(f"**{titulo}**")
-                st.markdown("<hr style='margin:0.2rem 0;'>", unsafe_allow_html=True)
-
-                for r, pid in zip(rows, id_por_indice):
-                    cols = st.columns(larguras)
-                    cols[0].write(r['Nº'])
-                    cols[1].write(r['Cliente'])
-                    cols[2].write(r['Tipo'] or "Não informado")
-                    cols[3].write(_fmt_brl(r['Valor']))
-                    cols[4].write(_fmt_brl(r['Receita Líquida Total']))
-                    cols[5].write(r['Status'])
-                    cols[6].write(r['Data'].strftime('%d/%m/%Y') if r['Data'] is not None else "—")
-                    if cols[7].button("Ver", key=f"hist_ver_{pid}", use_container_width=True):
-                        st.session_state['kanban_selected_proposta'] = pid
-                        st.rerun()
+    _kanban_board_fragment(grupos, total_concl, telefones, propostas_com_clientes)
+    st.markdown('<div class="pq-nota">Recusadas ficam no histórico, em cinza.</div>', unsafe_allow_html=True)
+    _historico(hist)
 
 
 if __name__ == "__main__":

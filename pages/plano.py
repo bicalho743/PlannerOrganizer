@@ -15,29 +15,41 @@ from utils.rastreamento import onclick_checkout
 
 CSS = """
 <style>
-.pl-status { border: 1px solid #E4E7EC; border-radius: 12px; padding: 18px 20px; background: #fff; margin-bottom: 18px; }
-.pl-status .rot { font-size: .72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #667085; }
-.pl-status .val { font-size: 1.35rem; font-weight: 700; color: #101828; margin: 4px 0 2px; }
-.pl-status .sub { font-size: .88rem; color: #475467; }
-.pl-status.alerta { border-color: #FEC84B; background: #FFFAEB; }
-.pl-status.pro { border-color: var(--navy); }
-.pl-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; max-width: 860px; }
-.pl-card { border: 1px solid #E4E7EC; border-radius: 12px; padding: 18px 20px; background: #fff; position: relative; }
-.pl-card.destaque { border: 2px solid var(--navy); }
-.pl-card .selo { position: absolute; top: -10px; left: 18px; background: var(--gold); color: var(--navy);
-                 font-size: .68rem; font-weight: 700; letter-spacing: .04em; padding: 2px 10px; border-radius: 999px; }
-.pl-card .nome { font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #475467; }
-.pl-card .preco { font-size: 1.6rem; font-weight: 700; color: #101828; margin: 4px 0; font-variant-numeric: tabular-nums; }
-.pl-card .preco span { font-size: .85rem; font-weight: 500; color: #667085; }
-.pl-card .obs { font-size: .82rem; color: #475467; min-height: 1.2em; }
-.pl-card a.cta { display: block; text-align: center; margin-top: 14px; padding: 9px 0; border-radius: 8px; font-weight: 600;
+.pl-eyebrow { font-size: .74rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #9C7A22; margin: 0 0 4px; }
+h1.pl-titulo { margin: 0 !important; padding: 0 !important; font-family: 'Cormorant Garamond', Georgia, serif !important;
+               font-size: 2.6rem !important; font-weight: 600 !important; color: var(--navy) !important; line-height: 1.15 !important; }
+h1.pl-titulo::after { content: ""; display: block; width: 40px; height: 3px; border-radius: 2px; background: var(--gold); margin-top: 8px; }
+.pl-subt { color: #5B6B80; font-size: .98rem; margin: 10px 0 22px; }
+.pl-status { border: 1px solid #E7E2D6; border-radius: 16px; padding: 18px 20px; background: #fff; margin-bottom: 18px; max-width: 860px; }
+.pl-status .rot { font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #5B6B80; }
+.pl-status .val { font-size: 1.45rem; font-weight: 700; color: var(--navy); margin: 6px 0 4px; }
+.pl-status .sub { font-size: .88rem; color: #5B6B80; line-height: 1.5; }
+.pl-status.alerta { border-color: #E8D5A3; background: #FBF6E6; }
+.pl-status.alerta .rot { color: #9C7A22; }
+.pl-status.pro { background: var(--navy); border-color: var(--navy); }
+.pl-status.pro .rot { color: var(--gold); }
+.pl-status.pro .val { color: #fff; }
+.pl-status.pro .sub { color: #C8D1DC; }
+.pl-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; max-width: 860px; margin-top: 8px; }
+.pl-card { border: 1px solid #E7E2D6; border-radius: 16px; padding: 20px; background: #fff; position: relative; }
+.pl-card.destaque { border: 2px solid var(--gold); }
+.pl-card .selo { position: absolute; top: -11px; left: 18px; background: var(--gold); color: var(--navy);
+                 font-size: .68rem; font-weight: 700; letter-spacing: .06em; padding: 3px 10px; border-radius: 999px; }
+.pl-card .nome { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #5B6B80; }
+.pl-card .preco { font-size: 1.7rem; font-weight: 700; color: var(--navy); margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
+.pl-card .preco span { font-size: .85rem; font-weight: 500; color: #5B6B80; }
+.pl-card .obs { font-size: .84rem; color: #5B6B80; min-height: 2.6em; line-height: 1.4; }
+.pl-card a.cta { display: block; text-align: center; margin-top: 14px; padding: 11px 0; border-radius: 10px; font-weight: 700;
                  text-decoration: none !important; font-size: .9rem; }
-.pl-card a.cta.primario { background: var(--navy); color: #fff !important; }
-.pl-card a.cta.secundario { border: 1px solid #D0D5DD; color: #344054 !important; }
-.pl-lista { margin: 18px 0 0; padding: 0; list-style: none; color: #344054; font-size: .9rem; }
+.pl-card a.cta.primario { background: var(--gold); color: var(--navy) !important; }
+.pl-card a.cta.primario:hover { background: #B8943D; }
+.pl-card a.cta.secundario { border: 1px solid #E7E2D6; color: var(--navy) !important; background: #fff; }
+.pl-card a.cta.secundario:hover { border-color: var(--gold); }
+.pl-lista { margin: 20px 0 0; padding: 0; list-style: none; color: #4A5B73; font-size: .9rem; max-width: 860px; }
 .pl-lista li { padding: 3px 0; }
-.pl-lista li::before { content: "✓"; color: #067647; font-weight: 700; margin-right: 8px; }
-@media (max-width: 760px) { .pl-cards { grid-template-columns: 1fr; } }
+.pl-lista li::before { content: "✓"; color: #2F6B4F; font-weight: 700; margin-right: 8px; }
+@media (max-width: 760px) { .pl-cards { grid-template-columns: 1fr; gap: 20px; } }
+@media (max-width: 640px) { h1.pl-titulo { font-size: 2.1rem !important; } }
 </style>
 """
 
@@ -61,8 +73,8 @@ ICONE_LOJA = {
     "apple": ('<svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><path fill="#111" d="M16.4 12.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9s-2-.9-3.4-.9C5.8 6.8 4.2 7.9 3.3 9.5c-1.8 3.2-.5 7.8 1.3 10.4.9 1.3 1.9 2.7 3.3 2.6 1.3-.1 1.8-.9 3.4-.9s2 .9 3.4.8c1.4 0 2.3-1.3 3.2-2.6 1-1.5 1.4-2.9 1.4-3-.1 0-2.9-1.1-2.9-4.2zM13.8 4.9c.7-.9 1.2-2.1 1.1-3.3-1 0-2.3.7-3 1.6-.7.8-1.3 2-1.1 3.2 1.1.1 2.3-.6 3-1.5z"/></svg>'),
 }
 PL_LOJA_CSS = """<style>
-.pl-loja { display:inline-flex; align-items:center; gap:10px; padding:9px 16px; border-radius:10px;
-  border:1px solid #D0D5DD; background:#fff; color:#101828 !important; text-decoration:none !important;
+.pl-loja { display:inline-flex; align-items:center; gap:10px; padding:10px 16px; border-radius:10px;
+  border:1px solid #E7E2D6; background:#fff; color:#0D1B2A !important; text-decoration:none !important;
   font-size:.92rem; font-weight:500; margin-top:4px; }
 .pl-loja:hover { border-color:#C9A84C; background:#FFFDF7; }
 </style>"""
@@ -75,7 +87,8 @@ def show():
 
     st.markdown(CSS, unsafe_allow_html=True)
     st.markdown(PL_LOJA_CSS, unsafe_allow_html=True)
-    st.markdown('<h1 class="page-title">Plano e cobrança</h1>', unsafe_allow_html=True)
+    st.markdown('<div class="pl-eyebrow">Sua assinatura</div><h1 class="pl-titulo">Plano e cobrança</h1>'
+                '<div class="pl-subt">A situação do seu plano e onde cuidar do pagamento.</div>', unsafe_allow_html=True)
     try:  # funil de conversão: viu os planos (utils/funil.py)
         from utils import funil
         from utils.database import engine as _eng, get_usuario_id_from_session

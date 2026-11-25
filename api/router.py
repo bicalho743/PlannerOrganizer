@@ -2417,9 +2417,14 @@ async def get_precificacao(uid: str = Depends(verify_firebase_token)):
 @api.put("/precificacao")
 async def put_precificacao(body: PrecificacaoBody, uid: str = Depends(verify_firebase_token)):
     from utils import precificacao as pr
+    try:
+        salvos = get_db(uid).get_precificacao() or {}
+    except Exception:
+        salvos = {}
     limpos = {}
     for k, padrao in pr.PADROES.items():
-        v = body.parametros.get(k, padrao)
+        # o que o app não manda (números novos do site) fica como estava salvo
+        v = body.parametros.get(k, salvos.get(k, padrao))
         try:
             v = float(v)
         except (TypeError, ValueError):
@@ -2427,6 +2432,11 @@ async def put_precificacao(body: PrecificacaoBody, uid: str = Depends(verify_fir
         if v < 0:
             raise HTTPException(status_code=422, detail=f"{k}: não pode ser negativo")
         limpos[k] = int(v) if isinstance(padrao, int) else v
+    # lista de materiais (feita no site): o app não mexe nela, então ela continua
+    if isinstance(body.parametros.get("materiais"), list):
+        limpos["materiais"] = body.parametros["materiais"]
+    elif isinstance(salvos.get("materiais"), list):
+        limpos["materiais"] = salvos["materiais"]
     if not get_db(uid).salvar_precificacao(limpos):
         raise HTTPException(status_code=404, detail="Perfil não encontrado")
     return {"parametros": limpos}

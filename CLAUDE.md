@@ -56,5 +56,15 @@ Responda em português, passo a passo e sem jargão. O README.md tem arquitetura
 - Proposta Comercial sai como "Proposta de Serviço"; todos os PDFs mostram `propostas.numero` (não o id interno) e
   o status legível (`utils/proposta_status.label_for`).
 
+## Desenho novo do site (25/11/2026)
+- Todas as telas seguem os protótipos aprovados (página: https://claude.ai/artifact/NeXx2Tpw2XXYVqY9CkwkUt). Peças comuns em
+  `utils/visual.py`: `hoje()` (Brasília), `pilula(status)` (○ em aberto, ● aprovada, ▶ em execução, ✓ concluída), `icone()`
+  (traço SVG, sem emoji), `icone_whatsapp()` (todo botão que abre o WhatsApp mostra o símbolo), `esc()`.
+- Orçamento único em `utils/precificacao.orcamento_completo` (Precificação > Preço de um projeto e Nova proposta em 4 passos,
+  `utils/nova_proposta.py`); materiais da organizer em `perfis.precificacao["materiais"]`. Precificação → Nova proposta pela
+  chave `nova_proposta_prefill`; Clientes/Pós/Agenda escolhem a cliente com `nova_proposta_cliente_id`.
+- "Colocar minha marca" saiu do Início: fica no Perfil e no passo 4 da Nova proposta. Pós-organização só marca "Enviada".
+- Tarefas únicas no banco: `utils/renumerar.tarefas_unicas` (tabela `tarefas_unicas`), rodam no 1º `Database()` do processo.
+
 ## Pendências (15/11/2026)
 - Recebimento da Apple: conta Itaú em BRL exige cadastro na StoneX; alternativa: conta USD da Wise no nome do titular.
