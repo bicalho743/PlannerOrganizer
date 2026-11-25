@@ -257,10 +257,10 @@ section[data-testid="stSidebar"] div[data-testid="stLinkButton"] > a * {
 section[data-testid="stSidebar"] .stButton > button [data-testid="stIconMaterial"],
 section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button [data-testid="stIconMaterial"],
 section[data-testid="stSidebar"] div[data-testid="stLinkButton"] > a [data-testid="stIconMaterial"] { color: #667085 !important; font-size: 1.15rem !important; }
-/* itens dos módulos: ícone num selo na cor do módulo (cores em app.py, CORES_MODULO) */
+/* itens dos módulos: ícone fino, todos na mesma cor; a tela aberta fica em dourado */
 section[data-testid="stSidebar"] [class*="st-key-main_menu_"] .stButton > button [data-testid="stIconMaterial"] {
     width: 28px; height: 28px; border-radius: 7px; display: inline-flex !important; align-items: center; justify-content: center;
-    font-size: 1.05rem !important; color: var(--cor-item, #667085) !important; background: var(--cor-item-bg, #F2F4F7);
+    font-size: 1.15rem !important; color: #4A5B73 !important; background: transparent;
 }
 section[data-testid="stSidebar"] .stButton > button:hover,
 section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button:hover,
@@ -270,14 +270,14 @@ section[data-testid="stSidebar"] div[data-testid="stLinkButton"] > a:hover {
 /* tela aberta */
 section[data-testid="stSidebar"] .stButton > button[kind="primary"],
 section[data-testid="stSidebar"] .stButton > button[data-testid="stBaseButton-primary"] {
-    background: var(--cor-item-bg, #EEF1F6) !important; color: var(--navy) !important; font-weight: 600 !important;
-    box-shadow: inset 3px 0 0 var(--cor-item, var(--gold)) !important;
+    background: #F6EDD3 !important; color: var(--navy) !important; font-weight: 700 !important;
+    box-shadow: inset 3px 0 0 var(--gold) !important;
 }
 section[data-testid="stSidebar"] .stButton > button[kind="primary"] [data-testid="stIconMaterial"],
-section[data-testid="stSidebar"] .stButton > button[data-testid="stBaseButton-primary"] [data-testid="stIconMaterial"] { color: var(--cor-item, var(--navy)) !important; }
+section[data-testid="stSidebar"] .stButton > button[data-testid="stBaseButton-primary"] [data-testid="stIconMaterial"] { color: #9C7A22 !important; }
 section[data-testid="stSidebar"] [class*="st-key-main_menu_"] .stButton > button[kind="primary"] [data-testid="stIconMaterial"],
 section[data-testid="stSidebar"] [class*="st-key-main_menu_"] .stButton > button[data-testid="stBaseButton-primary"] [data-testid="stIconMaterial"] {
-    background: var(--cor-item, var(--navy)); color: #FFFFFF !important;
+    background: transparent; color: #9C7A22 !important;
 }
 section[data-testid="stSidebar"] .stButton > button:focus:not(:focus-visible) { outline: none !important; }
 

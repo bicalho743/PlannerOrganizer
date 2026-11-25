@@ -975,13 +975,10 @@ if st.session_state.authenticated:
         st.session_state.current_page = "Dashboard"
         st.session_state.show_welcome = False
 
-# Cor de cada módulo: selo do ícone no menu, filete do título e aba ativa da tela aberta
-from utils.design_tokens import CORES_MODULO, GOLD_DARK
-st.markdown("<style>" + "".join(
-    f'section[data-testid="stSidebar"] .st-key-main_menu_{re.sub(r"[^a-z0-9_-]", "-", _pg.lower())} {{ --cor-item: {_cor}; --cor-item-bg: {_cor}1F; }}'
-    for _pg, _cor in CORES_MODULO.items())
-    + f':root {{ --modulo: {CORES_MODULO.get(st.session_state.get("current_page"), GOLD_DARK)}; }}</style>',
-    unsafe_allow_html=True)
+# Cor única de destaque (dourado) em todas as telas: filete do título, aba ativa e item aberto do menu.
+# As cores por módulo (CORES_MODULO) ficam só no manual em PDF.
+from utils.design_tokens import GOLD_DARK
+st.markdown(f"<style>:root {{ --modulo: {GOLD_DARK}; }}</style>", unsafe_allow_html=True)
 
 # link "Seja afiliada" da landing (app.plannerorganiza.com.br/?afiliada=1): abre a página do programa uma vez
 if st.session_state.get("authenticated") and st.query_params.get("afiliada") == "1" \
