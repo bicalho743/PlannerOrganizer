@@ -286,9 +286,21 @@ if st.query_params.get("ref"):  # código de afiliada: guardado à parte, para n
 # Vindo da landing ("Começar grátis"): abre direto o cadastro, com o e-mail que ela já digitou lá
 if (not st.session_state.authenticated and st.query_params.get("cadastro") == "1"
         and not st.session_state.get("_cadastro_aberto")):
-    st.session_state.login_page = "registrar"
     st.session_state._cadastro_aberto = True
     st.session_state._email_cadastro = st.query_params.get("email", "")
+    from utils import onboarding_novo
+    onboarding_novo.abrir(st.session_state._email_cadastro)  # onboarding antes da conta (o cadastro vem no fim)
+# ?comecar=1 (anúncios, links) e ?onb= (rascunho que voltou depois de atualizar a página) também abrem o onboarding
+if not st.session_state.authenticated and not st.session_state.get("_onb_aberto") and (
+        st.query_params.get("comecar") == "1" or st.query_params.get("onb")):
+    st.session_state._onb_aberto = True
+    from utils import onboarding_novo
+    onboarding_novo.abrir()
+    _tok_url = st.query_params.get("onb")
+    if _tok_url and not st.session_state.get("_ob", {}).get("token"):
+        _rasc = onboarding_novo.carregar_rascunho(_tok_url)
+        if _rasc:
+            st.session_state["_ob"] = {**_rasc, "token": _tok_url, "passo": "conta"}
 
 # ══════════════════════════════════════════════════════════
 # BLOCO DE LOGIN — visual novo, lógica original preservada
@@ -465,6 +477,18 @@ if not st.session_state.authenticated:
         print(f"Erro no callback Google: {e}")
 
     # Sub-páginas
+    if st.session_state.login_page == "onboarding":
+        from utils import onboarding_novo
+        onboarding_novo.mostrar()
+        # conta criada por e-mail no último passo: entra direto (o rascunho é gravado depois do login)
+        if st.session_state.get("usuario_id") and not st.session_state.authenticated:
+            from utils.database import Database
+            st.session_state.db = Database(usuario_id=st.session_state.usuario_id)
+            st.session_state.authenticated = True
+            st.session_state.current_page = "Dashboard"
+            st.session_state.login_page = "login"
+            st.rerun()
+        st.stop()
     if st.session_state.login_page == "registrar":
         try:
             from pages.registrar import show
@@ -554,7 +578,8 @@ if not st.session_state.authenticated:
             st.rerun()
     with col2:
         if st.button("Criar conta grátis", key="btn_criar_conta", use_container_width=True):
-            st.session_state.login_page = "registrar"
+            from utils import onboarding_novo
+            onboarding_novo.abrir()
             st.rerun()
 
     # App Android (Google Play)
@@ -995,8 +1020,21 @@ if st.session_state.get("authenticated") and st.session_state.get("current_page"
     st.markdown(somente_leitura.CSS, unsafe_allow_html=True)
     somente_leitura.faixa()
 
+# Conta recém-criada pelo onboarding: grava o rascunho (hora, cliente, proposta, marca) e mostra a tela final
+_ob_pronto = False
+if st.session_state.get("authenticated") and "db" in st.session_state:
+    try:
+        from utils import onboarding_novo as _obn
+        if _obn.token_pendente():
+            _obn.concluir(st.session_state.db)
+        _ob_pronto = _obn.mostrar_pronto()
+    except Exception as _e_obn:
+        print(f"[onboarding] {_e_obn}", flush=True)
+
 try:
-    if st.session_state.current_page == "Dashboard":
+    if _ob_pronto:
+        pass
+    elif st.session_state.current_page == "Dashboard":
         from pages.dashboard import show; show()
     elif st.session_state.current_page == "Agenda":
         from pages.agenda import show; show()
@@ -1034,7 +1072,7 @@ if st.session_state.get("authenticated"):
     try:
         from utils import tour
         from utils import onboarding_web
-        if not somente_leitura.janela_se_tentou():  # uma janela por vez: o convite para assinar vem antes
+        if not _ob_pronto and not somente_leitura.janela_se_tentou():  # uma janela por vez: o convite para assinar vem antes
             # conta nova: primeiro as perguntas do onboarding; depois delas, o tutorial rápido
             if not onboarding_web.mostrar_perguntas():
                 tour.mostrar()  # na primeira entrada da conta, ou pelo botão "Tutorial rápido" do menu

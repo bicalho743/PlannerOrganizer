@@ -27,7 +27,8 @@ def _get_firebase_api_key():
     return key
 
 
-def google_login_button():
+def google_login_button(rascunho=""):
+    """rascunho: código do onboarding sem conta, que volta no "state" do Google (a volta é uma sessão nova)."""
     api_key = _get_firebase_api_key()
     if not api_key:
         return
@@ -52,7 +53,8 @@ def google_login_button():
         qs     = urllib.parse.parse_qs(parsed.query, keep_blank_values=True)
 
         original_state = qs.get("state", [""])[0]
-        new_state = f"{original_state}__SID__{session_id}"
+        _onb = f"__ONB__{rascunho}" if rascunho else ""
+        new_state = f"{original_state}{_onb}__SID__{session_id}"
         qs["state"] = [new_state]
 
         qs["response_type"] = ["code"]
@@ -98,6 +100,8 @@ def handle_google_callback():
         st.query_params.clear()
         return False
 
+    if "__ONB__" in state:  # rascunho do onboarding sem conta: grava na conta depois do login
+        st.session_state["_ob_token_google"] = state.split("__ONB__", 1)[1].split("__SID__")[0]
     session_id = ""
     if "__SID__" in state:
         session_id = state.split("__SID__")[-1]

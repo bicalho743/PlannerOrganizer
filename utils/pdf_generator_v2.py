@@ -407,10 +407,13 @@ def gerar_pdf_cliente(dados, output_path, perfil=None, titulo="Fechamento do Ser
     if _sinal > 0:
         y = _total_row(c, margin, cw, y, "TOTAL DO INVESTIMENTO",
             _total_invest, P.NAVY_MEDIO, WHITE, WHITE)
+        # proposta ainda não aprovada: o sinal é o que se paga na aprovação, não algo já pago
+        _em_aberto = str(dados.get('status', '')).strip().lower() in ("em aberto", "aguardando", "em_aberto")
         y = _table_rows(c, margin, cw, y, [
-            {'descricao': "Sinal / entrada já pago", 'valor': _sinal, 'is_neg': True},
+            {'descricao': "Sinal na aprovação" if _em_aberto else "Sinal / entrada já pago",
+             'valor': _sinal, 'is_neg': True},
         ])
-        y = _total_row(c, margin, cw, y, "SALDO A PAGAR",
+        y = _total_row(c, margin, cw, y, "SALDO APÓS O SINAL" if _em_aberto else "SALDO A PAGAR",
             max(_total_invest - _sinal, 0), P.NAVY, WHITE, P.GOLD)
     else:
         y = _total_row(c, margin, cw, y, "TOTAL DO INVESTIMENTO",
