@@ -224,37 +224,19 @@ def _voltar(anterior, chave):
 BORDAO_SITE = 'A casa delas em <em>ordem</em>. O seu negócio <em>também</em>.'
 
 # Celular animado da tela de boas-vindas: ela "toca" nos ambientes, o preço sobe e a proposta sai pronta (8 s, em loop).
+# Celular das boas-vindas: telas REAIS do app (conta de exemplo), as mesmas do topo da landing, trocando a cada 4 s
 CELULAR = """<style>
-.bv-cel { width:250px; max-width:72vw; margin:6px auto 0; background:#0D1B2A; border-radius:34px; padding:10px;
+.bv-cel { width:180px; max-width:52vw; margin:6px auto 0; background:#0D1B2A; border-radius:34px; padding:10px;
           box-shadow:0 18px 40px rgba(13,27,42,.18); position:relative; }
-.bv-tela { background:#F7F5F0; border-radius:26px; padding:16px 13px 14px; height:330px; overflow:hidden; position:relative;
-           font-family:'Source Sans 3',system-ui,sans-serif; }
+.bv-tela { background:#FAF8F3; border-radius:26px; overflow:hidden; position:relative; aspect-ratio:390/880; }
 .bv-notch { position:absolute; top:10px; left:50%; transform:translateX(-50%); width:70px; height:16px; background:#0D1B2A;
-            border-radius:0 0 12px 12px; }
-.bv-ey { font-size:.55rem; font-weight:700; letter-spacing:.14em; color:#9C7A22; text-transform:uppercase; margin-top:10px; }
-.bv-tt { font-family:'Cormorant Garamond',Georgia,serif; font-size:1.15rem; font-weight:600; color:#0D1B2A; margin:2px 0 8px; }
-.bv-preco { background:#0D1B2A; border-radius:14px; padding:10px 12px; color:#fff; position:relative; height:54px; }
-.bv-preco small { font-size:.55rem; color:#C8D1DC; display:block; }
-.bv-preco span { position:absolute; left:12px; top:22px; font-family:'Cormorant Garamond',Georgia,serif; font-size:1.55rem;
-                 color:#C9A84C; opacity:0; animation:bvp 8s infinite; }
-.bv-preco .p0 { animation-name:bvp0; } .bv-preco .p1 { animation-name:bvp1; } .bv-preco .p2 { animation-name:bvp2; }
-.bv-amb { display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid #E7E2D6;
-          border-radius:10px; padding:7px 10px; margin-top:7px; font-size:.7rem; font-weight:600; color:#0D1B2A; }
-.bv-amb i { font-style:normal; font-size:.58rem; color:#6B7C94; background:#F2EFE7; border-radius:999px; padding:1px 7px; }
-.bv-amb.a1 { animation:bva1 8s infinite; } .bv-amb.a2 { animation:bva2 8s infinite; }
-.bv-pdf { position:absolute; left:13px; right:13px; bottom:14px; background:#E3F1E8; color:#2F6B4F; border-radius:12px;
-          padding:9px 10px; font-size:.68rem; font-weight:700; opacity:0; transform:translateY(10px); animation:bvpdf 8s infinite; }
-.bv-mao { position:absolute; width:34px; height:34px; left:150px; top:200px; animation:bvmao 8s infinite; filter:drop-shadow(0 3px 4px rgba(0,0,0,.2)); }
-@keyframes bvp0 { 0%,14% { opacity:1 } 18%,100% { opacity:0 } }
-@keyframes bvp1 { 0%,15% { opacity:0 } 19%,40% { opacity:1 } 44%,100% { opacity:0 } }
-@keyframes bvp2 { 0%,41% { opacity:0 } 45%,96% { opacity:1 } 100% { opacity:0 } }
-@keyframes bva1 { 0%,14% { border-color:#E7E2D6; background:#fff } 17%,96% { border-color:#C9A84C; background:#FFFBEF } 100% { border-color:#E7E2D6; background:#fff } }
-@keyframes bva2 { 0%,40% { border-color:#E7E2D6; background:#fff } 43%,96% { border-color:#C9A84C; background:#FFFBEF } 100% { border-color:#E7E2D6; background:#fff } }
-@keyframes bvpdf { 0%,60% { opacity:0; transform:translateY(10px) } 66%,94% { opacity:1; transform:none } 100% { opacity:0 } }
-@keyframes bvmao { 0% { left:150px; top:240px } 12% { left:150px; top:168px } 16% { transform:scale(.85) } 20% { transform:none; left:150px; top:168px }
-                   36% { left:150px; top:205px } 41% { transform:scale(.85) } 46% { transform:none; left:150px; top:205px }
-                   70%,100% { left:170px; top:300px; opacity:.0 } }
-@media (prefers-reduced-motion: reduce) { .bv-cel * { animation:none !important; } .bv-preco .p2, .bv-pdf { opacity:1; transform:none; } .bv-mao { display:none; } }
+            border-radius:0 0 12px 12px; z-index:2; }
+.bv-tela img { position:absolute; top:26px; left:0; width:100%; height:calc(100% - 26px); object-fit:cover; object-position:top;
+               opacity:0; animation:bvReal 12s infinite; }
+.bv-tela img.r2 { animation-delay:4s; } .bv-tela img.r3 { animation-delay:8s; }
+@keyframes bvReal { 0% { opacity:0; } 4% { opacity:1; } 33% { opacity:1; } 37% { opacity:0; } 100% { opacity:0; } }
+@media (prefers-reduced-motion: reduce) { .bv-tela img { animation:none; } .bv-tela img.r1 { opacity:1; } }
+@media (max-width:640px) { .bv-cel { width:150px; } }
 .bv-bem { text-align:center; font-size:.78rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#9C7A22; margin:22px 0 6px; }
 .bv-bordao { text-align:center; font-family:'Cormorant Garamond',Georgia,serif; font-size:2.35rem; line-height:1.12; font-weight:600;
              color:#0D1B2A; margin:0 0 10px; text-wrap:balance; }
@@ -269,17 +251,12 @@ CELULAR = """<style>
 .st-key-bv_continuar button, .st-key-bv_continuar button[kind] { border-radius:999px !important; min-height:54px !important; }
 @media (max-width: 640px) { .bv-bordao { font-size:1.95rem; } }
 </style>
-<div class="bv-cel"><div class="bv-notch"></div><div class="bv-tela">
-  <div class="bv-ey">Preço de um projeto</div><div class="bv-tt">Quais ambientes?</div>
-  <div class="bv-preco"><small>Preço sugerido</small><span class="p0">R$ 0</span><span class="p1">R$ 820</span><span class="p2">R$ 1.480</span></div>
-  <div class="bv-amb a1">Cozinha <i>6 h</i></div>
-  <div class="bv-amb a2">Closet <i>5 h</i></div>
-  <div class="bv-amb">Quarto de casal <i>4 h</i></div>
-  <div class="bv-pdf">✓ Proposta pronta em PDF, com a sua marca</div>
-</div>
-<svg class="bv-mao" viewBox="0 0 24 24" fill="#fff" stroke="#0D1B2A" stroke-width="1.3" stroke-linejoin="round">
-  <path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10m0-.5V8.5a1.5 1.5 0 0 1 3 0V11m0-1a1.5 1.5 0 0 1 3 0v4.5a6 6 0 0 1-6 6h-1.2a6 6 0 0 1-4.6-2.2L4.6 16a1.5 1.5 0 0 1 2.3-1.9L9 16.5V11"/></svg>
-</div>"""
+<div class="bv-cel" role="img" aria-label="Telas reais do app Planner Organiza: preço de um projeto, propostas e o Início">
+<div class="bv-notch"></div><div class="bv-tela">
+<img class="r1" src="app/static/telas/app_precificacao.webp" alt="">
+<img class="r2" src="app/static/telas/app_propostas.webp" alt="">
+<img class="r3" src="app/static/telas/app_inicio.webp" alt="">
+</div></div>"""
 
 
 def _tela_inicio(o):
