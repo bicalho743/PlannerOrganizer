@@ -1,6 +1,20 @@
 # Planner Organiza: API (FastAPI) e sistema web (Streamlit)
 
 Responda em português, passo a passo e sem jargão. O README.md tem arquitetura, rotas e variáveis em detalhe.
+Trabalho no PC: ver bicalho743/meu-enxoval-em-dia/docs/CLAUDE-NO-PC.md
+
+## Identificação
+- Tipo: **site** (Streamlit) + **API** (FastAPI) do Planner Organiza. O app de celular é outro repositório
+  (bicalho743/planner-app, Expo: bundle `com.plannerorganiza.app`, App Store Connect `6832855561`); a landing é
+  bicalho743/LandingPage_Planner.
+- Render (workspace `tea-cvupfb7diees73e9o96g`): site `srv-cvv6jpre5dus73eapt9g` (serviço PlannerOrganizer,
+  app.plannerorganiza.com.br), API `srv-d85ns40js32c73akof7g` (plannerorganiza-api.onrender.com), Postgres
+  `dpg-cvv936juibrs73ad3sh0-a`. Health Check Path recomendado para o site: `/_stcore/health` (a dona põe no painel).
+- Login das contas: Firebase (projeto `planner-organizer-68a23`). Pagamento no site: Stripe (conta "Coruja Labs").
+  Lojas: RevenueCat projeto `proj1aebd2c2`. Sem Supabase, sem Codemagic aqui.
+- Materiais: protótipos aprovados do site em `docs/prototipos/` (BRIEFING.md explica), PDFs de exemplo em
+  `docs/pdfs-exemplo/`, telas do onboarding em `docs/onboarding-site/`, telas reais em `docs/telas-reais-web/`,
+  pesquisa de concorrente em `docs/pesquisa/`, planilha de serviços e custos da Candeia Tec em `docs/candeia-tec/`.
 
 ## Publicação (Render)
 - API `plannerorganiza-api.onrender.com` (`api/router.py`): publica sozinha a cada push na `main`.
@@ -81,3 +95,20 @@ Responda em português, passo a passo e sem jargão. O README.md tem arquitetura
 
 ## Pendências (15/11/2026)
 - Recebimento da Apple: conta Itaú em BRL exige cadastro na StoneX; alternativa: conta USD da Wise no nome do titular.
+
+## Precificação: dias de cada assistente (26/11/2026, na branch, ainda não publicado)
+- Em Precificação > Preço de um projeto > Equipe e custos e na Nova proposta (passo "Quem vai com você?"): com
+  assistentes, aparece "Dias de cada assistente" (0 = todos os dias). `orcamento_completo(..., dias_assistente=N)`:
+  a assistente recebe só N dias × horas_dia; as horas que sobram ficam com a organizer. O valor da hora continua só
+  em Sua hora > Taxas (o campo mostra o valor como aviso). Testes: `tests/test_dias_assistente.py`.
+
+## Onde paramos (26/11/2026)
+- `main` = o que está no ar (publicado até 25/11: PDFs novos, login por cookie, telas reais, onboarding com boas-vindas,
+  Nova proposta sem retroativo e com Cliente nova completa).
+- **Pendente de publicar**: "Dias de cada assistente" está só na branch `claude/dreamy-bohr-1tib91` (testes passam,
+  179). Falta conferir a tela no navegador e a dona dizer "pode publicar"; aí levar a branch para a `main`.
+- Render: a dona ainda vai pôr o Health Check Path `/_stcore/health` no serviço do site.
+- Google Play pediu login de revisão: conta `contato+revisao@candeiatec.com.br` criada pela dona (7 dias grátis bastam).
+- Redes sociais (Upload-Post): carrossel e stories das telas reais publicados em 25/11 nos perfis PlannerOrganiza e
+  Tamaracavalcante; stories diários agendados até 08/12 (detalhes no CLAUDE.md do planner-app).
+
