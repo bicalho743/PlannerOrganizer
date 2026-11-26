@@ -1,5 +1,7 @@
 # Planner Organiza: API (FastAPI) e sistema web (Streamlit)
 
+Trabalho no PC: ver bicalho743/meu-enxoval-em-dia/docs/CLAUDE-NO-PC.md (guia de migração para o Claude Code do PC Windows "Notebook_Solano").
+
 Responda em português, passo a passo e sem jargão. O README.md tem arquitetura, rotas e variáveis em detalhe.
 
 ## Publicação (Render)
@@ -79,5 +81,32 @@ Responda em português, passo a passo e sem jargão. O README.md tem arquitetura
 - "Colocar minha marca" saiu do Início: fica no Perfil e no passo 4 da Nova proposta. Pós-organização só marca "Enviada".
 - Tarefas únicas no banco: `utils/renumerar.tarefas_unicas` (tabela `tarefas_unicas`), rodam no 1º `Database()` do processo.
 
-## Pendências (15/11/2026)
+## Pendências antigas (15/11/2026): conferir se ainda valem antes de agir
 - Recebimento da Apple: conta Itaú em BRL exige cadastro na StoneX; alternativa: conta USD da Wise no nome do titular.
+
+## Resumo de ids e onde fica cada coisa (26/11/2026)
+- Tipo: **servidor Python** = API FastAPI (`api/router.py`, usada pelo app) + **site** Streamlit (`app.py`, `pages/`).
+  Não tem build de loja: o app das lojas está em bicalho743/planner-app.
+- Render (workspace tea-cvupfb7diees73e9o96g):
+  - `plannerorganiza-api` = srv-d85ns40js32c73akof7g (API, publica a cada push na `main`);
+  - `PlannerOrganizer` = srv-cvv6jpre5dus73eapt9g (site app.plannerorganiza.com.br, publica a cada push na `main`);
+  - banco Postgres dpg-cvv936juibrs73ad3sh0-a;
+  - `plannerorganizer-teste` = srv-dbcc6jt9fdbs73ci1d20: serviço de teste antigo, ainda ligado à branch
+    `claude/festive-noether-ebu73p` (histórico anterior). Ver "decidir" abaixo.
+- Firebase (login): `planner-organizer-68a23`. RevenueCat: `proj1aebd2c2`. Stripe: conta "Coruja Labs". Supabase: não usa.
+- GitHub Actions: `lembretes-diarios.yml` (aviso da manhã) e `backup-banco.yml` (backup do banco).
+- Codemagic: não usa (fica no planner-app). Artes e textos de loja: no planner-app (`marketing/`).
+- Telas reais para a landing: `scripts/telas_reais/` (a saída gerada fica fora do repositório, no .gitignore).
+
+## Onde paramos (26/11/2026)
+- **No ar (25/11):** login do site guardado em cookie assinado; PDFs no desenho novo (proposta, fechamento, interno,
+  fornecedores, produtos/venda e Relatório do negócio, com link que não expira); boas-vindas do site com as telas reais
+  do app; todos os botões da landing abrem o onboarding; Nova proposta sem cadastro retroativo de cliente.
+- **Nada em andamento no código** (main limpa em da93580).
+- **Falta / decidir:**
+  - desativar o link antigo de R$ 297 da Stripe (`plink_1Tb02G…`), como já anotado acima, e conferir se os preços
+    anotados acima (R$ 39,90 / R$ 199,90) ainda valem: o planner-app registra em 23/11 mensal R$ 59,90, trimestral
+    R$ 149,90 e anual R$ 479,90;
+  - suspender ou apagar o serviço `plannerorganizer-teste` no Render (usa uma branch antiga; não é usado);
+  - recebimento da Apple (ver pendências antigas).
+
