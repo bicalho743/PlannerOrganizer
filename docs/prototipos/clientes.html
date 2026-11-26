@@ -1,0 +1,81 @@
+<html><head><link rel="stylesheet" href="base.css"><link rel="stylesheet" href="side.css"><link rel="stylesheet" href="comum.css"><style>
+.side{flex-shrink:0}.top{display:flex;justify-content:space-between;align-items:flex-end}
+.s-vis{background:#F6EDD3;color:#5C4708}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:22px}
+.sg{background:#fff;border:1.5px solid var(--borda);border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center}
+.sg b{display:block;color:var(--navy);font-size:15px}.sg span{font-size:12.5px;color:var(--txt2)}.sg em{font-style:normal;font-weight:700;font-size:20px;color:var(--navy)}
+.sg.on{border-color:var(--gold);background:var(--goldbg);box-shadow:inset 0 -3px 0 var(--gold)}
+.bus{display:flex;gap:10px;margin-top:14px}.bus .in{flex:1;background:#fff;border:1px solid var(--borda);border-radius:12px;padding:12px 14px;color:#9A968C}
+.fc{display:flex;gap:8px;margin-top:10px}.fc span{padding:6px 12px;border-radius:999px;border:1px solid var(--borda);background:#fff;font-size:13px;font-weight:600;color:var(--txt2)}
+.g{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;margin-top:16px;align-items:start}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.cc{background:#fff;border:1px solid var(--borda);border-radius:16px;padding:16px}.cc.on{border:2px solid var(--gold)}
+.hd{display:flex;gap:12px;align-items:center}.av{width:42px;height:42px;border-radius:12px;background:var(--goldbg);color:var(--golddk);display:grid;place-items:center;font-weight:700}
+.hd b{color:var(--navy);display:block}.sm{font-size:13px;color:var(--txt2)}
+.tag{font-size:12px;font-weight:700;background:#F3F0EA;color:var(--navy);padding:3px 8px;border-radius:8px;white-space:nowrap}
+.ln{margin-top:12px}.sm2{font-size:13px;color:var(--txt2);margin-top:5px}.orig{color:var(--golddk);font-weight:600}
+.bt{display:flex;gap:8px;margin-top:14px}.bt span{padding:8px 10px;border-radius:9px;font-size:13px;font-weight:700;text-align:center}
+.b1{flex:1;background:var(--navy);color:#fff}.b2{border:1px solid var(--borda);color:var(--navy)}
+.fi{padding:20px}.fi .ey{font-size:12px;letter-spacing:2px;font-weight:700;color:var(--golddk)}
+.fh{display:flex;gap:14px;align-items:center;margin-top:10px}.fh .av{width:56px;height:56px;font-size:18px}
+.fh h3{font-family:'Cormorant Garamond',Georgia,serif;font-size:28px;color:var(--navy)}
+.dl{display:flex;justify-content:space-between;font-size:14px;padding:9px 0;border-top:1px solid #F0ECE3}.dl span{color:var(--txt2)}.dl b{color:var(--navy);text-align:right}
+.obs{background:#FAF8F3;border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--txt);margin-top:8px}
+.hist{margin-top:14px}.hi{display:flex;gap:10px;font-size:13.5px;padding:6px 0}.hi i{width:9px;height:9px;border-radius:50%;margin-top:5px;flex-shrink:0}
+</style></head><body>
+<div class="side">
+<div class="logo"><i>▦</i>Planner Organiza</div>
+<div class="conta">Planner Organizer<br>voce@email.com</div><span class="pro">PRO</span>
+<div style="height:1px;background:var(--borda);margin:18px 0 6px"></div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/></svg>Início</div>
+<div class="it"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Agenda</div>
+<div class="grp">COMERCIAL</div>
+<div class="it on"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M16 11a3 3 0 100-6M21 20c0-2-1-4-3-4.5"/></svg>Clientes</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M10 13h5M10 17h5"/></svg>Propostas</div>
+<div class="it"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h3M13 11h3M8 15h3M13 15h3"/></svg>Precificação</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 13H7z"/><path d="M9 8a3 3 0 016 0"/></svg>Vendas</div>
+<div class="it"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M15 15a3 3 0 11-1-2"/></svg>Pós-organização</div>
+<div class="grp">FINANCEIRO</div>
+<div class="it"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M15 12h3"/></svg>Financeiro</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M6 20V11M12 20V5M18 20v-6"/></svg>Relatórios</div>
+<div class="grp">CONTA</div>
+<div class="it"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Perfil</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M12 3l8 4v6c0 4-4 7-8 8-4-1-8-4-8-8V7z"/></svg>Plano e cobrança</div>
+</div>
+<div class="main"><div class="wrap">
+<div class="top"><div><div class="eyebrow">Uma relação começa por aqui</div><h1>Clientes</h1><div class="sub">Cadastre, faça a proposta e acompanhe cada cliente do primeiro contato ao retorno.</div></div>
+<div style="display:flex;gap:10px;align-items:center"><span style="font-size:14px;color:var(--golddk);font-weight:600">Importar planilha</span><span class="btn ouro">+ Nova cliente</span></div></div>
+<div class="seg">
+<div class="sg"><div><b>Sem proposta</b><span>para orçar ou agendar visita</span></div><em>1</em></div>
+<div class="sg"><div><b>Proposta enviada</b><span>aguardando resposta</span></div><em>1</em></div>
+<div class="sg"><div><b>Em atendimento</b><span>aprovada ou em execução</span></div><em>2</em></div>
+<div class="sg"><div><b>Atendidas</b><span>para retorno e indicação</span></div><em>14</em></div></div>
+<div class="bus"><div class="in">🔍 Buscar por nome, telefone, bairro ou cidade</div></div>
+<div class="fc"><span>🎂 Aniversário este mês (3)</span><span>↻ Retorno pendente (2)</span><span>Origem ▾</span><span>Cidade ▾</span></div>
+<div class="g"><div class="cards"><div class="cc"><div class="hd"><span class="av">FR</span><div style="flex:1;min-width:0"><b>Fernanda Rocha</b><span class="sm">(11) 98765-4321</span></div></div>
+<div class="ln"><span class="sel s-ab">○ Proposta enviada</span></div><div class="sm2">Closet casal · R$ 1.850 · há 4 dias</div><div class="sm2">📍 Moema · São Paulo · <span class="orig">Instagram</span></div>
+<div class="bt"><span class="b1">Lembrar no WhatsApp</span><span class="b2">WhatsApp</span><span class="b2">Maps</span></div></div><div class="cc"><div class="hd"><span class="av">PN</span><div style="flex:1;min-width:0"><b>Paula Nunes</b><span class="sm">(11) 97654-3210</span></div></div>
+<div class="ln"><span class="sel s-vis">Visita hoje 16:00</span></div><div class="sm2">Lavanderia · sem proposta ainda</div><div class="sm2">📍 Vila Madalena · São Paulo · <span class="orig">Indicação</span></div>
+<div class="bt"><span class="b1">Criar proposta</span><span class="b2">WhatsApp</span><span class="b2">Maps</span></div></div><div class="cc on"><div class="hd"><span class="av">CM</span><div style="flex:1;min-width:0"><b>Clara Mendes</b><span class="sm">(11) 96543-2109</span></div></div>
+<div class="ln"><span class="sel s-ex">▶ Em execução</span></div><div class="sm2">Mudança completa · dia 1 de 2</div><div class="sm2">📍 Pinheiros · São Paulo · <span class="orig">Anúncio</span></div>
+<div class="bt"><span class="b1">Abrir proposta</span><span class="b2">WhatsApp</span><span class="b2">Maps</span></div></div><div class="cc"><div class="hd"><span class="av">ML</span><div style="flex:1;min-width:0"><b>Mariana Lopes</b><span class="sm">(11) 95432-1098</span></div><span class="tag">🎂 Hoje</span></div>
+<div class="ln"><span class="sel s-ap">● Aprovada</span></div><div class="sm2">Cozinha e despensa · sinal recebido</div><div class="sm2">📍 Perdizes · São Paulo · <span class="orig">Instagram</span></div>
+<div class="bt"><span class="b1">Agendar serviço</span><span class="b2">WhatsApp</span><span class="b2">Maps</span></div></div><div class="cc"><div class="hd"><span class="av">BF</span><div style="flex:1;min-width:0"><b>Beatriz Faria</b><span class="sm">(11) 94321-0987</span></div><span class="tag">↻ Retorno hoje</span></div>
+<div class="ln"><span class="sel s-co">✓ Atendida</span></div><div class="sm2">Quarto infantil · 20/11</div><div class="sm2">📍 Itaim · São Paulo · <span class="orig">Indicação</span></div>
+<div class="bt"><span class="b1">Mandar mensagem</span><span class="b2">WhatsApp</span><span class="b2">Maps</span></div></div><div class="cc"><div class="hd"><span class="av">LP</span><div style="flex:1;min-width:0"><b>Luana Prado</b><span class="sm">(11) 93210-9876</span></div></div>
+<div class="ln"><span class="sel s-co">✓ Atendida</span></div><div class="sm2">Closet · 14/11 · 2 serviços</div><div class="sm2">📍 Santana · São Paulo · <span class="orig">Google</span></div>
+<div class="bt"><span class="b1">Ver ficha</span><span class="b2">WhatsApp</span><span class="b2">Maps</span></div></div></div>
+<div class="card fi"><div class="ey">FICHA DA CLIENTE</div>
+<div class="fh"><span class="av">CM</span><div><h3>Clara Mendes</h3><span class="sel s-ex">▶ Em execução</span></div></div>
+<div class="bt" style="margin-bottom:10px"><span class="b1">WhatsApp</span><span class="b2">Ligar</span><span class="b2">Maps</span><span class="b2">Editar</span></div>
+<div class="dl"><span>Telefone</span><b>(11) 96543-2109</b></div>
+<div class="dl"><span>Endereço</span><b>R. dos Pinheiros, 600 · Pinheiros</b></div>
+<div class="dl"><span>Aniversário</span><b>14/06</b></div>
+<div class="dl"><span>Como chegou</span><b>Anúncio no Instagram</b></div>
+<div class="dl"><span>Total já pago</span><b style="color:#2F6B4F">R$ 3.450</b></div>
+<div style="font-size:12px;letter-spacing:1.5px;font-weight:700;color:var(--txt2);margin-top:14px">OBSERVAÇÕES DA CASA</div>
+<div class="obs">Elevador de serviço até 18h · gato no apartamento · louças frágeis na cristaleira</div>
+<div style="font-size:12px;letter-spacing:1.5px;font-weight:700;color:var(--txt2);margin-top:14px">HISTÓRICO</div>
+<div class="hist"><div class="hi"><i style="background:var(--navy)"></i>Mudança completa · em execução · R$ 6.900</div><div class="hi"><i style="background:var(--gold)"></i>Visita técnica · 10/11</div><div class="hi"><i style="background:#C3BDB0"></i>Primeiro contato · 05/11</div></div>
+<span class="btn ouro" style="display:block;text-align:center;margin-top:14px">+ Nova proposta para a Clara</span></div>
+</div></div></div></body></html>

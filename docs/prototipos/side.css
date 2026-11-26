@@ -1,0 +1,9 @@
+.side{width:300px;min-height:1250px;background:#fff;border-right:1px solid var(--borda);padding:28px 22px}
+.logo{display:flex;align-items:center;gap:12px;font-family:'Cormorant Garamond',Georgia,serif;font-size:28px;color:var(--navy);font-weight:600}
+.logo i{width:44px;height:44px;border-radius:10px;background:var(--navy);display:grid;place-items:center;color:var(--gold);font-style:normal;font-size:20px}
+.conta{font-size:14px;color:var(--txt2);margin-top:12px}.pro{display:inline-block;background:var(--navy);color:var(--gold);font-weight:700;font-size:12px;padding:4px 12px;border-radius:999px;margin-top:10px;letter-spacing:1px}
+.grp{font-size:11px;letter-spacing:2px;font-weight:700;color:#A09A8C;margin:22px 10px 6px}
+.it{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:10px;color:var(--txt);font-size:16px;margin:2px 0}
+.it svg{width:20px;height:20px;stroke:var(--navy2);fill:none;stroke-width:1.8;opacity:.75}
+.it.on{background:var(--goldbg);font-weight:700;color:var(--navy);box-shadow:inset 3px 0 0 var(--gold)}
+.it.on svg{stroke:var(--golddk);opacity:1}

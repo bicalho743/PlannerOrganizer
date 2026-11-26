@@ -1,8 +1,21 @@
 # Planner Organiza: API (FastAPI) e sistema web (Streamlit)
 
-Trabalho no PC: ver bicalho743/meu-enxoval-em-dia/docs/CLAUDE-NO-PC.md (guia de migração para o Claude Code do PC Windows "Notebook_Solano").
+Trabalho no PC: ver bicalho743/meu-enxoval-em-dia/docs/CLAUDE-NO-PC.md
 
 Responda em português, passo a passo e sem jargão. O README.md tem arquitetura, rotas e variáveis em detalhe.
+
+## Identificação
+- Tipo: **site** (Streamlit) + **API** (FastAPI) do Planner Organiza. O app de celular é outro repositório
+  (bicalho743/planner-app, Expo: bundle `com.plannerorganiza.app`, App Store Connect `6832855561`); a landing é
+  bicalho743/LandingPage_Planner.
+- Render (workspace `tea-cvupfb7diees73e9o96g`): site `srv-cvv6jpre5dus73eapt9g` (serviço PlannerOrganizer,
+  app.plannerorganiza.com.br), API `srv-d85ns40js32c73akof7g` (plannerorganiza-api.onrender.com), Postgres
+  `dpg-cvv936juibrs73ad3sh0-a`. Health Check Path recomendado para o site: `/_stcore/health` (a dona põe no painel).
+- Login das contas: Firebase (projeto `planner-organizer-68a23`). Pagamento no site: Stripe (conta "Coruja Labs").
+  Lojas: RevenueCat projeto `proj1aebd2c2`. Sem Supabase, sem Codemagic aqui.
+- Materiais: protótipos aprovados do site em `docs/prototipos/` (BRIEFING.md explica), PDFs de exemplo em
+  `docs/pdfs-exemplo/`, telas do onboarding em `docs/onboarding-site/`, telas reais em `docs/telas-reais-web/`,
+  pesquisa de concorrente em `docs/pesquisa/`, planilha de serviços e custos da Candeia Tec em `docs/candeia-tec/`.
 
 ## Publicação (Render)
 - API `plannerorganiza-api.onrender.com` (`api/router.py`): publica sozinha a cada push na `main`.
@@ -81,32 +94,34 @@ Responda em português, passo a passo e sem jargão. O README.md tem arquitetura
 - "Colocar minha marca" saiu do Início: fica no Perfil e no passo 4 da Nova proposta. Pós-organização só marca "Enviada".
 - Tarefas únicas no banco: `utils/renumerar.tarefas_unicas` (tabela `tarefas_unicas`), rodam no 1º `Database()` do processo.
 
-## Pendências antigas (15/11/2026): conferir se ainda valem antes de agir
+## Pendências (15/11/2026)
 - Recebimento da Apple: conta Itaú em BRL exige cadastro na StoneX; alternativa: conta USD da Wise no nome do titular.
 
-## Resumo de ids e onde fica cada coisa (26/11/2026)
-- Tipo: **servidor Python** = API FastAPI (`api/router.py`, usada pelo app) + **site** Streamlit (`app.py`, `pages/`).
-  Não tem build de loja: o app das lojas está em bicalho743/planner-app.
-- Render (workspace tea-cvupfb7diees73e9o96g):
-  - `plannerorganiza-api` = srv-d85ns40js32c73akof7g (API, publica a cada push na `main`);
-  - `PlannerOrganizer` = srv-cvv6jpre5dus73eapt9g (site app.plannerorganiza.com.br, publica a cada push na `main`);
-  - banco Postgres dpg-cvv936juibrs73ad3sh0-a;
-  - `plannerorganizer-teste` = srv-dbcc6jt9fdbs73ci1d20: serviço de teste antigo, ainda ligado à branch
-    `claude/festive-noether-ebu73p` (histórico anterior). Ver "decidir" abaixo.
-- Firebase (login): `planner-organizer-68a23`. RevenueCat: `proj1aebd2c2`. Stripe: conta "Coruja Labs". Supabase: não usa.
-- GitHub Actions: `lembretes-diarios.yml` (aviso da manhã) e `backup-banco.yml` (backup do banco).
-- Codemagic: não usa (fica no planner-app). Artes e textos de loja: no planner-app (`marketing/`).
-- Telas reais para a landing: `scripts/telas_reais/` (a saída gerada fica fora do repositório, no .gitignore).
+## Precificação: dias de cada assistente (26/11/2026, na branch, ainda não publicado)
+- Em Precificação > Preço de um projeto > Equipe e custos e na Nova proposta (passo "Quem vai com você?"): com
+  assistentes, aparece "Dias de cada assistente" (0 = todos os dias). `orcamento_completo(..., dias_assistente=N)`:
+  a assistente recebe só N dias × horas_dia; as horas que sobram ficam com a organizer. O valor da hora continua só
+  em Sua hora > Taxas (o campo mostra o valor como aviso). Testes: `tests/test_dias_assistente.py`.
 
 ## Onde paramos (26/11/2026)
-- **No ar (25/11):** login do site guardado em cookie assinado; PDFs no desenho novo (proposta, fechamento, interno,
-  fornecedores, produtos/venda e Relatório do negócio, com link que não expira); boas-vindas do site com as telas reais
-  do app; todos os botões da landing abrem o onboarding; Nova proposta sem cadastro retroativo de cliente.
-- **Nada em andamento no código** (main limpa em da93580).
-- **Falta / decidir:**
-  - desativar o link antigo de R$ 297 da Stripe (`plink_1Tb02G…`), como já anotado acima, e conferir se os preços
-    anotados acima (R$ 39,90 / R$ 199,90) ainda valem: o planner-app registra em 23/11 mensal R$ 59,90, trimestral
-    R$ 149,90 e anual R$ 479,90;
-  - suspender ou apagar o serviço `plannerorganizer-teste` no Render (usa uma branch antiga; não é usado);
-  - recebimento da Apple (ver pendências antigas).
+- `main` = o que está no ar (publicado até 25/11: PDFs novos, login por cookie, telas reais, onboarding com boas-vindas,
+  Nova proposta sem retroativo e com Cliente nova completa).
+- **Pendente de publicar**: "Dias de cada assistente" está só na branch `claude/dreamy-bohr-1tib91` (testes passam,
+  179). Falta conferir a tela no navegador e a dona dizer "pode publicar"; aí levar a branch para a `main`.
+- Render: a dona ainda vai pôr o Health Check Path `/_stcore/health` no serviço do site.
+- Google Play pediu login de revisão: conta `contato+revisao@candeiatec.com.br` criada pela dona (7 dias grátis bastam).
+- Redes sociais (Upload-Post): carrossel e stories das telas reais publicados em 25/11 nos perfis PlannerOrganiza e
+  Tamaracavalcante; stories diários agendados até 08/12 (detalhes no CLAUDE.md do planner-app).
+
+- Contato público do site e dos textos legais: `contato@candeiatec.com.br` (desde 19/11/2026).
+- Testes na nuvem: Postgres 16 numa pasta fora do scratchpad, certificado autoassinado e `ssl=on` na porta 5499. No PC
+  (Windows) use um Postgres local ou o Docker com SSL ligado.
+- Na landing (LandingPage_Planner) ainda falta: remetente `contato@candeiatec.com.br` no Brevo e tirar uma senha de
+  banco que ficou escrita no código (ver o CLAUDE.md de lá).
+- Ainda não feito nos apps: 10% no anual para indicadas (produto/oferta própria nas lojas + RevenueCat); não entrou na 1.0.20.
+
+## Complemento (26/11/2026, sessão do Financeiro/Candeia Tec)
+- Render: ainda existe o serviço de teste `plannerorganizer-teste` (srv-dbcc6jt9fdbs73ci1d20, plano free), ligado à
+  branch `claude/festive-noether-ebu73p` do histórico antigo. Não é usado: **decidir** se suspende ou apaga (só com ela).
+- GitHub Actions: além de `lembretes-diarios.yml`, há `backup-banco.yml` (backup do banco).
 
