@@ -144,7 +144,7 @@ def caixas_por_area(m2):
 
 
 def orcamento_completo(p, tipo="organizacao", *, horas_ambientes=0.0, caixas=0, complexidade=1.0, assistentes=0,
-                       km=0.0, outros=0.0, materiais_escolhidos=None):
+                       km=0.0, outros=0.0, materiais_escolhidos=None, dias_assistente=None):
     """Orçamento de um projeto com tudo o que entra no preço (tela Precificação > Preço de um projeto e
     Nova proposta). tipo: organizacao (horas dos ambientes × complexidade) ou pre/pos (horas pelas caixas:
     caixas ÷ caixas por pessoa por dia × horas do dia).
@@ -161,9 +161,15 @@ def orcamento_completo(p, tipo="organizacao", *, horas_ambientes=0.0, caixas=0, 
     else:
         horas = max(float(horas_ambientes or 0), 0.0) * float(complexidade or 1)
     suas_horas = horas / pessoas
+    horas_cada_assist = suas_horas
+    # dias_assistente: cada assistente vai só N dias (o resto das horas fica com você). None/0 = todos os dias.
+    da = int(dias_assistente or 0)
+    if pessoas > 1 and da > 0 and da * horas_dia < suas_horas:
+        horas_cada_assist = da * horas_dia
+        suas_horas = max(horas - (pessoas - 1) * horas_cada_assist, horas_cada_assist)
     dias = max(math.ceil(round(suas_horas / horas_dia, 6)), 1) if horas > 0 else 0
     voce = suas_horas * hora_liquida(p)
-    assistente = suas_horas * (pessoas - 1) * float(p.get("valor_hora_assistente") or 0)
+    assistente = horas_cada_assist * (pessoas - 1) * float(p.get("valor_hora_assistente") or 0)
     mats = [(n, float(q or 0), float(v or 0)) for n, q, v in (materiais_escolhidos or [])]
     custo_mat = sum(q * v for _, q, v in mats)
     desloc = float(km or 0) * float(p.get("km_valor") or 0) * dias
@@ -182,9 +188,12 @@ def orcamento_completo(p, tipo="organizacao", *, horas_ambientes=0.0, caixas=0, 
     fica = total - taxa - imposto - assistente - custo_mat - desloc - outros
     return {
         "tipo": tipo, "horas": horas, "pessoas": pessoas, "dias": dias, "suas_horas": suas_horas,
+        "horas_cada_assistente": horas_cada_assist if pessoas > 1 else 0.0,
+        "dias_assistente": (math.ceil(round(horas_cada_assist / horas_dia, 6)) if pessoas > 1 and horas > 0 else 0),
         "caixas": int(caixas or 0), "voce": voce, "assistente": assistente, "materiais": custo_mat,
         "itens_materiais": mats, "deslocamento": desloc, "outros": outros, "seguranca": seguranca,
         "taxa_cartao": taxa, "imposto": imposto, "total": float(total), "minimo": _preco(base),
         "sinal": float(total) * float(p.get("sinal_pct") or 0) / 100, "fica_para_voce": fica,
         "hora_no_local": (fica / suas_horas) if suas_horas > 0 else 0.0,
     }
+

@@ -41,7 +41,7 @@ MODOS = {"total": ("Total de caixas", "Você já sabe o volume"), "comodo": ("Po
 def _novo():
     return {"passo": 1, "cliente_id": None, "tipo": "organizacao", "amb": {}, "amb_extra": {}, "amb_horas": {}, "complexidade": "Média",
             "modo": "comodo", "caixas_total": 0, "comodos": {}, "com_extra": {}, "m2": 0.0, "mats": {}, "obs": "",
-            "assist": 0, "km": 0.0, "outros": 0.0, "sinal_pct": None, "valor_final": None, "data_inicio": None,
+            "assist": 0, "dias_assist": 0, "km": 0.0, "outros": 0.0, "sinal_pct": None, "valor_final": None, "data_inicio": None,
             "mostrar_obs": True, "pid": None, "numero": None, "enviada": False}
 
 
@@ -191,7 +191,8 @@ def calculo(o, p):
     horas = sum(horas_ambiente(o, n) * q for n, q in o["amb"].items() if q) if o["tipo"] == "organizacao" else 0.0
     return pr.orcamento_completo(p, o["tipo"], horas_ambientes=horas, caixas=caixas(o),
                                  complexidade=pr.COMPLEXIDADE.get(o["complexidade"], 1.0), assistentes=o["assist"],
-                                 km=o["km"], outros=o["outros"], materiais_escolhidos=materiais_escolhidos(o, p))
+                                 km=o["km"], outros=o["outros"], materiais_escolhidos=materiais_escolhidos(o, p),
+                                 dias_assistente=o.get("dias_assist") or None)
 
 
 def valor_final(o, r):
@@ -789,6 +790,11 @@ def _passo_equipe(o, p, r):
         o["assist"] = int(c1.number_input("Assistentes", 0, 10, int(o["assist"]), 1, key="np_assist") or 0)
         c2.markdown(f'<div class="np-dica" style="margin-top:34px">Cada assistente: <b>{brl0(p.get("valor_hora_assistente"))}'
                     f'</b> por hora, da sua Precificação.</div>', unsafe_allow_html=True)
+        if o["assist"]:
+            o["dias_assist"] = int(c1.number_input("Dias de cada assistente", 0, 60, int(o.get("dias_assist") or 0), 1,
+                                                   key="np_dias_assist") or 0)
+            c2.markdown('<div class="np-dica" style="margin-top:34px">0 = ela vai todos os dias com você. Com menos '
+                        'dias, o resto das horas fica com você.</div>', unsafe_allow_html=True)
         d = st.date_input("Dia previsto para começar (opcional)", value=o.get("data_inicio"), format="DD/MM/YYYY",
                           key="np_data")
         o["data_inicio"] = d or None

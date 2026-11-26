@@ -277,7 +277,7 @@ def _projeto():
         st.session_state["_pc_proj"] = {
             "tipo": "organizacao", "qtd": {}, "horas": {}, "extras": [], "novo_amb": False, "ajustar": False,
             "modo_vol": MODOS_VOLUME[0], "caixas_total": 0, "comodos": {}, "area": 0.0, "mat_qtd": {},
-            "compl": "Média", "assistentes": 0, "km": 0.0, "outros": 0.0,
+            "compl": "Média", "assistentes": 0, "km": 0.0, "outros": 0.0, "dias_assist": 0,
         }
     return st.session_state["_pc_proj"]
 
@@ -652,6 +652,14 @@ def _secao_equipe(proj, p, tipo, n):
         with c1:
             proj["assistentes"] = int(st.number_input("Assistentes", 0, 10, int(proj["assistentes"]), 1,
                                                       key="pc_assist"))
+            if proj["assistentes"]:
+                _md(f'<div class="pc-dica">Cada assistente: {fmt_brl(p["valor_hora_assistente"])} por hora '
+                    '(Sua hora &gt; Taxas).</div>')
+                proj.setdefault("dias_assist", 0)
+                proj["dias_assist"] = int(st.number_input("Dias de cada assistente", 0, 60, int(proj["dias_assist"]), 1,
+                                                          key="pc_dias_assist"))
+                _md('<div class="pc-dica">0 = ela fica todos os dias com você. Menos dias: o resto das horas fica '
+                    'com você.</div>')
         with c2:
             proj["km"] = float(st.number_input("Deslocamento (km)", 0.0, 5000.0, float(proj["km"]), 1.0,
                                                format="%g", key="pc_km"))
@@ -740,7 +748,7 @@ def _aba_projeto(p):
 
     o = pr.orcamento_completo(p, tipo, horas_ambientes=horas_amb, caixas=caixas, complexidade=compl,
                               assistentes=proj["assistentes"], km=proj["km"], outros=proj["outros"],
-                              materiais_escolhidos=mats)
+                              materiais_escolhidos=mats, dias_assistente=proj.get("dias_assist") or None)
     if tipo == "organizacao":
         nomes = AMBIENTES + proj["extras"]
         ambientes = {a: int(proj["qtd"][a]) for a in nomes if int(proj["qtd"].get(a, 0)) > 0}
