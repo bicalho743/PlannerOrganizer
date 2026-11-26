@@ -1,5 +1,7 @@
 # Planner Organiza: API (FastAPI) e sistema web (Streamlit)
 
+Trabalho no PC: ver bicalho743/meu-enxoval-em-dia/docs/CLAUDE-NO-PC.md
+
 Responda em português, passo a passo e sem jargão. O README.md tem arquitetura, rotas e variáveis em detalhe.
 
 ## Publicação (Render)
@@ -81,3 +83,13 @@ Responda em português, passo a passo e sem jargão. O README.md tem arquitetura
 
 ## Pendências (15/11/2026)
 - Recebimento da Apple: conta Itaú em BRL exige cadastro na StoneX; alternativa: conta USD da Wise no nome do titular.
+
+## Onde paramos (26/11/2026)
+- **19/11:** contato público do site e dos textos legais trocado para `contato@candeiatec.com.br` (branch
+  `claude/contato-candeiatec`, já na `main`; 120 testes passaram).
+- **Testes na nuvem:** funcionou com o Postgres 16 do sistema numa pasta fora do scratchpad (o usuário `postgres` não
+  acessa `/tmp/claude-0`), com certificado autoassinado e `ssl=on` na porta 5499. No PC (Windows) use um Postgres local
+  ou o Docker com SSL ligado.
+- **Pendente na landing (repo LandingPage_Planner):** remetente `contato@candeiatec.com.br` no Brevo e senha do banco
+  exposta no código. Ver o CLAUDE.md de lá.
+- **Em andamento:** oferta de 10% no anual para indicadas nos apps (1.0.20 do planner-app).
