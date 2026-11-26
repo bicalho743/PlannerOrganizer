@@ -1,0 +1,54 @@
+<html><head><link rel="stylesheet" href="base.css"><link rel="stylesheet" href="side.css"><link rel="stylesheet" href="comum.css"><style>
+.top{display:flex;justify-content:space-between;align-items:flex-end}
+.esc{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:22px}.esc i{height:6px;border-radius:3px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:10px}
+.k{padding:16px 18px}.k .l{font-size:13px;color:var(--txt2);display:flex;align-items:center;gap:8px}.k .v{font-size:24px;font-weight:700;color:var(--navy);margin-top:6px}.k .q{font-size:13px;color:var(--txt2)}
+.cols{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:24px}
+.col{background:#EFEBE2;border-radius:16px;padding:12px;min-height:420px}
+.col h4{font-size:14px;color:var(--navy);display:flex;justify-content:space-between;align-items:center;padding:2px 4px 10px}
+.p{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:12px 14px;margin-bottom:10px;border-left-width:4px}
+.p b{color:var(--navy);display:block;margin-top:8px}.p .s{font-size:13px;color:var(--txt2)}.p .rod{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:13px}.p .val{font-weight:700;color:var(--navy);font-size:14px}
+.nx{color:var(--golddk);font-weight:700}
+.mais{font-size:13px;color:var(--golddk);font-weight:600;padding:4px}
+</style></head><body>
+<div class="side">
+<div class="logo"><i>▦</i>Planner Organiza</div>
+<div class="conta">Planner Organizer<br>voce@email.com</div><span class="pro">PRO</span>
+<div style="height:1px;background:var(--borda);margin:18px 0 6px"></div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/></svg>Início</div>
+<div class="it"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Agenda</div>
+<div class="grp">COMERCIAL</div>
+<div class="it"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M16 11a3 3 0 100-6M21 20c0-2-1-4-3-4.5"/></svg>Clientes</div>
+<div class="it on"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M10 13h5M10 17h5"/></svg>Propostas</div>
+<div class="it"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h3M13 11h3M8 15h3M13 15h3"/></svg>Precificação</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 13H7z"/><path d="M9 8a3 3 0 016 0"/></svg>Vendas</div>
+<div class="it"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M15 15a3 3 0 11-1-2"/></svg>Pós-organização</div>
+<div class="grp">FINANCEIRO</div>
+<div class="it"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M15 12h3"/></svg>Financeiro</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M6 20V11M12 20V5M18 20v-6"/></svg>Relatórios</div>
+<div class="grp">CONTA</div>
+<div class="it"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Perfil</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M12 3l8 4v6c0 4-4 7-8 8-4-1-8-4-8-8V7z"/></svg>Plano e cobrança</div>
+</div>
+<div class="main"><div class="wrap">
+<div class="top"><div><div class="eyebrow">Do primeiro contato ao serviço feito</div><h1>Propostas</h1><div class="sub">Monte, envie e acompanhe cada proposta até virar serviço.</div></div><span class="btn ouro">+ Nova proposta</span></div>
+<div class="esc"><i style="background:#EFE3BE"></i><i style="background:var(--gold)"></i><i style="background:var(--navy)"></i><i style="background:#2F6B4F"></i></div>
+<div class="kpis">
+<div class="card k"><div class="l"><span class="sel s-ab">○ Em aberto</span></div><div class="v">R$ 2.570</div><div class="q">2 propostas</div></div>
+<div class="card k"><div class="l"><span class="sel s-ap">● Aprovada</span></div><div class="v">R$ 2.400</div><div class="q">1 proposta</div></div>
+<div class="card k"><div class="l"><span class="sel s-ex">▶ Em execução</span></div><div class="v">R$ 6.900</div><div class="q">1 proposta</div></div>
+<div class="card k"><div class="l"><span class="sel s-co">✓ Concluída</span></div><div class="v">R$ 12.300</div><div class="q">9 em novembro</div></div></div>
+<div class="cols">
+<div class="col"><h4>Em aberto <span class="sel s-ab">2</span></h4>
+<div class="p" style="border-left-color:#E5D08F"><span class="sel s-ab">○ Em aberto</span><b>Fernanda Rocha</b><div class="s">Closet casal · enviada há 4 dias</div><div class="rod"><span class="val">R$ 1.850</span><span class="nx">Lembrar →</span></div></div>
+<div class="p" style="border-left-color:#E5D08F"><span class="sel s-ab">○ Em aberto</span><b>Paula Nunes</b><div class="s">Lavanderia · rascunho</div><div class="rod"><span class="val">R$ 720</span><span class="nx">Enviar →</span></div></div></div>
+<div class="col"><h4>Aprovada <span class="sel s-ap">1</span></h4>
+<div class="p" style="border-left-color:var(--gold)"><span class="sel s-ap">● Aprovada</span><b>Mariana Lopes</b><div class="s">Cozinha e despensa · sinal recebido</div><div class="rod"><span class="val">R$ 2.400</span><span class="nx">Iniciar →</span></div></div></div>
+<div class="col"><h4>Em execução <span class="sel s-ex">1</span></h4>
+<div class="p" style="border-left-color:var(--navy)"><span class="sel s-ex">▶ Em execução</span><b>Clara Mendes</b><div class="s">Mudança completa · dia 1 de 2</div><div class="rod"><span class="val">R$ 6.900</span><span class="nx">Finalizar →</span></div></div></div>
+<div class="col"><h4>Concluída <span class="sel s-co">9</span></h4>
+<div class="p" style="border-left-color:#2F6B4F"><span class="sel s-co">✓ Concluída</span><b>Beatriz Faria</b><div class="s">Quarto infantil · 20/11</div><div class="rod"><span class="val">R$ 980</span><span class="s">pago</span></div></div>
+<div class="p" style="border-left-color:#2F6B4F"><span class="sel s-co">✓ Concluída</span><b>Luana Prado</b><div class="s">Closet · 14/11</div><div class="rod"><span class="val">R$ 1.400</span><span class="s">pago</span></div></div>
+<div class="mais">Ver todas as 9 no histórico →</div></div>
+</div><div style="font-size:13px;color:var(--txt2);margin-top:14px">Recusadas ficam no histórico, em cinza.</div>
+</div></div></body></html>

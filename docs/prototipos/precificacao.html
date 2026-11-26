@@ -1,0 +1,53 @@
+<html><head><link rel="stylesheet" href="base.css"><style>
+.grid{display:grid;grid-template-columns:1fr 360px;gap:24px;margin-top:26px;align-items:start}
+.tipos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.tipo{padding:16px;border:1.5px solid var(--borda);border-radius:14px;background:#fff}
+.tipo.on{border-color:var(--gold);background:var(--goldbg)}
+.tipo b{display:block;color:var(--navy)} .tipo span{font-size:13px;color:var(--txt2)}
+.amb{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+.a{padding:14px 16px;border:1.5px solid var(--borda);border-radius:14px;background:#fff}
+.a.on{border-color:var(--gold)}
+.a .t{font-weight:700;color:var(--navy);display:flex;justify-content:space-between}
+.a .h{font-size:13px;color:var(--txt2);margin-top:2px}
+.step{display:flex;align-items:center;gap:10px;margin-top:10px}
+.step i{font-style:normal;width:30px;height:30px;border-radius:8px;border:1px solid var(--borda);display:grid;place-items:center;font-weight:700;color:var(--navy)}
+.step em{font-style:normal;font-weight:700;min-width:16px;text-align:center}
+.sec{padding:22px;margin-top:18px}
+.sec h3{font-size:17px;color:var(--navy)} .sec p.d{font-size:14px;color:var(--txt2);margin:2px 0 14px}
+.n{display:inline-grid;width:24px;height:24px;border-radius:50%;background:var(--goldbg);color:var(--golddk);place-items:center;font-size:13px;font-weight:700;margin-right:8px}
+.campos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.campo label{font-size:13px;color:var(--txt2)} .campo div{border:1px solid var(--borda);border-radius:10px;padding:10px 12px;margin-top:4px;background:#fff}
+.seg{display:flex;gap:8px}.seg span{padding:8px 14px;border:1.5px solid var(--borda);border-radius:10px;font-weight:600;font-size:14px}.seg span.on{border-color:var(--gold);background:var(--goldbg)}
+.res{background:var(--navy);color:#fff;border-radius:18px;padding:24px;position:sticky;top:0}
+.res .l{font-size:13px;opacity:.7} .res .v{font-family:'Cormorant Garamond',Georgia,serif;font-size:46px;color:var(--gold);font-weight:600}
+.res .ln{display:flex;justify-content:space-between;font-size:14px;padding:7px 0;border-top:1px solid rgba(255,255,255,.12)}
+.mini{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.mini div{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:12px}.mini b{font-size:22px;color:var(--navy);display:block}.mini span{font-size:12px;color:var(--txt2)}
+</style></head><body><div class="wrap">
+<div class="eyebrow">Seus números, seu preço</div>
+<h1>Precificação</h1>
+<div class="sub">Quanto vale a sua hora e quanto cobrar por cada projeto, com os seus números.</div>
+<div class="tabs"><span class="tab">⏱ Sua hora</span><span class="tab on">▦ Preço de um projeto</span></div>
+<div class="grid"><div>
+ <div class="card sec" style="margin-top:0"><h3><span class="n">1</span>Qual serviço?</h3><p class="d">Escolha o tipo. Na mudança, o volume é calculado pelas caixas.</p>
+  <div class="tipos"><div class="tipo on"><b>Organização</b><span>Ambientes da casa</span></div><div class="tipo"><b>Pré-mudança</b><span>Embalar e inventariar</span></div><div class="tipo"><b>Pós-mudança</b><span>Desembalar e organizar</span></div></div></div>
+ <div class="card sec"><h3><span class="n">2</span>Quais ambientes?</h3><p class="d">Toque para incluir. As horas são um ponto de partida: ajuste pela sua experiência.</p>
+  <div class="amb">
+   <div class="a on"><div class="t">Cozinha <span class="chip" style="background:var(--goldbg);color:var(--golddk)">6 h</span></div><div class="step"><i>−</i><em>1</em><i>+</i><span class="h">ambiente</span></div></div>
+   <div class="a on"><div class="t">Closet / guarda-roupa <span class="chip" style="background:var(--goldbg);color:var(--golddk)">5 h</span></div><div class="step"><i>−</i><em>2</em><i>+</i><span class="h">ambientes</span></div></div>
+   <div class="a"><div class="t">Quarto de casal <span class="chip" style="background:#F1EEE7;color:var(--txt2)">4 h</span></div><div class="h">Toque para incluir</div></div>
+   <div class="a"><div class="t">Quarto infantil <span class="chip" style="background:#F1EEE7;color:var(--txt2)">5 h</span></div><div class="h">Toque para incluir</div></div>
+   <div class="a"><div class="t">Banheiro <span class="chip" style="background:#F1EEE7;color:var(--txt2)">2 h</span></div><div class="h">Toque para incluir</div></div>
+   <div class="a"><div class="t">Área de serviço <span class="chip" style="background:#F1EEE7;color:var(--txt2)">3 h</span></div><div class="h">Toque para incluir</div></div>
+   <div class="a"><div class="t">Despensa <span class="chip" style="background:#F1EEE7;color:var(--txt2)">3 h</span></div><div class="h">Toque para incluir</div></div>
+   <div class="a"><div class="t">Home office <span class="chip" style="background:#F1EEE7;color:var(--txt2)">4 h</span></div><div class="h">Toque para incluir</div></div>
+   <div class="a" style="border-style:dashed"><div class="t" style="color:var(--golddk)">+ Outro ambiente</div><div class="h">Garagem, área gourmet…</div></div>
+  </div></div>
+ <div class="card sec"><h3><span class="n">3</span>Equipe e custos</h3><p class="d">Quem vai com você e o que entra no preço.</p>
+  <div style="margin-bottom:14px"><div style="font-size:13px;color:var(--txt2);margin-bottom:6px">Complexidade</div><div class="seg"><span>Leve</span><span class="on">Média</span><span>Pesada (muito acúmulo)</span></div></div>
+  <div class="campos"><div class="campo"><label>Assistentes</label><div>1</div></div><div class="campo"><label>Deslocamento (km ida e volta)</label><div>24 km · R$ 1,20/km</div></div><div class="campo"><label>Outros custos</label><div>R$ 40,00</div></div><div class="campo"><label>Sinal na aprovação</label><div>50%</div></div><div class="campo"><label>Taxa do cartão</label><div>4,99%</div></div><div class="campo"><label>Margem de segurança</label><div>10%</div></div></div></div>
+</div>
+<div><div class="res"><div class="l">Preço sugerido</div><div class="v">R$ 2.480</div><div class="l" style="margin-bottom:14px">sinal de R$ 1.240 (50%)</div>
+ <div class="ln"><span>Suas horas</span><b>16 h</b></div><div class="ln"><span>Assistente</span><b>R$ 320</b></div><div class="ln"><span>Deslocamento</span><b>R$ 29</b></div><div class="ln"><span>Taxa do cartão</span><b>R$ 124</b></div><div class="ln"><span>Preço mínimo</span><b>R$ 1.960</b></div><div class="ln"><span>Fica para você</span><b style="color:var(--gold)">R$ 1.610</b></div>
+ <div class="btn ouro" style="display:block;text-align:center;margin-top:16px">Criar proposta com este valor</div></div>
+ <div class="mini"><div><b>3</b><span>ambientes</span></div><div><b>2</b><span>dias de serviço</span></div><div><b>2</b><span>pessoas por dia</span></div><div><b>R$ 155</b><span>sua hora no local</span></div></div>
+</div></div></div></body></html>

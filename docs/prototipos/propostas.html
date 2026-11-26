@@ -1,0 +1,24 @@
+<html><head><link rel="stylesheet" href="base.css"><style>
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:24px}
+.k{padding:18px 20px}.k .l{font-size:13px;color:var(--txt2);display:flex;align-items:center;gap:8px}.k .v{font-size:26px;font-weight:700;color:var(--navy);margin-top:6px}
+.dot{width:10px;height:10px;border-radius:50%}
+.top{display:flex;justify-content:space-between;align-items:flex-end}
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
+.col h4{font-size:14px;display:flex;justify-content:space-between;align-items:center;color:var(--navy);padding:0 4px 10px}
+.p{padding:16px;margin-bottom:12px}.p .c{font-weight:700;color:var(--navy)}.p .s{font-size:13px;color:var(--txt2);margin-top:2px}.p .rod{display:flex;justify-content:space-between;align-items:center;margin-top:12px}.p .val{font-weight:700}
+.vazio{border:1.5px dashed var(--borda);border-radius:14px;padding:18px;color:var(--txt2);font-size:14px;text-align:center}
+</style></head><body><div class="wrap">
+<div class="top"><div><div class="eyebrow">Do primeiro contato ao serviço feito</div><h1>Propostas</h1><div class="sub">Monte, envie e acompanhe cada proposta até virar serviço.</div></div><span class="btn ouro">+ Nova proposta</span></div>
+<div class="kpis">
+<div class="card k"><div class="l"><span class="dot" style="background:var(--gold)"></span>Em aberto</div><div class="v">R$ 4.960</div></div>
+<div class="card k"><div class="l"><span class="dot" style="background:var(--verde)"></span>Aprovadas</div><div class="v">R$ 2.480</div></div>
+<div class="card k"><div class="l"><span class="dot" style="background:var(--navy2)"></span>Em execução</div><div class="v">R$ 1.800</div></div>
+<div class="card k"><div class="l"><span class="dot" style="background:#9AA3AE"></span>Finalizadas</div><div class="v">R$ 12.300</div></div></div>
+<div class="cols">
+<div class="col"><h4>Em aberto <span class="chip" style="background:var(--goldbg);color:var(--golddk)">2</span></h4>
+ <div class="card p"><div class="c">Mariana Souza</div><div class="s">Cozinha + 2 closets · enviada há 2 dias</div><div class="rod"><span class="val">R$ 2.480</span><span class="chip" style="background:var(--goldbg);color:var(--golddk)">Aguardando resposta</span></div></div>
+ <div class="card p"><div class="c">Juliana Ferraz</div><div class="s">Pré-mudança · 34 caixas · validade 05/12</div><div class="rod"><span class="val">R$ 2.480</span><span class="chip" style="background:var(--goldbg);color:var(--golddk)">Rascunho</span></div></div></div>
+<div class="col"><h4>Aprovadas <span class="chip" style="background:var(--verdebg);color:var(--verde)">1</span></h4>
+ <div class="card p"><div class="c">Ana Lima</div><div class="s">Closet casal · sinal recebido</div><div class="rod"><span class="val">R$ 2.480</span><span class="chip" style="background:var(--verdebg);color:var(--verde)">Agendar serviço</span></div></div></div>
+<div class="col"><h4>Em execução <span class="chip" style="background:var(--azulbg);color:var(--navy2)">0</span></h4><div class="vazio">Nenhuma proposta nesta etapa.<br>Quando você iniciar um serviço, ele aparece aqui.</div></div>
+</div></div></body></html>

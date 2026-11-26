@@ -1,0 +1,76 @@
+<title>Protótipos Planner Organiza</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: índice fixo de telas no topo, cada protótipo em tamanho real com o caminho do menu ao lado */
+:root {
+  --bg: #F7F5F0; --card: #FFFFFF; --fg: #0D1B2A; --muted: #5B6B80; --line: #E7E2D6; --gold: #9C7A22; --gold-soft: #F6EDD3;
+  --display: 'Cormorant Garamond', Georgia, serif; --body: 'Source Sans 3', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #10171F; --card: #18212C; --fg: #EEF1F5; --muted: #A3AEBC; --line: #2A3542; --gold: #D9B95E; --gold-soft: #2B2614; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #10171F; --card: #18212C; --fg: #EEF1F5; --muted: #A3AEBC; --line: #2A3542; --gold: #D9B95E; --gold-soft: #2B2614; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1480px; margin: 0 auto; padding-block: 32px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.eyebrow { font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); margin: 0; }
+h1 { font-family: var(--display); font-weight: 600; font-size: clamp(2rem, 4vw, 2.8rem); margin: 4px 0 6px; text-wrap: balance; }
+.lead { color: var(--muted); max-width: 68ch; margin: 0 0 20px; }
+nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+nav a { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--fg); text-decoration: none;
+  font-weight: 600; font-size: .88rem; background: var(--card); }
+nav a:hover, nav a:focus-visible { border-color: var(--gold); outline: none; background: var(--gold-soft); }
+section { margin: 0 0 40px; scroll-margin-top: 16px; }
+.cab { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-bottom: 10px; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 1.7rem; margin: 0; }
+.onde { color: var(--muted); font-size: .9rem; }
+.onde b { color: var(--fg); }
+figure { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px; overflow-x: auto; }
+figure img { display: block; max-width: 100%; height: auto; border-radius: 8px; }
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Planner Organiza · site</p>
+  <h1>Protótipos aprovados</h1>
+  <p class="lead">Como cada tela do site deve ficar. Use para comparar com o site publicado em app.plannerorganiza.com.br, em tela grande e no celular.</p>
+  <nav aria-label="Telas">
+    <a href="#inicio">Início</a><a href="#agenda">Agenda</a><a href="#propostas">Propostas</a>
+    <a href="#nova-servico">Nova proposta · Serviço</a><a href="#nova-revisar">Nova proposta · Revisar</a>
+    <a href="#detalhe">Detalhe da proposta</a><a href="#precificacao">Precificação · Projeto</a>
+    <a href="#sua-hora">Precificação · Sua hora</a><a href="#clientes">Clientes</a><a href="#pos">Pós-organização</a>
+    <a href="#financeiro">Financeiro</a><a href="#impostos">Impostos</a><a href="#relatorios">Relatórios</a>
+    <a href="#vendas">Vendas</a><a href="#perfil">Perfil</a>
+  </nav>
+
+  <section id="inicio"><div class="cab"><h2>Início</h2><span class="onde">Menu: <b>Início</b></span></div>
+    <figure><img src="img/inicio2.jpg" alt="Protótipo do Início" loading="lazy"></figure></section>
+  <section id="agenda"><div class="cab"><h2>Agenda</h2><span class="onde">Menu: <b>Agenda</b></span></div>
+    <figure><img src="img/agenda2.jpg" alt="Protótipo da Agenda" loading="lazy"></figure></section>
+  <section id="propostas"><div class="cab"><h2>Propostas</h2><span class="onde">Menu: <b>Propostas</b></span></div>
+    <figure><img src="img/propostasB.jpg" alt="Protótipo da lista de Propostas" loading="lazy"></figure></section>
+  <section id="nova-servico"><div class="cab"><h2>Nova proposta · passo 2, Serviço</h2><span class="onde">Propostas › <b>Nova proposta</b></span></div>
+    <figure><img src="img/nova2.jpg" alt="Protótipo da Nova proposta, passo Serviço" loading="lazy"></figure></section>
+  <section id="nova-revisar"><div class="cab"><h2>Nova proposta · passo 4, Revisar e enviar</h2><span class="onde">Propostas › <b>Nova proposta</b></span></div>
+    <figure><img src="img/nova4.jpg" alt="Protótipo da Nova proposta, passo Revisar e enviar" loading="lazy"></figure></section>
+  <section id="detalhe"><div class="cab"><h2>Detalhe da proposta</h2><span class="onde">Propostas › <b>tocar num cartão</b></span></div>
+    <figure><img src="img/detalhe.jpg" alt="Protótipo do detalhe de uma proposta" loading="lazy"></figure></section>
+  <section id="precificacao"><div class="cab"><h2>Precificação · Preço de um projeto</h2><span class="onde">Menu: <b>Precificação</b></span></div>
+    <figure><img src="img/precificacao.jpg" alt="Protótipo da Precificação, preço de um projeto" loading="lazy"></figure></section>
+  <section id="sua-hora"><div class="cab"><h2>Precificação · Sua hora</h2><span class="onde">Menu: <b>Precificação</b></span></div>
+    <figure><img src="img/suahora.jpg" alt="Protótipo da Precificação, sua hora" loading="lazy"></figure></section>
+  <section id="clientes"><div class="cab"><h2>Clientes</h2><span class="onde">Menu: <b>Clientes</b></span></div>
+    <figure><img src="img/clientes.jpg" alt="Protótipo de Clientes" loading="lazy"></figure></section>
+  <section id="pos"><div class="cab"><h2>Pós-organização</h2><span class="onde">Menu: <b>Pós-organização</b></span></div>
+    <figure><img src="img/pos.jpg" alt="Protótipo da Pós-organização" loading="lazy"></figure></section>
+  <section id="financeiro"><div class="cab"><h2>Financeiro</h2><span class="onde">Menu: <b>Financeiro</b></span></div>
+    <figure><img src="img/financeiro.jpg" alt="Protótipo do Financeiro" loading="lazy"></figure></section>
+  <section id="impostos"><div class="cab"><h2>Impostos</h2><span class="onde">Menu: <b>Financeiro</b> › Impostos</span></div>
+    <figure><img src="img/impostos.jpg" alt="Protótipo de Impostos" loading="lazy"></figure></section>
+  <section id="relatorios"><div class="cab"><h2>Relatórios</h2><span class="onde">Menu: <b>Relatórios</b></span></div>
+    <figure><img src="img/relatorios.jpg" alt="Protótipo de Relatórios" loading="lazy"></figure></section>
+  <section id="vendas"><div class="cab"><h2>Vendas</h2><span class="onde">Menu: <b>Vendas</b></span></div>
+    <figure><img src="img/vendas.jpg" alt="Protótipo de Vendas" loading="lazy"></figure></section>
+  <section id="perfil"><div class="cab"><h2>Perfil</h2><span class="onde">Menu: <b>Perfil</b></span></div>
+    <figure><img src="img/perfil.jpg" alt="Protótipo do Perfil" loading="lazy"></figure></section>
+</div>

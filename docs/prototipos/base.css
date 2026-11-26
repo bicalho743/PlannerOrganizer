@@ -1,0 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Source+Sans+3:wght@400;600;700&display=swap');
+:root{--navy:#0D1B2A;--navy2:#33507A;--gold:#C9A84C;--golddk:#9C7A22;--goldbg:#F6EDD3;--creme:#F8F6F1;--card:#fff;--borda:#E6E1D6;--txt:#1A202C;--txt2:#5F6B7A;--verde:#2F7D57;--verdebg:#E3F1E8;--azulbg:#E5ECF5}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Source Sans 3',Inter,sans-serif;background:var(--creme);color:var(--txt);font-size:16px}
+.wrap{width:1280px;padding:40px 48px}
+.eyebrow{font-size:12px;letter-spacing:2px;font-weight:700;color:var(--golddk);text-transform:uppercase}
+h1{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:44px;color:var(--navy);margin-top:6px}
+h1:after{content:"";display:block;width:40px;height:3px;background:var(--gold);border-radius:2px;margin-top:6px}
+.sub{color:var(--txt2);margin-top:10px}
+.tabs{display:inline-flex;background:#ECE7DC;border-radius:14px;padding:5px;margin-top:22px;gap:4px}
+.tab{padding:10px 20px;border-radius:10px;font-weight:600;color:var(--txt2)}
+.tab.on{background:#fff;color:var(--navy);box-shadow:inset 0 -3px 0 var(--gold),0 1px 3px rgba(0,0,0,.08)}
+.card{background:#fff;border:1px solid var(--borda);border-radius:16px}
+.btn{background:var(--navy);color:#fff;border-radius:10px;padding:12px 20px;font-weight:700;display:inline-block}
+.btn.ouro{background:var(--gold);color:var(--navy)}
+.chip{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700}

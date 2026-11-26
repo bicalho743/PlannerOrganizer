@@ -1,0 +1,53 @@
+<html><head><link rel="stylesheet" href="base.css"><link rel="stylesheet" href="side.css"><link rel="stylesheet" href="comum.css"><style>
+.top{display:flex;justify-content:space-between;align-items:flex-end}
+.bar1{display:flex;justify-content:space-between;align-items:center;margin-top:22px}
+.seg{display:inline-flex;background:#ECE7DC;border-radius:12px;padding:4px}.seg span{padding:8px 18px;border-radius:9px;font-weight:600;color:var(--txt2)}.seg span.on{background:#fff;color:var(--navy);box-shadow:inset 0 -2px 0 var(--gold)}
+.nav{display:flex;align-items:center;gap:10px}.nav i{font-style:normal;width:38px;height:38px;border-radius:10px;border:1px solid var(--borda);background:#fff;display:grid;place-items:center}.nav b{color:var(--navy);font-size:17px;margin:0 8px}
+.leg{display:flex;gap:16px;margin-top:16px;font-size:13px;color:var(--txt2);flex-wrap:wrap}.leg span{display:flex;align-items:center;gap:6px}.leg i{width:12px;height:12px;border-radius:4px;display:inline-block}
+.sem{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-top:16px}
+.dia{background:#fff;border:1px solid var(--borda);border-radius:14px;min-height:430px;padding:10px}
+.dia.hoje{border:2px solid var(--gold);background:#FFFCF3}
+.dh{display:flex;justify-content:space-between;align-items:baseline;padding:2px 4px 10px}.dh span{font-size:12px;letter-spacing:1px;font-weight:700;color:var(--txt2)}.dh b{font-size:22px;color:var(--navy)}
+.dia.hoje .dh span{color:var(--golddk)}
+.ev{border-radius:10px;padding:8px 9px;margin-bottom:8px;font-size:12.5px;line-height:1.3}
+.ev b{display:block;font-size:13px}.ev small{color:inherit;opacity:.8}
+.e-serv{background:var(--navy);color:#fff}
+.e-vis{background:#F6EDD3;color:#5C4708;border-left:3px solid var(--gold)}
+.e-pos{background:#fff;color:#5C4708;border:1.5px solid var(--gold)}
+.e-niver{background:#F3F0EA;color:var(--navy)}
+.e-rec{background:#E3F1E8;color:#2F6B4F}
+.e-pag{background:#F7E8E4;color:#8A3B2B}
+.livre{font-size:13px;color:#A8A294;padding:6px 4px}
+</style></head><body>
+<div class="side">
+<div class="logo"><i>▦</i>Planner Organiza</div>
+<div class="conta">Planner Organizer<br>voce@email.com</div><span class="pro">PRO</span>
+<div style="height:1px;background:var(--borda);margin:18px 0 6px"></div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/></svg>Início</div>
+<div class="it on"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Agenda</div>
+<div class="grp">COMERCIAL</div>
+<div class="it"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M16 11a3 3 0 100-6M21 20c0-2-1-4-3-4.5"/></svg>Clientes</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M10 13h5M10 17h5"/></svg>Propostas</div>
+<div class="it"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h3M13 11h3M8 15h3M13 15h3"/></svg>Precificação</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 13H7z"/><path d="M9 8a3 3 0 016 0"/></svg>Vendas</div>
+<div class="it"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M15 15a3 3 0 11-1-2"/></svg>Pós-organização</div>
+<div class="grp">FINANCEIRO</div>
+<div class="it"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M15 12h3"/></svg>Financeiro</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M6 20V11M12 20V5M18 20v-6"/></svg>Relatórios</div>
+<div class="grp">CONTA</div>
+<div class="it"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Perfil</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M12 3l8 4v6c0 4-4 7-8 8-4-1-8-4-8-8V7z"/></svg>Plano e cobrança</div>
+</div>
+<div class="main"><div class="wrap">
+<div class="top"><div><div class="eyebrow">Tudo o que tem data</div><h1>Agenda</h1><div class="sub">Serviços, visitas, retornos, aniversários e contas, num lugar só.</div></div><span class="btn ouro">+ Novo compromisso</span></div>
+<div class="bar1"><div class="seg"><span class="on">Semana</span><span>Mês</span></div><div class="nav"><i>‹</i><b>23 a 29 de novembro</b><i>›</i><span class="btn lin" style="background:#fff;color:var(--navy);border:1px solid var(--borda);padding:9px 16px">Hoje</span></div></div>
+<div class="leg"><span><i style="background:var(--navy)"></i>Serviço</span><span><i style="background:#F6EDD3;border-left:3px solid var(--gold)"></i>Visita / compromisso</span><span><i style="background:#fff;border:1.5px solid var(--gold)"></i>Retorno pós-organização</span><span><i style="background:#F3F0EA"></i>🎂 Aniversário</span><span><i style="background:#E3F1E8"></i>A receber</span><span><i style="background:#F7E8E4"></i>A pagar</span></div>
+<div class="sem">
+<div class="dia"><div class="dh"><span>SEG</span><b>23</b></div><div class="ev e-vis"><b>10:00 Visita técnica</b><small>Fernanda Rocha · closet</small></div></div>
+<div class="dia"><div class="dh"><span>TER</span><b>24</b></div><div class="ev e-rec"><b>Sinal recebido</b><small>Mariana Lopes · R$ 1.200</small></div></div>
+<div class="dia hoje"><div class="dh"><span>QUA · HOJE</span><b>25</b></div><div class="ev e-serv"><b>09:00 Mudança completa</b><small>Clara Mendes · dia 1 de 2</small></div><div class="ev e-vis"><b>16:00 Visita técnica</b><small>Paula Nunes · lavanderia</small></div><div class="ev e-niver"><b>🎂 Mariana Lopes</b><small>Dar parabéns no WhatsApp</small></div></div>
+<div class="dia"><div class="dh"><span>QUI</span><b>26</b></div><div class="ev e-serv"><b>09:00 Mudança completa</b><small>Clara Mendes · dia 2 de 2</small></div><div class="ev e-pos"><b>↻ Retorno</b><small>Beatriz Faria · 30 dias</small></div></div>
+<div class="dia"><div class="dh"><span>SEX</span><b>27</b></div><div class="ev e-rec"><b>A receber</b><small>Clara Mendes · R$ 3.450</small></div><div class="ev e-pag"><b>A pagar</b><small>Caixas e fitas · R$ 180</small></div></div>
+<div class="dia"><div class="dh"><span>SÁB</span><b>28</b></div><div class="ev e-serv"><b>08:30 Cozinha e despensa</b><small>Mariana Lopes</small></div></div>
+<div class="dia"><div class="dh"><span>DOM</span><b>29</b></div><div class="livre">Livre</div></div>
+</div></div></div></body></html>
