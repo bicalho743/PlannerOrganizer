@@ -1,7 +1,8 @@
 # Planner Organiza: API (FastAPI) e sistema web (Streamlit)
 
-Responda em português, passo a passo e sem jargão. O README.md tem arquitetura, rotas e variáveis em detalhe.
 Trabalho no PC: ver bicalho743/meu-enxoval-em-dia/docs/CLAUDE-NO-PC.md
+
+Responda em português, passo a passo e sem jargão. O README.md tem arquitetura, rotas e variáveis em detalhe.
 
 ## Identificação
 - Tipo: **site** (Streamlit) + **API** (FastAPI) do Planner Organiza. O app de celular é outro repositório
@@ -112,3 +113,9 @@ Trabalho no PC: ver bicalho743/meu-enxoval-em-dia/docs/CLAUDE-NO-PC.md
 - Redes sociais (Upload-Post): carrossel e stories das telas reais publicados em 25/11 nos perfis PlannerOrganiza e
   Tamaracavalcante; stories diários agendados até 08/12 (detalhes no CLAUDE.md do planner-app).
 
+- Contato público do site e dos textos legais: `contato@candeiatec.com.br` (desde 19/11/2026).
+- Testes na nuvem: Postgres 16 numa pasta fora do scratchpad, certificado autoassinado e `ssl=on` na porta 5499. No PC
+  (Windows) use um Postgres local ou o Docker com SSL ligado.
+- Na landing (LandingPage_Planner) ainda falta: remetente `contato@candeiatec.com.br` no Brevo e tirar uma senha de
+  banco que ficou escrita no código (ver o CLAUDE.md de lá).
+- Ainda não feito nos apps: 10% no anual para indicadas (produto/oferta própria nas lojas + RevenueCat); não entrou na 1.0.20.
