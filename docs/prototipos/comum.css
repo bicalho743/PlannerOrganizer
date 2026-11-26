@@ -1,0 +1,8 @@
+body{display:flex}.main{flex:1}.wrap{width:auto;padding:36px 40px}
+.sel{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.s-ab{border:1.5px solid var(--gold);color:#7A5F0B;background:#fff}
+.s-ap{background:#F6EDD3;color:#7A5F0B}
+.s-ex{background:#E3E8F0;color:var(--navy)}
+.s-co{background:#E3F1E8;color:#2F6B4F}
+.sec-t{font-size:12px;letter-spacing:2px;font-weight:700;color:var(--txt2);margin:26px 0 10px;display:flex;justify-content:space-between;align-items:center}
+.sec-t a{letter-spacing:0;font-size:14px;color:var(--golddk);text-decoration:none}

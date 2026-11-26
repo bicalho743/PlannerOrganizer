@@ -1,0 +1,68 @@
+<html><head><link rel="stylesheet" href="base.css"><style>
+body{display:flex}
+.side{width:300px;min-height:1250px;background:#fff;border-right:1px solid var(--borda);padding:28px 22px}
+.logo{display:flex;align-items:center;gap:12px;font-family:'Cormorant Garamond',Georgia,serif;font-size:28px;color:var(--navy);font-weight:600}
+.logo i{width:44px;height:44px;border-radius:10px;background:var(--navy);display:grid;place-items:center;color:var(--gold);font-style:normal;font-size:20px}
+.conta{font-size:14px;color:var(--txt2);margin-top:12px}.pro{display:inline-block;background:var(--navy);color:var(--gold);font-weight:700;font-size:12px;padding:4px 12px;border-radius:999px;margin-top:10px;letter-spacing:1px}
+.grp{font-size:11px;letter-spacing:2px;font-weight:700;color:#A09A8C;margin:22px 10px 6px}
+.it{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:10px;color:var(--txt);font-size:16px;margin:2px 0}
+.it svg{width:20px;height:20px;stroke:var(--navy2);fill:none;stroke-width:1.8;opacity:.75}
+.it.on{background:var(--goldbg);font-weight:700;color:var(--navy);box-shadow:inset 3px 0 0 var(--gold)}
+.it.on svg{stroke:var(--golddk);opacity:1}
+.main{flex:1}.wrap{width:auto;padding:40px 44px}
+.grid{display:grid;grid-template-columns:1fr 340px;gap:22px;margin-top:24px;align-items:start}
+.sec{padding:22px;margin-bottom:18px}.sec h3{font-size:17px;color:var(--navy)}.sec p.d{font-size:14px;color:var(--txt2);margin:2px 0 14px}
+.n{display:inline-grid;width:24px;height:24px;border-radius:50%;background:var(--goldbg);color:var(--golddk);place-items:center;font-size:13px;font-weight:700;margin-right:8px}
+.campos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.campo label{font-size:13px;color:var(--txt2)}.campo div{border:1px solid var(--borda);border-radius:10px;padding:10px 12px;margin-top:4px;background:#fff}
+.campo small{font-size:12px;color:#8A8F98}
+.res{background:var(--navy);color:#fff;border-radius:18px;padding:24px}
+.res .l{font-size:13px;opacity:.7}.res .v{font-family:'Cormorant Garamond',Georgia,serif;font-size:50px;color:var(--gold);font-weight:600;line-height:1.1}
+.res .ln{display:flex;justify-content:space-between;font-size:14px;padding:8px 0;border-top:1px solid rgba(255,255,255,.12)}
+.barra{height:10px;border-radius:6px;background:rgba(255,255,255,.12);margin:10px 0 4px;position:relative}.barra i{position:absolute;left:0;top:0;bottom:0;width:6%;background:var(--gold);border-radius:6px}
+.nota{background:#fff;border:1px solid var(--borda);border-radius:14px;padding:16px;margin-top:14px;font-size:14px;color:var(--txt2)}
+.nota b{color:var(--navy)}
+</style></head><body>
+<div class="side">
+<div class="logo"><i>▦</i>Planner Organiza</div>
+<div class="conta">Planner Organizer<br>voce@email.com</div><span class="pro">PRO</span>
+<div style="height:1px;background:var(--borda);margin:18px 0 6px"></div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/></svg>Início</div>
+<div class="it"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Agenda</div>
+<div class="grp">COMERCIAL</div>
+<div class="it"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M16 11a3 3 0 100-6M21 20c0-2-1-4-3-4.5"/></svg>Clientes</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M10 13h5M10 17h5"/></svg>Propostas</div>
+<div class="it on"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h3M13 11h3M8 15h3M13 15h3"/></svg>Precificação</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 13H7z"/><path d="M9 8a3 3 0 016 0"/></svg>Vendas</div>
+<div class="it"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M15 15a3 3 0 11-1-2"/></svg>Pós-organização</div>
+<div class="grp">FINANCEIRO</div>
+<div class="it"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M15 12h3"/></svg>Financeiro</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M6 20V11M12 20V5M18 20v-6"/></svg>Relatórios</div>
+<div class="grp">CONTA</div>
+<div class="it"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Perfil</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M12 3l8 4v6c0 4-4 7-8 8-4-1-8-4-8-8V7z"/></svg>Plano e cobrança</div>
+</div>
+<div class="main"><div class="wrap">
+<div class="eyebrow">Seus números, seu preço</div><h1>Precificação</h1>
+<div class="sub">Quanto vale a sua hora e quanto cobrar por cada projeto, com os seus números.</div>
+<div class="tabs"><span class="tab on">⏱ Sua hora</span><span class="tab">▦ Preço de um projeto</span></div>
+<div class="grid"><div>
+<div class="card sec"><h3><span class="n">1</span>Quanto você quer ganhar</h3><p class="d">O valor que precisa sobrar para você no fim do mês.</p>
+<div class="campos"><div class="campo"><label>Por mês</label><div>R$ 5.000,00</div></div><div class="campo"><label>Margem de lucro</label><div>20%</div><small>Para reinvestir, imprevistos e meses fracos</small></div></div></div>
+<div class="card sec"><h3><span class="n">2</span>Quanto você gasta para trabalhar</h3><p class="d">Custos que existem mesmo sem cliente. Somam R$ 630 por mês.</p>
+<div class="campos"><div class="campo"><label>Impostos fixos (DAS do MEI)</label><div>R$ 80,00</div></div><div class="campo"><label>Transporte</label><div>R$ 400,00</div></div><div class="campo"><label>Ferramentas, celular, cursos</label><div>R$ 150,00</div></div><div class="campo"><label>Outros custos</label><div>R$ 0,00</div></div></div></div>
+<div class="card sec"><h3><span class="n">3</span>Quanto tempo você vende</h3><p class="d">Só as horas na casa da cliente. Orçamento, compras e deslocamento não contam.</p>
+<div class="campos"><div class="campo"><label>Dias de atendimento no mês</label><div>12</div></div><div class="campo"><label>Horas por dia de atendimento</label><div>6 h</div></div></div></div>
+<div class="card sec"><h3><span class="n">4</span>Taxas de cada venda <span class="chip" style="background:var(--goldbg);color:var(--golddk);margin-left:6px">novo</span></h3><p class="d">Entram em todo preço de projeto e de mudança.</p>
+<div class="campos"><div class="campo"><label>Imposto sobre a venda</label><div>0%</div><small>MEI: 0 (o DAS já está nos custos)</small></div><div class="campo"><label>Taxa do cartão / maquininha</label><div>4,99%</div></div><div class="campo"><label>Valor por km rodado</label><div>R$ 1,20</div></div><div class="campo"><label>Hora de cada assistente</label><div>R$ 30,00</div></div></div></div>
+<div style="text-align:right"><span class="btn">Salvar meus números</span></div>
+</div>
+<div><div class="res"><div class="l">Sua hora sugerida</div><div class="v">R$ 94</div><div class="l">com 20% de margem</div>
+<div class="ln" style="margin-top:16px"><span>Hora mínima</span><b>R$ 78</b></div>
+<div class="ln"><span>Horas que você vende</span><b>72 h/mês</b></div>
+<div class="ln"><span>Custos fixos</span><b>R$ 630/mês</b></div>
+<div class="ln" style="border-bottom:0"><span>Diária sugerida (6 h)</span><b style="color:var(--gold)">R$ 564</b></div>
+<div class="l" style="margin-top:12px">Onde você está na faixa do mercado</div><div class="barra"><i></i></div><div style="display:flex;justify-content:space-between;font-size:12px;opacity:.7"><span>R$ 80</span><span>R$ 350/h</span></div></div>
+<div class="nota"><b>Abaixo de R$ 78 a hora, a conta do mês não fecha.</b> Use a sua conta, não a média do mercado: ela mostra o que o seu negócio precisa.</div>
+<div class="nota" style="font-size:13px">O Planner Organiza não é contador. Em dúvida sobre impostos e alíquota, procure um contador.</div>
+</div></div></div></div></body></html>

@@ -1,0 +1,54 @@
+<html><head><link rel="stylesheet" href="base.css"><link rel="stylesheet" href="side.css"><link rel="stylesheet" href="comum.css"><style>
+.top{display:flex;justify-content:space-between;align-items:flex-end}
+.fil{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap}.fil span{padding:7px 14px;border-radius:999px;border:1px solid var(--borda);background:#fff;font-size:14px;font-weight:600;color:var(--txt2);display:flex;gap:7px;align-items:center}.fil span.on{background:var(--navy);color:#fff;border-color:var(--navy)}.fil i{width:10px;height:10px;border-radius:3px}
+.g{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;margin-top:16px;align-items:start}
+.cal{padding:18px}.ch{display:flex;justify-content:space-between;align-items:center}.ch b{font-size:20px;color:var(--navy);font-family:'Cormorant Garamond',Georgia,serif;font-size:28px}
+.nav{display:flex;gap:8px;align-items:center}.nav i{font-style:normal;width:36px;height:36px;border:1px solid var(--borda);border-radius:10px;display:grid;place-items:center;background:#fff}
+.seg{display:inline-flex;background:#ECE7DC;border-radius:10px;padding:3px;margin-right:8px}.seg span{padding:6px 14px;border-radius:8px;font-weight:600;font-size:14px;color:var(--txt2)}.seg span.on{background:#fff;color:var(--navy);box-shadow:inset 0 -2px 0 var(--gold)}
+.ws{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:16px;font-size:12px;font-weight:700;color:var(--txt2);text-align:center;letter-spacing:1px}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:8px}
+.d{min-height:96px;border:1px solid #EEE9DF;border-radius:10px;padding:6px;background:#fff;display:flex;flex-direction:column;gap:3px}
+.d .num{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:2px}
+.d.fora{background:#FAF8F3}.d.fora .num{color:#C3BDB0}
+.d.hoje{border:2px solid var(--gold);background:#FFFCF3}.d.hoje .num{background:var(--gold);color:var(--navy);width:24px;height:24px;border-radius:50%;display:grid;place-items:center}
+.c{font-size:10.5px;border-radius:5px;padding:2px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.c-serv{background:var(--navy);color:#fff}.c-vis{background:#F6EDD3;color:#5C4708}.c-pos{border:1px solid var(--gold);color:#5C4708}.c-niver{background:#F3F0EA;color:var(--navy)}.c-rec{background:#E3F1E8;color:#2F6B4F}.c-pag{background:#F7E8E4;color:#8A3B2B}
+.dia{padding:20px}.dia .ey{font-size:12px;letter-spacing:2px;font-weight:700;color:var(--golddk)}.dia h3{font-family:'Cormorant Garamond',Georgia,serif;font-size:30px;color:var(--navy);margin-top:4px}
+.ev{display:flex;gap:12px;padding:12px;border-radius:12px;border:1px solid var(--borda);margin-top:10px;background:#fff}
+.ev .h{font-weight:700;color:var(--navy);width:44px;font-size:14px}.ev .bar{width:4px;border-radius:3px}.ev b{color:var(--navy);font-size:14px;display:block}.ev span{font-size:12.5px;color:var(--txt2)}
+.ac{display:inline-block;margin-top:8px;font-size:12px;font-weight:700;color:var(--navy);border:1px solid var(--borda);border-radius:8px;padding:5px 10px}
+.al{background:#FFF6E5;border:1px solid #EBCB8B;color:#7A5F0B;font-size:13px;border-radius:10px;padding:9px 12px;margin-top:12px}
+.side{flex-shrink:0}.d{min-width:0;overflow:hidden}.c{display:block;max-width:100%}</style></head><body>
+<div class="side">
+<div class="logo"><i>▦</i>Planner Organiza</div>
+<div class="conta">Planner Organizer<br>voce@email.com</div><span class="pro">PRO</span>
+<div style="height:1px;background:var(--borda);margin:18px 0 6px"></div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/></svg>Início</div>
+<div class="it on"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Agenda</div>
+<div class="grp">COMERCIAL</div>
+<div class="it"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M16 11a3 3 0 100-6M21 20c0-2-1-4-3-4.5"/></svg>Clientes</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M10 13h5M10 17h5"/></svg>Propostas</div>
+<div class="it"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h3M13 11h3M8 15h3M13 15h3"/></svg>Precificação</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 13H7z"/><path d="M9 8a3 3 0 016 0"/></svg>Vendas</div>
+<div class="it"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M15 15a3 3 0 11-1-2"/></svg>Pós-organização</div>
+<div class="grp">FINANCEIRO</div>
+<div class="it"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M15 12h3"/></svg>Financeiro</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M6 20V11M12 20V5M18 20v-6"/></svg>Relatórios</div>
+<div class="grp">CONTA</div>
+<div class="it"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Perfil</div>
+<div class="it"><svg viewBox="0 0 24 24"><path d="M12 3l8 4v6c0 4-4 7-8 8-4-1-8-4-8-8V7z"/></svg>Plano e cobrança</div>
+</div>
+<div class="main"><div class="wrap">
+<div class="top"><div><div class="eyebrow">Cada compromisso no seu lugar</div><h1>Agenda</h1><div class="sub">Serviços, visitas, retornos, aniversários e contas, organizados por dia.</div></div><span class="btn ouro">+ Novo compromisso</span></div>
+<div class="fil"><span class="on">Tudo</span><span><i style="background:var(--navy)"></i>Serviços</span><span><i style="background:#F6EDD3;border:1px solid var(--gold)"></i>Visitas</span><span><i style="border:1.5px solid var(--gold)"></i>Retornos</span><span><i style="background:#E9E4D8"></i>🎂 Aniversários</span><span><i style="background:#CFE6D8"></i>A receber</span><span><i style="background:#F1D5CE"></i>A pagar</span></div>
+<div class="g"><div class="card cal"><div class="ch"><b>Novembro de 2026</b><div class="nav"><div class="seg"><span>Semana</span><span class="on">Mês</span></div><i>←</i><span class="btn lin" style="background:#fff;color:var(--navy);border:1px solid var(--borda);padding:8px 14px">Hoje</span><i>→</i></div></div>
+<div class="ws"><span>DOM</span><span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span></div>
+<div class="grid"><div class="d"><span class="num">1</span></div><div class="d"><span class="num">2</span></div><div class="d"><span class="num">3</span><span class="c c-vis">10:00 Visita · Fer…</span></div><div class="d"><span class="num">4</span></div><div class="d"><span class="num">5</span><span class="c c-serv">09:00 Closet · Lu…</span></div><div class="d"><span class="num">6</span></div><div class="d"><span class="num">7</span></div><div class="d"><span class="num">8</span></div><div class="d"><span class="num">9</span></div><div class="d"><span class="num">10</span><span class="c c-rec">Recebido R$ 980</span></div><div class="d"><span class="num">11</span></div><div class="d"><span class="num">12</span><span class="c c-serv">08:30 Quarto inf…</span></div><div class="d"><span class="num">13</span></div><div class="d"><span class="num">14</span><span class="c c-pos">↻ Retorno · Tati…</span></div><div class="d"><span class="num">15</span></div><div class="d"><span class="num">16</span></div><div class="d"><span class="num">17</span><span class="c c-vis">14:00 Visita · Ma…</span></div><div class="d"><span class="num">18</span></div><div class="d"><span class="num">19</span></div><div class="d"><span class="num">20</span><span class="c c-serv">09:00 Quarto · Bea…</span><span class="c c-pag">DAS R$ 80</span></div><div class="d"><span class="num">21</span></div><div class="d"><span class="num">22</span></div><div class="d"><span class="num">23</span><span class="c c-vis">10:00 Visita · Fer…</span></div><div class="d"><span class="num">24</span><span class="c c-rec">Sinal R$ 1.200</span></div><div class="d hoje sel"><span class="num">25</span><span class="c c-serv">09:00 Mudança · Cla…</span><span class="c c-vis">16:00 Visita · Pau…</span><span class="c c-niver">🎂 Mariana</span></div><div class="d"><span class="num">26</span><span class="c c-serv">09:00 Mudança · Cla…</span><span class="c c-pos">↻ Retorno · Bea…</span></div><div class="d"><span class="num">27</span><span class="c c-rec">A receber R$ 3.450</span><span class="c c-pag">Caixas R$ 180</span></div><div class="d"><span class="num">28</span><span class="c c-serv">08:30 Cozinha · Ma…</span></div><div class="d"><span class="num">29</span></div><div class="d"><span class="num">30</span></div><div class="d fora"><span class="num">1</span></div><div class="d fora"><span class="num">2</span></div><div class="d fora"><span class="num">3</span></div><div class="d fora"><span class="num">4</span></div><div class="d fora"><span class="num">5</span></div></div>
+<div style="font-size:12.5px;color:var(--txt2);margin-top:10px">Toque em um dia para ver os detalhes. Serviços de vários dias aparecem em todos os dias do período.</div></div>
+<div class="card dia"><div class="ey">SUA PROGRAMAÇÃO</div><h3>Quarta, 25 de novembro</h3><div style="font-size:13px;color:var(--txt2)">Hoje · 2 compromissos e 1 aniversário</div>
+<div class="ev"><span class="h">09:00</span><span class="bar" style="background:var(--navy)"></span><div><b>Mudança completa</b><span>Clara Mendes · dia 1 de 2 · com Júlia</span><br><span class="ac">Abrir proposta</span> <span class="ac">Rota no Maps</span></div></div>
+<div class="ev"><span class="h">16:00</span><span class="bar" style="background:var(--gold)"></span><div><b>Visita técnica</b><span>Paula Nunes · lavanderia · Vila Madalena</span><br><span class="ac">Criar proposta</span> <span class="ac">Rota no Maps</span></div></div>
+<div class="ev"><span class="h">🎂</span><span class="bar" style="background:#D8D2C4"></span><div><b>Aniversário da Mariana Lopes</b><span>Cliente desde março</span><br><span class="ac">Dar parabéns no WhatsApp</span></div></div>
+<div class="al">⚠ A visita das 16:00 começa 30 min depois do fim previsto da mudança.</div>
+<span class="btn lin" style="display:block;text-align:center;margin-top:14px;background:#fff;color:var(--navy);border:1px solid var(--borda)">+ Agendar neste dia</span></div></div>
+</div></div></body></html>
