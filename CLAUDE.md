@@ -119,3 +119,9 @@ Responda em português, passo a passo e sem jargão. O README.md tem arquitetura
 - Na landing (LandingPage_Planner) ainda falta: remetente `contato@candeiatec.com.br` no Brevo e tirar uma senha de
   banco que ficou escrita no código (ver o CLAUDE.md de lá).
 - Ainda não feito nos apps: 10% no anual para indicadas (produto/oferta própria nas lojas + RevenueCat); não entrou na 1.0.20.
+
+## Complemento (26/11/2026, sessão do Financeiro/Candeia Tec)
+- Render: ainda existe o serviço de teste `plannerorganizer-teste` (srv-dbcc6jt9fdbs73ci1d20, plano free), ligado à
+  branch `claude/festive-noether-ebu73p` do histórico antigo. Não é usado: **decidir** se suspende ou apaga (só com ela).
+- GitHub Actions: além de `lembretes-diarios.yml`, há `backup-banco.yml` (backup do banco).
+
