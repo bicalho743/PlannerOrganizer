@@ -89,3 +89,22 @@ def test_cleo_so_no_plano_pro(monkeypatch):
     assert not cleo_liberada({"plano": "gratuito", "email": "outra@exemplo.com"})
     assert not cleo_liberada({"plano": "cancelado"})
     assert not cleo_liberada(None)
+
+
+def test_so_agenda_ignora_outros_formularios():
+    """Desde 28/11/2026 a Cléo é só da Agenda: pedido de proposta ou lançamento não vira ação."""
+    r = interpretar("proposta pra Carla de 3 mil", chamar=_resposta(
+        {"type": "text", "text": "Por voz eu só cuido da Agenda."},
+        {"type": "tool_use", "name": "preencher_proposta", "input": {"cliente": "Carla", "valor": 3000}},
+        {"type": "tool_use", "name": "abrir_tela", "input": {"tela": "financeiro"}}))
+    assert r["acoes"] == [] and "Agenda" in r["fala"]
+
+
+def test_nao_salva_formulario_de_outra_tela():
+    """Versões antigas mostram a Cléo na proposta: lá 'salvar' não pode valer."""
+    r = interpretar("pode salvar", formulario="proposta",
+                    chamar=_resposta({"type": "tool_use", "name": "salvar_formulario", "input": {}}))
+    assert r["acoes"] == []
+    r = interpretar("pode salvar", formulario="compromisso",
+                    chamar=_resposta({"type": "tool_use", "name": "salvar_formulario", "input": {}}))
+    assert r["acoes"] == [{"tipo": "salvar"}]

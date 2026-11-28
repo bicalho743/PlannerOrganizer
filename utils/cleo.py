@@ -28,17 +28,20 @@ TELAS = ["inicio", "propostas", "agenda", "financeiro", "clientes", "vendas",
 SISTEMA = """Você é a Cléo, assistente de voz do app Planner Organiza, usado por personal organizers no Brasil.
 Fale sempre em português do Brasil, em frases curtas e simpáticas, como quem conversa. Sem jargão.
 
-O que você faz: abrir telas e abrir formulários JÁ PREENCHIDOS com o que a usuária disse. Você nunca grava
+O que você faz: SÓ a Agenda. Você abre o formulário de compromisso da Agenda JÁ PREENCHIDO com o que a usuária disse
+(serviço, visita, retorno, reunião, lembrete com data e hora). Você nunca grava
 nada sozinha: a usuária confere o formulário na tela e diz "salvar" (ou toca em salvar).
 
 Regras:
 - Hoje é {hoje} ({dia_semana}). Converta datas faladas ("amanhã", "sexta", "dia 20") para AAAA-MM-DD e horas para HH:MM (24h).
 - Valores em reais viram número (ex.: "mil e duzentos" = 1200).
+- Pedidos de proposta, financeiro, cadastro de cliente ou outra tela: diga com gentileza que por voz você só cuida da
+  Agenda e que o resto é pelo app. Não use ferramenta nesses casos.
 - Cliente: use exatamente um nome da lista de clientes quando a usuária citar uma. Se não achar, passe o nome falado
   mesmo assim e avise que não encontrou. Nunca invente cliente, valor, data ou telefone: se faltar algo importante,
   preencha o que sabe e pergunte o resto em uma frase.
 - "Salvar", "confirma", "pode salvar" -> use salvar_formulario. "Fecha", "cancela", "deixa pra lá" -> use fechar_formulario.
-- Se o pedido não tiver relação com o app, diga com gentileza que você ajuda com propostas, agenda, financeiro e clientes.
+- Se o pedido não tiver relação com o app, diga com gentileza que você ajuda a marcar compromissos na Agenda.
 - Sempre responda com uma frase curta de fala (o app lê e mostra). Use as ferramentas para as ações.
 
 Tela atual da usuária: {tela}. Formulário aberto agora: {formulario}.
@@ -48,31 +51,12 @@ telefone"), use a ferramenta de preencher apenas com o que MUDA: o app junta com
 Clientes cadastradas (nomes): {clientes}"""
 
 FERRAMENTAS = [
-    {"name": "abrir_tela", "description": "Abre uma tela do app.",
-     "input_schema": {"type": "object", "properties": {"tela": {"type": "string", "enum": TELAS}},
-                      "required": ["tela"]}},
     {"name": "preencher_compromisso",
      "description": "Abre o formulário de novo compromisso da Agenda, preenchido.",
      "input_schema": {"type": "object", "properties": {
          "titulo": {"type": "string"}, "data": {"type": "string", "description": "AAAA-MM-DD"},
          "hora": {"type": "string", "description": "HH:MM"}, "cliente": {"type": "string"},
          "local": {"type": "string"}, "valor": {"type": "number"}, "observacoes": {"type": "string"}}}},
-    {"name": "preencher_proposta",
-     "description": "Abre o formulário de nova proposta, preenchido.",
-     "input_schema": {"type": "object", "properties": {
-         "cliente": {"type": "string"}, "descricao": {"type": "string"}, "ambiente": {"type": "string"},
-         "valor": {"type": "number"}, "sinal": {"type": "number"}}}},
-    {"name": "preencher_lancamento",
-     "description": "Abre o formulário de novo lançamento financeiro (receita ou despesa), preenchido.",
-     "input_schema": {"type": "object", "properties": {
-         "tipo": {"type": "string", "enum": ["receita", "despesa"]}, "descricao": {"type": "string"},
-         "valor": {"type": "number"}, "categoria": {"type": "string"}}}},
-    {"name": "preencher_cliente",
-     "description": "Abre o formulário de nova cliente, preenchido.",
-     "input_schema": {"type": "object", "properties": {
-         "nome": {"type": "string"}, "telefone": {"type": "string"}, "email": {"type": "string"},
-         "cidade": {"type": "string"}, "bairro": {"type": "string"},
-         "aniversario": {"type": "string", "description": "DD/MM"}, "observacoes": {"type": "string"}}}},
     {"name": "salvar_formulario", "description": "Confirma e salva o formulário que está aberto.",
      "input_schema": {"type": "object", "properties": {}}},
     {"name": "fechar_formulario", "description": "Fecha o formulário aberto sem salvar.",
@@ -82,8 +66,7 @@ FERRAMENTAS = [
 DIAS = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
 
 # nome da ferramenta -> tipo de ação que o app entende
-_FORMULARIOS = {"preencher_compromisso": "compromisso", "preencher_proposta": "proposta",
-                "preencher_lancamento": "lancamento", "preencher_cliente": "cliente"}
+_FORMULARIOS = {"preencher_compromisso": "compromisso"}   # desde 28/11/2026 a Cléo é só da Agenda
 
 
 _cliente = None
@@ -138,12 +121,11 @@ def interpretar(texto: str, tela: str = "", formulario: str = "", clientes=None,
             fala.append(bloco["text"].strip())
         elif bloco.get("type") == "tool_use":
             nome, dados = bloco.get("name"), bloco.get("input") or {}
-            if nome == "abrir_tela" and dados.get("tela") in TELAS:
-                acoes.append({"tipo": "abrir_tela", "tela": dados["tela"]})
-            elif nome in _FORMULARIOS:
+            if nome in _FORMULARIOS:
                 campos = {k: v for k, v in dados.items() if v not in (None, "")}
                 acoes.append({"tipo": "formulario", "formulario": _FORMULARIOS[nome], "campos": campos})
-            elif nome in ("salvar_formulario", "fechar_formulario"):
+            elif nome in ("salvar_formulario", "fechar_formulario") and formulario in ("", "compromisso"):
+                # versões antigas do app ainda mostram a Cléo em outros formulários: lá ela não salva nem fecha
                 acoes.append({"tipo": nome.split("_")[0]})
     return {"fala": " ".join(fala) or ("Pronto." if acoes else "Não entendi. Pode falar de outro jeito?"),
             "acoes": acoes}
