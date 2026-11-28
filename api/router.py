@@ -1822,12 +1822,42 @@ class PerfilUpdate(BaseModel):
     cnpj: Optional[str] = None
     mensagem_padrao: Optional[str] = None
     observacoes_relatorio: Optional[str] = None
+    cor_principal: Optional[str] = None   # cor da marca nos PDFs (#RRGGBB)
+    logo: Optional[str] = None            # imagem em base64 (ou data URL); "" tira o logo
+
+
+def _logo_do_app(texto: str):
+    """Logo enviado pelo app (base64 da galeria): reduz para 600 px e devolve data URL PNG, como no site."""
+    import base64, io
+    from PIL import Image, UnidentifiedImageError
+    bruto = texto.split(",", 1)[1] if texto.startswith("data:") else texto
+    try:
+        dados = base64.b64decode(bruto, validate=False)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Não consegui ler essa imagem.")
+    if len(dados) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="A imagem passa de 5 MB. Escolha uma menor.")
+    try:
+        img = Image.open(io.BytesIO(dados)); img.load()
+    except (UnidentifiedImageError, OSError):
+        raise HTTPException(status_code=400, detail="Não consegui abrir essa imagem. Escolha um PNG ou JPG.")
+    img = img.convert("RGBA"); img.thumbnail((600, 600))
+    saida = io.BytesIO(); img.save(saida, "PNG", optimize=True)
+    return "data:image/png;base64," + base64.b64encode(saida.getvalue()).decode()
+
 
 @api.put("/perfil")
 async def update_perfil(body: PerfilUpdate, uid: str = Depends(verify_firebase_token)):
     try:
         db = get_db(uid)
-        dados = {k: v for k, v in body.dict().items() if v is not None}
+        dados = {k: v for k, v in body.dict().items() if v is not None and k not in ("logo", "cor_principal")}
+        if body.cor_principal is not None:
+            import re as _re
+            if not _re.fullmatch(r"#[0-9A-Fa-f]{6}", body.cor_principal.strip()):
+                raise HTTPException(status_code=400, detail="Cor inválida.")
+            dados["cor_principal"] = body.cor_principal.strip().upper()
+        if body.logo is not None:
+            dados["logo"] = _logo_do_app(body.logo) if body.logo.strip() else None
         db.salvar_perfil_usuario(dados)
         return JSONResponse(content={"success": True})
     except HTTPException:
