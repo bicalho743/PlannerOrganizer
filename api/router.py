@@ -2369,7 +2369,7 @@ def _montar_inicio(uid: str) -> dict:
             venc = _data(a.get("due_date")) or hoje
             cliente = a.get("cliente_nome") or "cliente"
             txt = (templates.get(at, {}) or {}).get("texto", "")
-            itens.append({"tipo": "pos", "tag": f"Pós {dmais}".strip(), "titulo": f"{nome_etapa} · {cliente}",
+            itens.append({"tipo": "pos", "tag": "Retorno à cliente", "titulo": f"{nome_etapa} · {cliente}",
                           "detalhe": f"{objetivo} · proposta #{a.get('proposta_numero', '')}",
                           "quando": ("venceu " if venc < hoje else "") + _quando(venc, hoje), "atrasado": venc < hoje,
                           "vencimento": venc.isoformat(), "acao_id": int(a.get("action_id")),
