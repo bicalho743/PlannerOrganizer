@@ -537,7 +537,7 @@ def _det_mais_acoes(proposta_id, proposta, status):
             from utils.propostas_dados import _data
             ed_data = c4.date_input("Início previsto:", value=_data(proposta.get('data_inicio')), format="DD/MM/YYYY",
                                     key=f"ed_data_{proposta_id}")
-            ed_desc = st.text_area("Descrição:", value=str(proposta.get('descricao') or ''), height=110,
+            ed_desc = st.text_area("Descrição:", value=str(proposta.get('descricao') or ''), height=220,
                                    key=f"ed_desc_{proposta_id}")
             if st.form_submit_button("Salvar alterações", type="primary", use_container_width=True):
                 try:
@@ -927,7 +927,7 @@ def _tab_detalhes(proposta_id, proposta):
     # ── Formulário novo andamento ─────────────────────────────────────────
     st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">Novo Andamento</p>', unsafe_allow_html=True)
     with st.form(key=f"form_andamento_{proposta_id}"):
-        descricao_andamento = st.text_area("Descrição:", height=90, placeholder="Descreva o que aconteceu nesta etapa…", label_visibility="collapsed")
+        descricao_andamento = st.text_area("Descrição:", height=150, placeholder="Descreva o que aconteceu nesta etapa…", label_visibility="collapsed")
         submitted = st.form_submit_button("Registrar Andamento", type="primary", use_container_width=True)
         if submitted:
             if descricao_andamento:
@@ -1175,7 +1175,7 @@ def _tab_itens(proposta_id, show_finalizar=False, proposta=None):
                 nova_descricao = st.text_area(
                     "Descrição do serviço (ambientes/itens):",
                     value=str(proposta.get('descricao') or ''),
-                    height=120,
+                    height=220,
                     key=f"nova_descricao_exec_{proposta_id}")
                 if st.form_submit_button("Salvar alterações", type="primary", use_container_width=True):
                     try:

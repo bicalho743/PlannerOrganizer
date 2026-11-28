@@ -772,7 +772,7 @@ def _passo_servico(o, p, r):
     with sec:
         o["obs"] = st.text_area("Observações da visita", value=o["obs"], key="np_obs", label_visibility="collapsed",
                                 placeholder="Acesso pelo elevador de serviço, louças e cristais frágeis, mudança dia 12/12",
-                                height=90)
+                                height=160)
     if css_on:
         mat = [c for c in css_on if "npmat" in c]
         st.markdown("<style>" + ", ".join(css_on) + " { border-color:#C9A84C !important; }"
