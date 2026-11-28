@@ -97,7 +97,7 @@ Responda em português, passo a passo e sem jargão. O README.md tem arquitetura
 ## Pendências (15/11/2026)
 - Recebimento da Apple: conta Itaú em BRL exige cadastro na StoneX; alternativa: conta USD da Wise no nome do titular.
 
-## Precificação: dias de cada assistente (26/11/2026, na branch, ainda não publicado)
+## Precificação: dias de cada assistente (publicado em 28/11/2026)
 - Em Precificação > Preço de um projeto > Equipe e custos e na Nova proposta (passo "Quem vai com você?"): com
   assistentes, aparece "Dias de cada assistente" (0 = todos os dias). `orcamento_completo(..., dias_assistente=N)`:
   a assistente recebe só N dias × horas_dia; as horas que sobram ficam com a organizer. O valor da hora continua só
@@ -106,8 +106,8 @@ Responda em português, passo a passo e sem jargão. O README.md tem arquitetura
 ## Onde paramos (26/11/2026)
 - `main` = o que está no ar (publicado até 25/11: PDFs novos, login por cookie, telas reais, onboarding com boas-vindas,
   Nova proposta sem retroativo e com Cliente nova completa).
-- **Pendente de publicar**: "Dias de cada assistente" está só na branch `claude/dreamy-bohr-1tib91` (testes passam,
-  179). Falta conferir a tela no navegador e a dona dizer "pode publicar"; aí levar a branch para a `main`.
+- 28/11: publicados "Dias de cada assistente" e a Cléo só para a Agenda (`utils/cleo.py`: só a ferramenta
+  preencher_compromisso; salvar/fechar só valem no formulário de compromisso). 181 testes.
 - Render: a dona ainda vai pôr o Health Check Path `/_stcore/health` no serviço do site.
 - Google Play pediu login de revisão: conta `contato+revisao@candeiatec.com.br` criada pela dona (7 dias grátis bastam).
 - Redes sociais (Upload-Post): carrossel e stories das telas reais publicados em 25/11 nos perfis PlannerOrganiza e
